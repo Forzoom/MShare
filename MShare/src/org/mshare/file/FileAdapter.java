@@ -9,7 +9,9 @@ import org.mshare.main.R.id;
 import org.mshare.main.R.layout;
 
 
+import android.R.color;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -151,7 +153,7 @@ public class FileAdapter extends BaseAdapter {
 			item.fileNameView.setWidth(drawable.getIntrinsicWidth()); // max width
 			item.fileNameView.setText(item.file.getDisplayName());
 			item.fileNameView.setCompoundDrawables(null, drawable, null, null);
-			
+			item.fileNameView.setTextColor(Color.BLACK);
 			// register for long click
 			
 			
