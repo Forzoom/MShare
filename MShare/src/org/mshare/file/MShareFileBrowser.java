@@ -17,6 +17,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class MShareFileBrowser {
 
@@ -27,7 +29,7 @@ public class MShareFileBrowser {
 	/**
 	 * show current file path
 	 */
-	private EditText crumbs = null;
+	private TextView crumbsView = null;
 	/**
 	 * crumb controller
 	 */
@@ -43,19 +45,20 @@ public class MShareFileBrowser {
 	/**
 	 * the button show parent directory content
 	 */
-	private Button crumbLastButton = null;
+	private Button backBtn = null;
 	
 	public MShareFileBrowser(Context context, ViewGroup container) {
 		this.context = context;
-		if (context == null) Log.e(TAG, "context is null");
 		this.container = container;
 	}
 	
 	public View getView() {
+		// file browser view
 		View view = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
 
-		crumbLastButton = (Button)(view.findViewById(R.id.crumb_last_button));
-		crumbLastButton.setOnClickListener(new CrumbLastButtonListener(context));
+		// set back button
+		backBtn = (Button)(view.findViewById(R.id.crumb_last_button));
+		backBtn.setOnClickListener(new BackBtnListener(context));
 		
 		// get sd card root path and list files
 		File root = Environment.getExternalStorageDirectory();
@@ -63,34 +66,61 @@ public class MShareFileBrowser {
 		// create `MShareCrumbs`
 		mShareCrumbs = new MShareCrumbs(root);
 		
+		// get crumbsView and set the path
+		crumbsView = (TextView)(view.findViewById(R.id.crumb_text));
+		crumbsView.setText(mShareCrumbs.getPath());
+		
+		// all files in root directory
 		MShareFile[] files = mShareCrumbs.getFiles();
-		
-		// root does not have parent
-		adapter = new FileAdapter(context, files);
-		
-		// get crumbs and set the path
-		crumbs = (EditText)(view.findViewById(R.id.crumb_text));
-		crumbs.setText(mShareCrumbs.getPath());
-		
 		// create grid view
 		gridView = (GridView)(view.findViewById(R.id.grid_view));
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
-//		gridView.setOnItemLongClickListener(new GridViewItemLongClickListener2());
 		
+		// register context menu
 		((Activity)context).registerForContextMenu(gridView);
 		
-		gridView.setAdapter(adapter);
-		
-		return view;
+		// check external storage useful
+		if (!isExternalStorageUseful()) {
+			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
+			return null;
+		} else {
+			// set adapter
+			adapter = new FileAdapter(context, files); 
+			gridView.setAdapter(adapter);
+			return view;
+		}
 	}
+	
 	/**
-	 * reset
+	 * check whether the external storage is useful
+	 * @return
+	 */
+	public boolean isExternalStorageUseful() {
+		String state = Environment.getExternalStorageState();
+		return state.equals(Environment.MEDIA_MOUNTED);
+	}
+	
+	/**
+	 * main refresh method
+	 */
+	public void refresh() {
+		if (isExternalStorageUseful()) {
+			refreshGridView();
+		} else {
+			mShareCrumbs.clean();
+			refreshGridView(new MShareFile[0]);
+			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_LONG).show();
+		}
+	}
+	
+	/**
+	 * refresh gridview
 	 */
 	public void refreshGridView() {
 		refreshGridView(mShareCrumbs.get());
 	}
 	/**
-	 * reset
+	 * refresh gridview
 	 * @param file
 	 */
 	public void refreshGridView(MShareFile file) {
@@ -109,9 +139,9 @@ public class MShareFileBrowser {
 		refreshPath();
 		// set the last button style
 		if (!mShareCrumbs.canPop()) {
-			crumbLastButton.setClickable(false);
+			backBtn.setClickable(false);
 		} else {
-			crumbLastButton.setClickable(true);
+			backBtn.setClickable(true);
 		}
 	}
 	
@@ -120,7 +150,7 @@ public class MShareFileBrowser {
 	 * @param text content to be shown in crumb
 	 */
 	private void setPath(String text) {
-		this.crumbs.setText(text);
+		this.crumbsView.setText(text);
 	}
 	/**
 	 * refresh the MainActivity path
@@ -130,7 +160,7 @@ public class MShareFileBrowser {
 	}
 	
 	/**
-	 * new level
+	 * push a new crumb
 	 * @param file
 	 */
 	public void pushCrumb(MShareFile file) {
@@ -138,28 +168,13 @@ public class MShareFileBrowser {
 		refreshPath();
 	}
 	/**
-	 * crumb operation
+	 * pop top crumb
 	 * @return
 	 */
 	public MShareFile popCrumb() {
 		MShareFile file = mShareCrumbs.pop();
 		refreshPath();
 		return file;
-	}
-	
-	/**
-	 * default index
-	 */
-	public void goParent() {
-		goParent(mShareCrumbs.getDepth());
-	}
-	
-	/**
-	 * parent directory
-	 */
-	public void goParent(int index) {
-		mShareCrumbs.setDepth(index);
-		refreshGridView(mShareCrumbs.get());
 	}
 	
 	/**
@@ -184,8 +199,13 @@ public class MShareFileBrowser {
 				ItemContainer item = (ItemContainer)tag; 
 				MShareFile file = item.file;
 				if (file.isDirectory()) { // whether is a directory
-					pushCrumb(file);
-					refreshGridView(file);
+					if (file.getSubFiles() != null) {
+						pushCrumb(file);
+						refreshGridView(file.getSubFiles());
+					} else {
+						// cannot open the directory
+						Toast.makeText(context, "文件夹无法访问", Toast.LENGTH_LONG).show();
+					}
 				} else {
 					// is file, do nothing
 				}
@@ -195,37 +215,16 @@ public class MShareFileBrowser {
 		}
 	}
 	
-	private class GridViewItemLongClickListener implements AdapterView.OnItemLongClickListener {
-
-		@Override
-		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-			Log.v(TAG, "long click :" + mShareCrumbs.getFiles()[position].getName());
-			return false;
-		}
-		
-	}
-	
-	private class GridViewItemLongClickListener2 implements AdapterView.OnItemLongClickListener {
-
-		@Override
-		public boolean onItemLongClick(AdapterView<?> parent, View view,
-				int position, long id) {
-			
-			return false;
-		}
-
-	}
-	
 	/**
 	 * temp listener for crumb last button
 	 * @author HM
 	 *
 	 */
-	private class CrumbLastButtonListener implements View.OnClickListener {
+	private class BackBtnListener implements View.OnClickListener {
 
 		private Context context = null;
 		
-		public CrumbLastButtonListener(Context context) {
+		public BackBtnListener(Context context) {
 			this.context = context;
 		}
 		

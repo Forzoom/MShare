@@ -47,7 +47,7 @@ public class MShareFile extends File {
 	
 	/**
 	 * get all sub files which show in the grid view
-	 * @return
+	 * @return the array of `MShareFile`, or null if the `list()` == null
 	 */
 	public MShareFile[] getSubFiles() {
 		// default ret
@@ -56,10 +56,12 @@ public class MShareFile extends File {
 		if (this.isDirectory()) { // is directory
 			int retIndex = 0;
 			String[] fileList = this.list();
-			String dir = this.getAbsolutePath();
+			
 			if (fileList == null) {
-				Log.e(TAG, "fileList is null");
+				 return null;
 			}
+			
+			String dir = this.getAbsolutePath();
 			ret = new MShareFile[fileList.length];
 			
 			// fill the ret
@@ -67,9 +69,6 @@ public class MShareFile extends File {
 				ret[retIndex] = new MShareFile(dir + "/" + fileList[i]);
 				retIndex++;
 			}
-		} else {
-			// empty array
-			ret = new MShareFile[0];
 		}
 		
 		return ret;

@@ -16,7 +16,7 @@ public class MShareCrumbs {
 	private static final String TAG = "MShareCrumbs";
 	
 	private static final int DEPTH_DEFAULT = -1;
-	
+	private static final int DEPTH_INIT = 0;
 	private static final int DEPTH_MAX_DEFAULT = 10;
 	/**
 	 * the stack for saving files(to be exact, directory)
@@ -46,6 +46,14 @@ public class MShareCrumbs {
 	}
 	
 	/**
+	 * reset crumbs
+	 */
+	public void clean() {
+		this.top = this.curDepth = DEPTH_INIT;
+		refreshPath();
+	}
+	
+	/**
 	 * get the top file
 	 * @return
 	 */
@@ -72,6 +80,10 @@ public class MShareCrumbs {
 		refreshPath();
 	}
 	
+	/**
+	 * check whether can pop the top crumb
+	 * @return
+	 */
 	public boolean canPop() {
 		if (this.curDepth > 0) {
 			return true;
@@ -114,9 +126,8 @@ public class MShareCrumbs {
 	public String getPath() {
 		return path;
 	}
-	
 	/**
-	 * refresh the `path`
+	 * refresh the `path` for buffer
 	 */
 	private void refreshPath() {
 		ArrayList<String> list = new ArrayList<String>();

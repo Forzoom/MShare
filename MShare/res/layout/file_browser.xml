@@ -14,10 +14,11 @@
             android:layout_height="wrap_content"
             android:text="@string/crumb_last"
             />
-        <EditText 
+        <TextView 
             android:id="@+id/crumb_text"
             android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
+	        android:singleLine="true"
             />
     </LinearLayout>
 	<GridView

@@ -88,7 +88,7 @@ public class DummyFragment extends Fragment
 	@Override  
     public void onStart() {
 		
-		mFileBrowser.refreshGridView();
+		mFileBrowser.refresh();
 		
         // 生成动态数组，并且转入数据<span style="color:#ff6666;"> #在onStart()方法中加载数据，就在Fragment中可以动态刷新数据#</span>  
 //        listImageItem = new ArrayList<HashMap<String, Object>>();  
