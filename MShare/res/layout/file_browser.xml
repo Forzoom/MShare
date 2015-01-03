@@ -1,0 +1,34 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    <LinearLayout 
+        android:id="@+id/crumb_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+        <Button
+            android:id="@+id/crumb_last_button"
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content"
+            android:text="@string/crumb_last"
+            />
+        <EditText 
+            android:id="@+id/crumb_text"
+            android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+            />
+    </LinearLayout>
+	<GridView
+	    android:id="@+id/grid_view"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:numColumns="4"
+	    android:gravity="center" 
+	    android:stretchMode="columnWidth"
+	    android:verticalSpacing="10dp"
+	    android:horizontalSpacing="10dp"
+	    >
+	</GridView>
+</LinearLayout>
