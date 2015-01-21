@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.mshare.file.FileAdapter;
-import org.mshare.file.MShareCrumbs;
+import org.mshare.file.MShareCrumbController;
 import org.mshare.file.MShareFileBrowser;
 import org.mshare.main.R;
 
@@ -80,43 +80,10 @@ public class DummyFragment extends Fragment
 			return view2; 
 	}  
 
-//	private void InitView(View view) {  
-//	    gridView = (GridView) view.findViewById(R.id.grid_view);
-//	    btftp = (Button) view.findViewById(R.id.btnewftp);
-//	}  
-	
 	@Override  
     public void onStart() {
 		
-		mFileBrowser.refresh();
-		
-        // 生成动态数组，并且转入数据<span style="color:#ff6666;"> #在onStart()方法中加载数据，就在Fragment中可以动态刷新数据#</span>  
-//        listImageItem = new ArrayList<HashMap<String, Object>>();  
-//            for (int i = 0; i < 4; i++) {  
-//                HashMap<String, Object> map = new HashMap<String, Object>();  
-//                map.put("ItemImage", R.drawable.folder);// 添加图像资源的ID  
-//                map.put("ItemText", "文件夹"+i);// 按序号做ItemText  
-//                listImageItem.add(map);  
-//            }  
-//          
-//        simpleAdapter = new SimpleAdapter(  
-//                getActivity().getApplicationContext(), listImageItem,  
-//                R.layout.labelicon, new String[] {  
-//                        "ItemImage", "ItemText" }, new int[] { R.id.imageview,  
-//                        R.id.textview });  
-//        //添加图片绑定  
-//        simpleAdapter.setViewBinder(new ViewBinder() {  
-//            public boolean setViewValue(View view, Object data,  
-//                    String textRepresentation) {  
-//                if (view instanceof ImageView && data instanceof Drawable) {  
-//                    ImageView iv = (ImageView) view;  
-//                    iv.setImageDrawable((Drawable) data);  
-//                    return true;  
-//                } else  
-//                    return false;  
-//            }  
-//        });  
-//        gridView.setAdapter(simpleAdapter);  
+		mFileBrowser.refresh();  
         super.onStart();  
     }  
 }

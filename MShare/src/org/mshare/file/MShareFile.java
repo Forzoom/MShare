@@ -3,13 +3,18 @@ package org.mshare.file;
 import java.io.File;
 
 import android.util.Log;
-
+// TODO 如何在刷新文件子内容和减少IO读取之间进行平衡
+/**
+ * 
+ * @author HM
+ * 
+ */
 public class MShareFile extends File {
 
 	private static final String TAG = "MShareFile";
 	
 	/**
-	 * all subFiles last got
+	 * 上一次通过调用`getSubFiles`得到的文件所有子文件
 	 */
 	private MShareFile[] subFiles = null;
 	
@@ -23,15 +28,15 @@ public class MShareFile extends File {
 	}
 	
 	/**
-	 * the name show in gridview
-	 * @return
+	 * 获得浏览器中所显示的名字
+	 * @return 文件所显示的名字
 	 */
 	public String getDisplayName() {
 		return getName();
 	}
 	
 	/**
-	 * get the file extname
+	 * 获得文件的扩展名
 	 * @return
 	 */
 	public String getExtname() {
@@ -46,8 +51,8 @@ public class MShareFile extends File {
 	}
 	
 	/**
-	 * get all sub files which show in the grid view
-	 * @return the array of `MShareFile`, or null if the `list()` == null
+	 * 获得所有子文件
+	 * @return 一个`MShareFile`的数组, or null if the `list()` == null
 	 */
 	public MShareFile[] getSubFiles() {
 		// default ret

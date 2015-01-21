@@ -172,7 +172,7 @@
     <string name="action_settings">setting</string>
     <string name="hello_world">Hello world!</string>
     <string name="crumb_label">路径</string>
-    <string name="crumb_last">&lt;</string>
+    <string name="crumb_back">&lt;</string>
     <string name="file_image_description">file</string>
     <string name="file_text_place_holder">filename</string>
 </resources>

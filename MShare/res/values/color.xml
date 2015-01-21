@@ -8,8 +8,9 @@
   	<color name="Color_Gray">#cccccc</color>
   	<color name="Color_Yellow">#cccc00</color>
   	<color name="Color_Link">#5a5dff</color>
- 
-  	<color name="transparent">#00000000</color>
+
+  	<color name="color_light_gray">#dddddd</color>
+  	<color name="color_transparent">#00000000</color>
   	
 	<drawable name="tv_normal">#FFFFFF</drawable>
 	<drawable name="tv_focused">#1F2FAB</drawable>

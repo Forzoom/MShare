@@ -15,35 +15,35 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-public class MShareFileBrowser {
+/**
+ * 入口类
+ * @author HM
+ *
+ */
+public class MShareFileBrowser implements MShareCrumbController.OnItemClickListener {
 
 	private static final String TAG = "MShareFileBrowser";
 	
 	private Context context = null;
 	private ViewGroup container = null;
 	/**
-	 * show current file path
+	 * 面包屑导航的控制器
 	 */
-	private TextView crumbsView = null;
+	private MShareCrumbController mShareCrumbs = null;
 	/**
-	 * crumb controller
-	 */
-	private MShareCrumbs mShareCrumbs = null;
-	/**
-	 * try to use new adapter to refresh the content of gridview
+	 * GridView所对应的适配器
 	 */
 	private FileAdapter adapter = null;
 	/**
-	 * the main view
+	 * 主要显示的GridView
 	 */
 	private GridView gridView = null;
 	/**
-	 * the button show parent directory content
+	 * 后退按钮
 	 */
 	private Button backBtn = null;
 	
@@ -57,20 +57,19 @@ public class MShareFileBrowser {
 		View view = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
 
 		// set back button
-		backBtn = (Button)(view.findViewById(R.id.crumb_last_button));
+		backBtn = (Button)(view.findViewById(R.id.crumb_back_button));
 		backBtn.setOnClickListener(new BackBtnListener(context));
 		
-		// get sd card root path and list files
+		// 根目录路径，即扩展存储路径
 		File root = Environment.getExternalStorageDirectory();
 		
-		// create `MShareCrumbs`
-		mShareCrumbs = new MShareCrumbs(root);
+		LinearLayout crumbContainer = (LinearLayout)(view.findViewById(R.id.crumb_container));
 		
-		// get crumbsView and set the path
-		crumbsView = (TextView)(view.findViewById(R.id.crumb_text));
-		crumbsView.setText(mShareCrumbs.getPath());
+		// 面包屑导航控制器
+		mShareCrumbs = new MShareCrumbController(context, root, crumbContainer);
+		mShareCrumbs.setOnItemClickListener(this);
 		
-		// all files in root directory
+		// 获得根目录下的文件列表
 		MShareFile[] files = mShareCrumbs.getFiles();
 		// create grid view
 		gridView = (GridView)(view.findViewById(R.id.grid_view));
@@ -92,16 +91,17 @@ public class MShareFileBrowser {
 	}
 	
 	/**
-	 * check whether the external storage is useful
-	 * @return
+	 * 检测扩展存储是否有效
+	 * @return 成功时返回true，否则返回false
 	 */
 	public boolean isExternalStorageUseful() {
 		String state = Environment.getExternalStorageState();
+		// 仅仅当扩展存储可读写的时候才算有效
 		return state.equals(Environment.MEDIA_MOUNTED);
 	}
 	
 	/**
-	 * main refresh method
+	 * 刷新用的主要方法
 	 */
 	public void refresh() {
 		if (isExternalStorageUseful()) {
@@ -132,12 +132,10 @@ public class MShareFileBrowser {
 	 * @param files
 	 */
 	public void refreshGridView(MShareFile[] files) {
-		// new Adapter
+		// 新的适配器，用于刷新GridView
 		adapter = new FileAdapter(context, files);
 		gridView.setAdapter(adapter);
-		// set crumb path
-		refreshPath();
-		// set the last button style
+		// 设置导航后退按钮的样式，即是否可以被按下
 		if (!mShareCrumbs.canPop()) {
 			backBtn.setClickable(false);
 		} else {
@@ -146,39 +144,35 @@ public class MShareFileBrowser {
 	}
 	
 	/**
-	 * set the path
-	 * @param text content to be shown in crumb
-	 */
-	private void setPath(String text) {
-		this.crumbsView.setText(text);
-	}
-	/**
-	 * refresh the MainActivity path
-	 */
-	public void refreshPath() {
-		setPath(mShareCrumbs.getPath());
-	}
-	
-	/**
-	 * push a new crumb
-	 * @param file
+	 * 向面包屑导航中添加新的导航内容
+	 * @param file 添加到面包屑导航中的新内容
 	 */
 	public void pushCrumb(MShareFile file) {
 		mShareCrumbs.push(file);
-		refreshPath();
 	}
 	/**
 	 * pop top crumb
 	 * @return
 	 */
-	public MShareFile popCrumb() {
-		MShareFile file = mShareCrumbs.pop();
-		refreshPath();
-		return file;
+	public void popCrumb() {
+		mShareCrumbs.pop();
 	}
 	
 	/**
-	 * GridView item click listener, now just change the crumb content
+	 * 用于响应当面包屑导航中的内容被点击时的事件
+	 * @param selected
+	 * @param name
+	 */
+	@Override
+	public void onClick(int selected, String name) {
+		// TODO Auto-generated method stub
+//		this.selected = selected;
+		refreshGridView();
+	}
+	
+	
+	/**
+	 * 用于相应GridView中的button的响应事件
 	 * @author HM
 	 *
 	 */

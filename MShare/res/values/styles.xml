@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 	<style name="dialog_text_color">
         <item name="android:textColor">#ff33b5e5</item>
     </style>
@@ -211,4 +211,5 @@
 		<item name="android:layout_marginBottom">3dip</item>
 		<item name="android:layout_width">0.5dip</item>
 	</style>
+	
 </resources>

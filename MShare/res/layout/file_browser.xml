@@ -9,17 +9,25 @@
         android:orientation="horizontal"
         >
         <Button
-            android:id="@+id/crumb_last_button"
+            android:id="@+id/crumb_back_button"
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content"
-            android:text="@string/crumb_last"
+            android:background="@drawable/button"
+            android:text="@string/crumb_back"
             />
-        <TextView 
-            android:id="@+id/crumb_text"
+        <HorizontalScrollView
+            android:id="@+id/crumb_scroller"
             android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:singleLine="true"
-            />
+            android:layout_height="wrap_content" 
+            >
+            <LinearLayout
+                android:id="@+id/crumb_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" 
+                >
+            </LinearLayout>
+        </HorizontalScrollView>
     </LinearLayout>
 	<GridView
 	    android:id="@+id/grid_view"
