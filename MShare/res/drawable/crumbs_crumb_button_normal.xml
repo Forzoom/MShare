@@ -10,7 +10,7 @@
 	<!-- 默认 -->
 	<item>
         <shape>
-            <solid android:color="@color/color_crumb_btn_pressed"/>
+            <solid android:color="@color/color_transparent"/>
             <corners android:radius="5px"/>
         </shape>
 	</item>

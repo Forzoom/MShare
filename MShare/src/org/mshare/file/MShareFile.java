@@ -17,6 +17,15 @@ public class MShareFile extends File {
 	 * 上一次通过调用`getSubFiles`得到的文件所有子文件
 	 */
 	private MShareFile[] subFiles = null;
+	/**
+	 * 用于显示在文件浏览器中的名字
+	 * 可能要改名为iconName
+	 */
+	private String mDisplayName;
+	
+	public MShareFile(File file) {
+		super(file.getAbsolutePath());
+	}
 	
 	/**
 	 * 
@@ -32,7 +41,14 @@ public class MShareFile extends File {
 	 * @return 文件所显示的名字
 	 */
 	public String getDisplayName() {
-		return getName();
+		return mDisplayName == null ? getName() : mDisplayName; 
+	}
+	/**
+	 * 设置用于显示在文件浏览器中的名字
+	 * @param displayName
+	 */
+	public void setDisplayName(String displayName) {
+		this.mDisplayName = displayName;
 	}
 	
 	/**

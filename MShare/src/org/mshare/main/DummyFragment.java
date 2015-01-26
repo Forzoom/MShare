@@ -55,8 +55,8 @@ public class DummyFragment extends Fragment
 		int num = args.getInt(ARG_SECTION_NUMBER);
 		
 		mFileBrowser = new MShareFileBrowser(this.getActivity(), container);
-		
 		View fileBrowser = mFileBrowser.getView();
+		
 		View view2 = inflater.inflate(R.layout.ftpservice, container, false);
 		// initial the view
 //		InitView(fileBrowser);

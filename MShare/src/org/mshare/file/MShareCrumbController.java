@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import org.mshare.main.R;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -16,11 +18,11 @@ import android.widget.LinearLayout.LayoutParams;
 /**
  * 面包屑导航
  * @author HM
- *
+ * TODO 可以使用button池来减少性能消耗
  */
 public class MShareCrumbController {
 
-	private static final String TAG = "MShareCrumbController";
+	private static final String TAG = MShareCrumbController.class.getSimpleName();
 	
 	/**
 	 * 上下文对象
@@ -52,7 +54,7 @@ public class MShareCrumbController {
 	/**
 	 * the capacity of stack
 	 */
-	private int maxDepth = COUNT_MAX;
+	private int maxCount = COUNT_MAX;
 	/**
 	 * path the crumbs represent
 	 */
@@ -64,32 +66,36 @@ public class MShareCrumbController {
 
 	private OnItemClickListener listener = null;
 	
-	public MShareCrumbController(Context context, File file, LinearLayout container) {
+	public MShareCrumbController(Context context, MShareFile rootFile, LinearLayout container) {
 		this.context = context;
 		
 		// 生成栈
-		stack = new MShareFile[maxDepth];
+		stack = new MShareFile[maxCount];
 		
 		// 指定container
 		this.container = container;
 		
 		// 将根目录添加到导航中
-		push(new MShareFile(file.getAbsolutePath()));
+		push(rootFile);
 	}
 	
 	/**
-	 * 重置导航中的所有内容
+	 * 重置导航中内容，即只有根路径
 	 */
 	public void clean() {
 		this.top = this.selected = POINTER_INIT;
 		refreshPath();
 	}
 	
+	public int getSelected() {
+		return selected;
+	}
+	
 	/**
 	 * 获得选定的文件内容
 	 * @return
 	 */
-	public MShareFile get() {
+	public MShareFile getSelectedFile() {
 		return stack[selected];
 	}
 	/**
@@ -102,7 +108,8 @@ public class MShareCrumbController {
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		
 		button.setLayoutParams(params);
-		button.setBackgroundResource(R.drawable.crumbs_crumb_button);
+		button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
+		button.setTextColor(context.getResources().getColorStateList(R.color.crumbs_crumb_btn));
 		
 		button.setTag(index);
 		button.setText(name);
@@ -138,46 +145,41 @@ public class MShareCrumbController {
 	 * 将一个新的`MShareFile`入栈
 	 * @param file
 	 */
-	public void push(MShareFile file) {
+	public int push(MShareFile file) {
 		// 部分内容出栈
 		if (selected != top) {
 			popUseless();
 		}
 		
+		int index = selected + 1;
+		
 		// 创建button
-		Button button = getView(selected + 1, file.getName());
-		container.addView(button, selected + 1);
-		
-		stack[selected + 1] = file;
-		
-		unselect();
-		select(selected + 1);
-		
+		Button button = getView(index, file.getName());
+		container.addView(button, index);
+		stack[index] = file;
 		// 设置top
-		this.top = this.selected;	
+		top = index;
+		
+		return index;	
 	}
 	
 	/**
-	 * 弹出栈顶导航内容 
-	 * @return
+	 * 弹出被选择的导航内容
 	 */
-	public void pop() {
-		if (selected > 0) {
-			// 额外内容出栈
-			popUseless();
-			// selected内容出栈
-			stack[selected] = null;
-			
-			// 设置container中的样式
-			container.removeViewAt(selected);
-			
-			// 重新计算top和selected
-			// 设置新的选择对象
-			select(selected - 1);
-			// 重新设置top
-			top = selected;
-		}
+	public int pop() {
+		
+		popUseless();
+
+		int index = getSelected();
+		unselect();
+		stack[index] = null;
+		container.removeViewAt(index);
+		
+		// 重新设置top
+		top = index - 1;
+		return index;
 	}
+	
 	/**
 	 * 弹出多个导航内容，直到将selected的内容作为栈顶内容
 	 * @return
@@ -203,15 +205,14 @@ public class MShareCrumbController {
 	 */
 	public void select(int index) {
 		// 要将没有被选中的内容设置为选中的
-		if (selected != index) {
+//		if (selected != index) {
 			Log.v(TAG, "selected :" + selected);
 			Log.v(TAG, "index :" + index);
 			Button button = (Button)container.getChildAt(index);
-			// 将Button设置为未选中
-			
+			// 将Button设置为选中
 			button.setBackgroundResource(R.drawable.crumbs_crumb_button_pressed);
 			selected = index;
-		}
+//		}
 	}
 	/**
 	 * 将当前被选中的内容设置为不选中
@@ -219,16 +220,19 @@ public class MShareCrumbController {
 	public void unselect() {
 		if (selected >= 0) {
 			Button button = (Button)container.getChildAt(selected);
-			// 如何将button设置成不选中
-			button.setBackgroundResource(R.drawable.crumbs_crumb_button);
+			if (button != null) {
+				// 如何将button设置成不选中
+				button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
+			}
+			selected = POINTER_DEFAULT;
 		}
 	}
 	/**
-	 * get files in current maxDepth level 
+	 * get files in current maxCount level 
 	 * @return selected files or null
 	 */
 	public MShareFile[] getFiles() {
-		if (selected < maxDepth && stack[selected] != null) {
+		if (selected < maxCount && stack[selected] != null) {
 			return stack[selected].getSubFiles();
 		}
 		return null;

@@ -167,7 +167,7 @@
     <string name="video">Video</string>
     <string name="picture">Image</string>
     
-    
+    <!-- 文件浏览器 -->
     <string name="activity_not_found">Application is not installed on your device.</string>
     <string name="action_settings">setting</string>
     <string name="hello_world">Hello world!</string>
@@ -175,4 +175,8 @@
     <string name="crumb_back">&lt;</string>
     <string name="file_image_description">file</string>
     <string name="file_text_place_holder">filename</string>
+    
+    <!-- FTP服务器 -->
+    <string name="storage_warning">扩展存储不可用</string>
+    <string name="nsd_servername_postfix">FTP Server</string>
 </resources>
