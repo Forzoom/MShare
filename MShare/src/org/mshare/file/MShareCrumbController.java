@@ -77,6 +77,7 @@ public class MShareCrumbController {
 		
 		// 将根目录添加到导航中
 		push(rootFile);
+		select(0);
 	}
 	
 	/**

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package org.mshare.ftp.server;
+package org.mshare.main;
 
 import android.app.Application;
 import android.content.Context;
@@ -25,9 +25,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
 
-public class FsApp extends Application {
+public class MShareApp extends Application {
 
-    private static final String TAG = FsApp.class.getSimpleName();
+    private static final String TAG = MShareApp.class.getSimpleName();
 
     private static Context sContext;
 
@@ -35,6 +35,7 @@ public class FsApp extends Application {
     public void onCreate() {
         super.onCreate();
         sContext = getApplicationContext();
+        Log.v(TAG, sContext.toString());
     }
 
     /**
@@ -46,34 +47,4 @@ public class FsApp extends Application {
         }
         return sContext;
     }
-
-    /**
-     * @return true if this is the free version
-     */
-    public static boolean isFreeVersion() {
-        try {
-            Context context = getAppContext();
-            return context.getPackageName().contains("free");
-        } catch (Exception swallow) {
-        }
-        return false;
-    }
-
-    /**
-     * Get the version from the manifest.
-     * 
-     * @return The version as a String.
-     */
-    public static String getVersion() {
-        Context context = getAppContext();
-        String packageName = context.getPackageName();
-        try {
-            PackageManager pm = context.getPackageManager();
-            return pm.getPackageInfo(packageName, 0).versionName;
-        } catch (NameNotFoundException e) {
-            Log.e(TAG, "Unable to find the name " + packageName + " in the package");
-            return null;
-        }
-    }
-
 }

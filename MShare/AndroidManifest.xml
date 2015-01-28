@@ -5,21 +5,26 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="14"
+        android:minSdkVersion="10"
         android:targetSdkVersion="19" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
     
     <supports-screens
         android:anyDensity="true" />
     
     <application
+        android:name="org.mshare.main.MShareApp"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:anyDensity="true"
-         >
+        android:label="@string/app_name" >
         <activity
             android:name="org.mshare.main.JoinConn"
             android:label="@string/app_name" >
@@ -27,22 +32,33 @@
         <activity
             android:name="org.mshare.main.NewConn"
             android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity
             android:name="org.mshare.main.MainActivity"
             android:label="@string/app_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         
-        <receiver android:name="org.mshare.file.ExternalStorageStateReceive">
+        <receiver android:name="org.mshare.file.MShareFileBrowser">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_REMOVED"/>
             </intent-filter>
         </receiver>
+        
+        <receiver 
+            android:name="org.mshare.ftp.server.RequestStartStopReceiver"
+            >
+            <intent-filter>
+                <action android:name="org.mshare.ftp.server.ACTION_START_FTPSERVER"/>
+                <action android:name="org.mshare.ftp.server.ACTION_STOP_FTPSERVER"/>
+            </intent-filter>
+        </receiver>
+        
+        <service android:name="org.mshare.ftp.server.FsService"></service>
+        
     </application>
 
 </manifest>

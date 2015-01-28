@@ -237,7 +237,7 @@ public class SessionThread extends Thread {
         Log.i(TAG, "SessionThread started");
 
         if (sendWelcomeBanner) {
-            writeString("220 SwiFTP " + FsApp.getVersion() + " ready\r\n");
+            writeString("220 SwiFTP ready\r\n");
         }
         // Main loop: read an incoming line and process it
         try {

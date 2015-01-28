@@ -12,9 +12,12 @@
   	<color name="color_light_gray">#eeeeee</color>
   	<color name="color_transparent">#00000000</color>
   	
+  	<!-- 文件浏览器 -->
   	<color name="color_crumb_btn_pressed">#55eeeeee</color>
   	<color name="color_crumb_btn_pressing">#99eeeeee</color>
   	
+  	<!-- 服务器 -->
+  	<color name="color_light_gray_alpha">#55eeeeee</color>
   	
 	<drawable name="tv_normal">#FFFFFF</drawable>
 	<drawable name="tv_focused">#1F2FAB</drawable>

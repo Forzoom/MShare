@@ -27,28 +27,67 @@ import android.content.SharedPreferences;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import org.mshare.main.MShareApp;
 /**
- * 
+ * 目前使用原本的设置方法，即使用SharedPreference
  * @author HM
  *
  */
 public class FsSettings {
 
-    private final static String TAG = FsSettings.class.getSimpleName();
-
-    public static String getUserName() {
+    private static final String TAG = FsSettings.class.getSimpleName();
+    public static final String KEY_USERNAME = "username";
+    public static final String VALUE_USERNAME_DEFAULT = "username";
+    public static final String KEY_PASSWORD = "password";
+    public static final String VALUE_PASSWORD_DEFAULT = "password";
+    
+    // 端口：默认21
+    public static final String KEY_PORT = "port";
+    public static final String VALUE_PORT_DEFAULT = "2121";
+    
+    // 允许匿名
+    public static final String KEY_ALLOW_ANONYMOUS = "allow_anonymous";
+    public static final boolean VALUE_ALLOW_ANONYMOUS_DEFAULT = false;
+    
+    /**
+     * 获得用户名称
+     * @return
+     */
+    public static String getUsername() {
         final SharedPreferences sp = getSharedPreferences();
-        return sp.getString("username", "ftp");
+        return sp.getString(KEY_USERNAME, VALUE_USERNAME_DEFAULT);
     }
 
-    public static String getPassWord() {
+    /**
+     * 获得密码
+     * @return
+     */
+    public static String getPassword() {
         final SharedPreferences sp = getSharedPreferences();
-        return sp.getString("password", "ftp");
+        return sp.getString(KEY_PASSWORD, VALUE_PASSWORD_DEFAULT);
     }
 
+    /**
+     * 默认使用2121作为端口？
+     * @return
+     */
+    public static int getPort() {
+        final SharedPreferences sp = getSharedPreferences();
+        // TODO: port is always an number, so store this accordenly
+        String portString = sp.getString(KEY_PORT, VALUE_PORT_DEFAULT);
+        int port = Integer.valueOf(portString);
+        Log.v(TAG, "Using port: " + port);
+        return port;
+    }
+    
+    /**
+     * 是否允许匿名
+     * @return
+     */
     public static boolean allowAnoymous() {
         final SharedPreferences sp = getSharedPreferences();
-        return sp.getBoolean("allow_anonymous", false);
+        return sp.getBoolean(KEY_ALLOW_ANONYMOUS, VALUE_ALLOW_ANONYMOUS_DEFAULT);
     }
 
     public static File getChrootDir() {
@@ -68,31 +107,56 @@ public class FsSettings {
         }
         return chrootDir;
     }
+
+    /**
+     * 设置用户名
+     * @param username
+     */
+    public static void setUsername(String username) {
+    	final SharedPreferences sp = getSharedPreferences();
+    	SharedPreferences.Editor editor = sp.edit();
+    	editor.putString(KEY_USERNAME, username);
+    	editor.commit();
+    }
     
     /**
-     * 默认使用2121作为端口？
+     * 设置密码
+     * @param password
+     */
+    public static void setPassword(String password) {
+    	final SharedPreferences sp = getSharedPreferences();
+    	SharedPreferences.Editor editor = sp.edit();
+    	editor.putString(KEY_PASSWORD, password);
+    	editor.commit();
+    }
+    
+    /**
+     * 设置端口
+     * @param port
+     */
+    public static void setPort(String port) {
+    	final SharedPreferences sp = getSharedPreferences();
+    	SharedPreferences.Editor editor = sp.edit();
+    	editor.putString(KEY_PORT, port);
+    	editor.commit();
+    }
+    
+    /**
+     * 是否保持唤醒状态
      * @return
      */
-    public static int getPortNumber() {
-        final SharedPreferences sp = getSharedPreferences();
-        // TODO: port is always an number, so store this accordenly
-        String portString = sp.getString("portNum", "2121");
-        int port = Integer.valueOf(portString);
-        Log.v(TAG, "Using port: " + port);
-        return port;
-    }
-
     public static boolean shouldTakeFullWakeLock() {
         final SharedPreferences sp = getSharedPreferences();
         return sp.getBoolean("stayAwake", false);
     }
 
     /**
+     * 获得SharedPreference
      * @return the SharedPreferences for this application
      */
     private static SharedPreferences getSharedPreferences() {
-        final Context context = FsApp.getAppContext();
-        return PreferenceManager.getDefaultSharedPreferences(context);
+        final Context context = MShareApp.getAppContext();
+        return context.getSharedPreferences("server_setting", Context.MODE_PRIVATE);
     }
 
     // cleaning up after his

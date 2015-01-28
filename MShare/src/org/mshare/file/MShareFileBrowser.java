@@ -20,6 +20,8 @@ import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.mshare.main.MShareUtil;
 /**
  * 入口类
  * @author HM
@@ -81,9 +83,11 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		// register context menu
 		((Activity)context).registerForContextMenu(gridView);
 		
-		// check external storage useful
+		// 检测扩展存储是否可用
+		this.enable = MShareUtil.isExternalStorageUsable();
+		
 		if (!isEnabled()) {
-			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
+			Toast.makeText(context, R.string.external_storage_removed, Toast.LENGTH_SHORT).show();
 			return null;
 		} else {
 			// set adapter
@@ -91,16 +95,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			gridView.setAdapter(adapter);
 			return view;
 		}
-	}
-	/**
-	 * 检查是否可用
-	 * @return
-	 */
-	public boolean checkEnable() {
-		String state = Environment.getExternalStorageState();
-		this.enable = state.equals(Environment.MEDIA_MOUNTED);
-		// 仅仅当扩展存储可读写的时候才算有效
-		return isEnabled();
 	}
 	
 	/**
@@ -129,7 +123,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			crumbController.clean();
 			// 将GridView中的内容设置为空
 			refreshGridView(new MShareFile[0]);
-			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_LONG).show();
+			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
 		}
 	}
 	

@@ -45,6 +45,9 @@ import android.os.PowerManager.WakeLock;
 import android.os.SystemClock;
 import android.util.Log;
 
+import org.mshare.main.MShareApp;
+import org.mshare.main.MShareUtil;
+
 public class FsService extends Service implements Runnable {
     private static final String TAG = FsService.class.getSimpleName();
 
@@ -78,11 +81,16 @@ public class FsService extends Service implements Runnable {
     private WakeLock wakeLock;
     private WifiLock wifiLock = null;
     
+    
+    /**
+     * 当start被调用的时候，即尝试启动一个新的服务器线程
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         shouldExit = false;
         int attempts = 10;
         // The previous server thread may still be cleaning up, wait for it to finish.
+        // 用于等待上一个服务器关闭
         while (serverThread != null) {
             Log.w(TAG, "Won't start, server thread exists");
             if (attempts > 0) {
@@ -159,13 +167,13 @@ public class FsService extends Service implements Runnable {
     }
 
     // This opens a listening socket on all interfaces.
-    // 创建一个套接字
+    // 创建一个套接字，即创建服务器进程
     void setupListener() throws IOException {
         listenSocket = new ServerSocket();
         // 允许出于TIME_WAIT状态的Socket连接下一个内容
         listenSocket.setReuseAddress(true);
-        // 
-        listenSocket.bind(new InetSocketAddress(FsSettings.getPortNumber()));
+        // 将其绑定到特定的端口号上
+        listenSocket.bind(new InetSocketAddress(FsSettings.getPort()));
     }
 
     /**
@@ -194,11 +202,13 @@ public class FsService extends Service implements Runnable {
         }
 
         // @TODO: when using ethernet, is it needed to take wifi lock?
+        // 获得Wifi和Wake锁
         takeWifiLock();
         takeWakeLock();
 
         // A socket is open now, so the FTP server is started, notify rest of world
         Log.i(TAG, "Ftp Server up and running, broadcasting ACTION_STARTED");
+        // 告知服务启动
         sendBroadcast(new Intent(ACTION_STARTED));
 
         // shouldExit是退出标志
@@ -243,7 +253,9 @@ public class FsService extends Service implements Runnable {
         stopSelf();
         sendBroadcast(new Intent(ACTION_STOPPED));
     }
-
+    /**
+     * 停止所有会话
+     */
     private void terminateAllSessions() {
         Log.i(TAG, "Terminating " + sessionThreads.size() + " session thread(s)");
         synchronized (this) {
@@ -297,13 +309,14 @@ public class FsService extends Service implements Runnable {
      * @return local ip adress or null if not found
      */
     public static InetAddress getLocalInetAddress() {
+    	// 需要检测是否当前连接的是WIFI网络，需要保证接入的内容是在同一个网络中
         if (isConnectedToLocalNetwork() == false) {
             Log.e(TAG, "getLocalInetAddress called and no connection");
             return null;
         }
         // TODO: next if block could probably be removed
-        if (isConnectedUsingWifi() == true) {
-            Context context = FsApp.getAppContext();
+        if (MShareUtil.isConnectedUsingWifi() == true) {
+            Context context = MShareApp.getAppContext();
             WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             // 获得WIFI环境下的IP地址
             int ipAddress = wm.getConnectionInfo().getIpAddress();
@@ -340,8 +353,9 @@ public class FsService extends Service implements Runnable {
      */
     public static boolean isConnectedToLocalNetwork() {
         boolean connected = false;
-        // 上下文对象
-        Context context = FsApp.getAppContext();
+
+        Context context = MShareApp.getAppContext();
+        
         // 操作网络连接的管理器
         ConnectivityManager cm = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -349,6 +363,7 @@ public class FsService extends Service implements Runnable {
         // 检测 连接存在 && 连接上 && 类型是WIFI或者以太网
         connected = ni != null && ni.isConnected() == true
                 && (ni.getType() & (ConnectivityManager.TYPE_WIFI | ConnectivityManager.TYPE_ETHERNET)) != 0;
+        
         if (connected == false) {
             Log.d(TAG, "Device not connected to a network, see if it is an AP");
             // wifi管理器
@@ -362,20 +377,6 @@ public class FsService extends Service implements Runnable {
             }
         }
         return connected;
-    }
-
-    /**
-     * Checks to see if we are connected using wifi
-     * 检测是否是WIFI环境
-     * @return true if connected using wifi
-     */
-    public static boolean isConnectedUsingWifi() {
-        Context context = FsApp.getAppContext();
-        ConnectivityManager cm = (ConnectivityManager) context
-                .getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo ni = cm.getActiveNetworkInfo();
-        return ni != null && ni.isConnected() == true
-                && ni.getType() == ConnectivityManager.TYPE_WIFI;
     }
 
     /**
