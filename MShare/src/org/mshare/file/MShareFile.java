@@ -5,21 +5,19 @@ import java.io.File;
 import android.util.Log;
 // TODO 如何在刷新文件子内容和减少IO读取之间进行平衡
 /**
- * 
+ * TODO 添加对于分享的判定
  * @author HM
  * 
  */
 public class MShareFile extends File {
 
-	private static final String TAG = "MShareFile";
+	private static final String TAG = MShareFile.class.getSimpleName();
+	// 默认不分享
+	private boolean shared = false;
 	
 	/**
-	 * 上一次通过调用`getSubFiles`得到的文件所有子文件
-	 */
-	private MShareFile[] subFiles = null;
-	/**
 	 * 用于显示在文件浏览器中的名字
-	 * 可能要改名为iconName
+	 * TODO 可能要改名为iconName
 	 */
 	private String mDisplayName;
 	
@@ -66,11 +64,15 @@ public class MShareFile extends File {
 		}
 	}
 	
+	public boolean isShared() {
+		return this.shared;
+	}
+	
 	/**
 	 * 获得所有子文件
 	 * @return 一个`MShareFile`的数组, or null if the `list()` == null
 	 */
-	public MShareFile[] getSubFiles() {
+	public MShareFile[] getFiles() {
 		// default ret
 		MShareFile[] ret = null;
 		
@@ -93,5 +95,9 @@ public class MShareFile extends File {
 		}
 		
 		return ret;
+	}
+	
+	public void setShared(boolean shared) {
+		this.shared = shared;
 	}
 }

@@ -113,6 +113,9 @@ public class MainActivity extends FragmentActivity
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
+		
+		// TODO 需要判断长按的是否是gridView中的内容，使用instance判断v是否是ItemContainer的实例
+
 		Object tag = v.getTag();
 		if (tag != null) {
 			ItemContainer item = (ItemContainer)tag;

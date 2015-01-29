@@ -27,7 +27,7 @@ import org.mshare.main.MShareUtil;
  * @author HM
  *
  */
-public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnItemClickListener {
+public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
 
 	private static final String TAG = "MShareFileBrowser";
 	
@@ -59,16 +59,15 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	
 	public View getView() {
 		// 文件浏览器布局
-		View view = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
+		View fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
 
 		// 设置后退按钮
-		backBtn = (Button)(view.findViewById(R.id.crumb_back_button));
+		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backBtn.setOnClickListener(new BackBtnListener(context));
 		
 		// 根目录路径，即扩展存储路径
 		rootFile = new MShareFile(Environment.getExternalStorageDirectory());
-		
-		LinearLayout crumbContainer = (LinearLayout)(view.findViewById(R.id.crumb_container));
+		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
 		
 		// 面包屑导航控制器
 		crumbController = new MShareCrumbController(context, rootFile, crumbContainer);
@@ -77,15 +76,15 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		// 获得根目录下的文件列表
 		MShareFile[] files = crumbController.getFiles();
 		// create grid view
-		gridView = (GridView)(view.findViewById(R.id.grid_view));
+		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
+//		gridView.setOnL
 		
-		// register context menu
+		// 注册长按监听
 		((Activity)context).registerForContextMenu(gridView);
 		
 		// 检测扩展存储是否可用
-		this.enable = MShareUtil.isExternalStorageUsable();
-		
+		setEnabled(MShareUtil.isExternalStorageUsable());
 		if (!isEnabled()) {
 			Toast.makeText(context, R.string.external_storage_removed, Toast.LENGTH_SHORT).show();
 			return null;
@@ -93,7 +92,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			// set adapter
 			adapter = new FileAdapter(context, files); 
 			gridView.setAdapter(adapter);
-			return view;
+			return fileBrowserLayout;
 		}
 	}
 	
@@ -105,7 +104,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		return this.enable;
 	}
 	/**
-	 * 手动设置是否可用
+	 * 设置扩展存储是否可用
 	 * @param enable
 	 */
 	public void setEnabled(boolean enable) {
@@ -138,7 +137,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * @param file
 	 */
 	public void refreshGridView(MShareFile file) {
-		refreshGridView(file.getSubFiles());
+		refreshGridView(file.getFiles());
 	}
 	
 	/**
@@ -181,12 +180,11 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * @param name
 	 */
 	@Override
-	public void onClick(int selected, String name) {
+	public void onCrumbClick(int selected, String name) {
 		// TODO Auto-generated method stub
 //		this.selected = selected;
 		refreshGridView();
 	}
-	
 	
 	/**
 	 * 用于相应GridView中的button的响应事件
@@ -210,15 +208,15 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 				ItemContainer item = (ItemContainer)tag; 
 				MShareFile file = item.file;
 				if (file.isDirectory()) { // whether is a directory
-					if (file.getSubFiles() != null) {
+					
+					if (file != null && file.canRead()) { // 文件夹可以打开 
 						pushCrumb(file);
-						refreshGridView(file.getSubFiles());
-					} else {
-						// cannot open the directory
+						refreshGridView(file.getFiles());
+					} else { // 文件夹无法打开
 						Toast.makeText(context, "文件夹无法访问", Toast.LENGTH_LONG).show();
 					}
 				} else {
-					// is file, do nothing
+					// 是文件
 				}
 			} else {
 				// error
@@ -227,7 +225,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	}
 	
 	/**
-	 * temp listener for crumb last button
+	 * 后退按钮的监听器
 	 * @author HM
 	 *
 	 */
@@ -248,6 +246,9 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		
 	}
 
+	/**
+	 * 监听扩展存储的状态
+	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();

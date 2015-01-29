@@ -64,7 +64,7 @@ public class MShareCrumbController {
 	 */
 	private LinearLayout container = null;
 
-	private OnItemClickListener listener = null;
+	private OnCrumbClickListener listener = null;
 	
 	public MShareCrumbController(Context context, MShareFile rootFile, LinearLayout container) {
 		this.context = context;
@@ -234,7 +234,7 @@ public class MShareCrumbController {
 	 */
 	public MShareFile[] getFiles() {
 		if (selected < maxCount && stack[selected] != null) {
-			return stack[selected].getSubFiles();
+			return stack[selected].getFiles();
 		}
 		return null;
 	}
@@ -258,7 +258,7 @@ public class MShareCrumbController {
 		this.path = TextUtils.join(File.separator, list);
 	}
 	
-	public void setOnItemClickListener(OnItemClickListener listener) {
+	public void setOnItemClickListener(OnCrumbClickListener listener) {
 		this.listener = listener;
 	}
 	/**
@@ -266,13 +266,13 @@ public class MShareCrumbController {
 	 * @author HM
 	 *
 	 */
-	public interface OnItemClickListener {
+	public interface OnCrumbClickListener {
 		/**
 		 * 当有button被点击的时候，将调用该回调函数
 		 * @param index
 		 * @param name
 		 */
-		public void onClick(int selected, String name);
+		public void onCrumbClick(int selected, String name);
 	}
 	
 	/**
@@ -290,7 +290,7 @@ public class MShareCrumbController {
 			unselect();
 			select(selected);
 			if (listener != null) {
-				listener.onClick(selected, name);
+				listener.onCrumbClick(selected, name);
 			}
 		}
 	}

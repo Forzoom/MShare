@@ -97,7 +97,15 @@ public class NewConn extends Activity {
 		Log.v(TAG, ((Context)this).toString());
 		
 		ftpSwitch.setOnClickListener(new OnStartStopServerListener());
+	}
+	
+	@Override
+	protected void onStart() {
+		// TODO 可能需要使用更加安全的BroadcastReceiver注册方式
+		super.onStart();
 		
+		// 先设置当前的状态
+		// TODO 先设置监听器
 		changeState(SERVER_STATE_STOPPED);
 		if (MShareUtil.isConnectedUsingWifi()) {
 			changeState(WIFI_STATE_CONNECTED);
@@ -108,12 +116,6 @@ public class NewConn extends Activity {
 				stopServer();
 			}
 		}
-	}
-	
-	@Override
-	protected void onStart() {
-		// TODO 可能需要使用更加安全的BroadcastReceiver注册方式
-		super.onStart();
 		
 		// 简单的BroadcastReceiver，可能存在安全风险
 		wifiConnectReceiver = new WifiConnectRecevier();

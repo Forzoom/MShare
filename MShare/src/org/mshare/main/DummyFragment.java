@@ -35,7 +35,7 @@ import android.view.View.OnClickListener;
 public class DummyFragment extends Fragment 
 {
 	public static final String ARG_SECTION_NUMBER = "section_number";
-	final String TAG = "--MShare--";
+	private static final String TAG = DummyFragment.class.getSimpleName();
 //	private Button btftp;
 	private RelativeLayout relative;
 	private ArrayList<HashMap<String, Object>> listImageItem;  
