@@ -40,6 +40,7 @@ public class CmdPORT extends FtpCmd implements Runnable {
         String errString = null;
         mainBlock: {
             String param = getParameter(input);
+            // ²»Ö§³ÖIPv6
             if (param.contains("|") && param.contains("::")) {
                 errString = "550 No IPv6 support, reconfigure your client\r\n";
                 break mainBlock;
