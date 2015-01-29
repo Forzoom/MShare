@@ -8,8 +8,16 @@
   	<color name="Color_Gray">#cccccc</color>
   	<color name="Color_Yellow">#cccc00</color>
   	<color name="Color_Link">#5a5dff</color>
- 
-  	<color name="transparent">#00000000</color>
+
+  	<color name="color_light_gray">#eeeeee</color>
+  	<color name="color_transparent">#00000000</color>
+  	
+  	<!-- 文件浏览器 -->
+  	<color name="color_crumb_btn_pressed">#55eeeeee</color>
+  	<color name="color_crumb_btn_pressing">#99eeeeee</color>
+  	
+  	<!-- 服务器 -->
+  	<color name="color_light_gray_alpha">#55eeeeee</color>
   	
 	<drawable name="tv_normal">#FFFFFF</drawable>
 	<drawable name="tv_focused">#1F2FAB</drawable>

@@ -1,51 +1,56 @@
 package org.mshare.file;
 
 import java.io.File;
-
 import org.mshare.main.*;
 import org.mshare.file.FileAdapter.ItemContainer;
 import org.mshare.main.R;
 
 import android.widget.AdapterView;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MShareFileBrowser {
+import org.mshare.main.MShareUtil;
+/**
+ * 入口类
+ * @author HM
+ *
+ */
+public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
 
 	private static final String TAG = "MShareFileBrowser";
 	
 	private Context context = null;
 	private ViewGroup container = null;
 	/**
-	 * show current file path
+	 * 面包屑导航的控制器
 	 */
-	private TextView crumbsView = null;
+	private MShareCrumbController crumbController = null;
 	/**
-	 * crumb controller
-	 */
-	private MShareCrumbs mShareCrumbs = null;
-	/**
-	 * try to use new adapter to refresh the content of gridview
+	 * GridView所对应的适配器
 	 */
 	private FileAdapter adapter = null;
 	/**
-	 * the main view
+	 * 主要显示的GridView
 	 */
 	private GridView gridView = null;
 	/**
-	 * the button show parent directory content
+	 * 后退按钮
 	 */
 	private Button backBtn = null;
+	private MShareFile rootFile;
+	private boolean enable = false;
 	
 	public MShareFileBrowser(Context context, ViewGroup container) {
 		this.context = context;
@@ -53,92 +58,99 @@ public class MShareFileBrowser {
 	}
 	
 	public View getView() {
-		// file browser view
-		View view = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
+		// 文件浏览器布局
+		View fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
 
-		// set back button
-		backBtn = (Button)(view.findViewById(R.id.crumb_last_button));
+		// 设置后退按钮
+		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backBtn.setOnClickListener(new BackBtnListener(context));
 		
-		// get sd card root path and list files
-		File root = Environment.getExternalStorageDirectory();
+		// 根目录路径，即扩展存储路径
+		rootFile = new MShareFile(Environment.getExternalStorageDirectory());
+		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
 		
-		// create `MShareCrumbs`
-		mShareCrumbs = new MShareCrumbs(root);
+		// 面包屑导航控制器
+		crumbController = new MShareCrumbController(context, rootFile, crumbContainer);
+		crumbController.setOnItemClickListener(this);
 		
-		// get crumbsView and set the path
-		crumbsView = (TextView)(view.findViewById(R.id.crumb_text));
-		crumbsView.setText(mShareCrumbs.getPath());
-		
-		// all files in root directory
-		MShareFile[] files = mShareCrumbs.getFiles();
+		// 获得根目录下的文件列表
+		MShareFile[] files = crumbController.getFiles();
 		// create grid view
-		gridView = (GridView)(view.findViewById(R.id.grid_view));
+		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
+//		gridView.setOnL
 		
-		// register context menu
+		// 注册长按监听
 		((Activity)context).registerForContextMenu(gridView);
 		
-		// check external storage useful
-		if (!isExternalStorageUseful()) {
-			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
+		// 检测扩展存储是否可用
+		setEnabled(MShareUtil.isExternalStorageUsable());
+		if (!isEnabled()) {
+			Toast.makeText(context, R.string.external_storage_removed, Toast.LENGTH_SHORT).show();
 			return null;
 		} else {
 			// set adapter
 			adapter = new FileAdapter(context, files); 
 			gridView.setAdapter(adapter);
-			return view;
+			return fileBrowserLayout;
 		}
 	}
 	
 	/**
-	 * check whether the external storage is useful
+	 * 检测扩展存储是否可用
 	 * @return
 	 */
-	public boolean isExternalStorageUseful() {
-		String state = Environment.getExternalStorageState();
-		return state.equals(Environment.MEDIA_MOUNTED);
+	public boolean isEnabled() {
+		return this.enable;
+	}
+	/**
+	 * 设置扩展存储是否可用
+	 * @param enable
+	 */
+	public void setEnabled(boolean enable) {
+		this.enable = enable;
 	}
 	
 	/**
-	 * main refresh method
+	 * 刷新用的主要方法
 	 */
 	public void refresh() {
-		if (isExternalStorageUseful()) {
+		if (isEnabled()) {
 			refreshGridView();
 		} else {
-			mShareCrumbs.clean();
+			
+			crumbController.clean();
+			// 将GridView中的内容设置为空
 			refreshGridView(new MShareFile[0]);
-			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_LONG).show();
+			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
 		}
 	}
 	
 	/**
-	 * refresh gridview
+	 * 刷新GridView，默认使用面包屑导航中的内容
 	 */
 	public void refreshGridView() {
-		refreshGridView(mShareCrumbs.get());
+		refreshGridView(crumbController.getSelectedFile());
 	}
 	/**
-	 * refresh gridview
+	 * 刷新GridView
 	 * @param file
 	 */
 	public void refreshGridView(MShareFile file) {
-		refreshGridView(file.getSubFiles());
+		refreshGridView(file.getFiles());
 	}
 	
 	/**
-	 * reset the adapter of grid view 
+	 * 刷新GridView，重置适配器 
 	 * @param files
 	 */
 	public void refreshGridView(MShareFile[] files) {
-		// new Adapter
+		// 新的适配器，用于刷新GridView
 		adapter = new FileAdapter(context, files);
 		gridView.setAdapter(adapter);
-		// set crumb path
-		refreshPath();
-		// set the last button style
-		if (!mShareCrumbs.canPop()) {
+		
+		// 设置导航后退按钮的样式，即是否可以被按下
+		if (!crumbController.canPop()) {
 			backBtn.setClickable(false);
 		} else {
 			backBtn.setClickable(true);
@@ -146,39 +158,36 @@ public class MShareFileBrowser {
 	}
 	
 	/**
-	 * set the path
-	 * @param text content to be shown in crumb
-	 */
-	private void setPath(String text) {
-		this.crumbsView.setText(text);
-	}
-	/**
-	 * refresh the MainActivity path
-	 */
-	public void refreshPath() {
-		setPath(mShareCrumbs.getPath());
-	}
-	
-	/**
-	 * push a new crumb
-	 * @param file
+	 * 向面包屑导航中添加新的导航内容
+	 * @param file 添加到面包屑导航中的新内容
 	 */
 	public void pushCrumb(MShareFile file) {
-		mShareCrumbs.push(file);
-		refreshPath();
+		int index = crumbController.push(file);
+		crumbController.select(index);
 	}
 	/**
-	 * pop top crumb
+	 * 弹出当前选择的面包屑导航
 	 * @return
 	 */
-	public MShareFile popCrumb() {
-		MShareFile file = mShareCrumbs.pop();
-		refreshPath();
-		return file;
+	public void popCrumb() {
+		int index = crumbController.pop();
+		crumbController.select(index - 1);
 	}
 	
 	/**
-	 * GridView item click listener, now just change the crumb content
+	 * 用于响应当面包屑导航中的内容被点击时的事件
+	 * @param selected
+	 * @param name
+	 */
+	@Override
+	public void onCrumbClick(int selected, String name) {
+		// TODO Auto-generated method stub
+//		this.selected = selected;
+		refreshGridView();
+	}
+	
+	/**
+	 * 用于相应GridView中的button的响应事件
 	 * @author HM
 	 *
 	 */
@@ -199,15 +208,15 @@ public class MShareFileBrowser {
 				ItemContainer item = (ItemContainer)tag; 
 				MShareFile file = item.file;
 				if (file.isDirectory()) { // whether is a directory
-					if (file.getSubFiles() != null) {
+					
+					if (file != null && file.canRead()) { // 文件夹可以打开 
 						pushCrumb(file);
-						refreshGridView(file.getSubFiles());
-					} else {
-						// cannot open the directory
+						refreshGridView(file.getFiles());
+					} else { // 文件夹无法打开
 						Toast.makeText(context, "文件夹无法访问", Toast.LENGTH_LONG).show();
 					}
 				} else {
-					// is file, do nothing
+					// 是文件
 				}
 			} else {
 				// error
@@ -216,7 +225,7 @@ public class MShareFileBrowser {
 	}
 	
 	/**
-	 * temp listener for crumb last button
+	 * 后退按钮的监听器
 	 * @author HM
 	 *
 	 */
@@ -235,5 +244,20 @@ public class MShareFileBrowser {
 			refreshGridView();
 		}
 		
+	}
+
+	/**
+	 * 监听扩展存储的状态
+	 */
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		String action = intent.getAction();
+		if (action.equals(Intent.ACTION_MEDIA_REMOVED)) { // 扩展卡被拔出
+			setEnabled(false);
+			refresh();
+		} else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) { // 扩展卡可以使用
+			setEnabled(true);
+			refresh();
+		}
 	}	
 }

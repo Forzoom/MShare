@@ -1,35 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
-
-    <Button
-        android:id="@+id/ftpswitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="28dp"
-        android:text="打开" />
-
-    <TextView
-        android:id="@+id/connhint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="164dp"
-        android:text="打开后可以在其他设备上管理本设备的文件" />
-
-    <TextView
-        android:id="@+id/ftpaddr"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/connhint"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="25dp"
-        android:background="@drawable/button"
-        android:text="ftp://192.168.1.108:3721"
-        android:textColor="@color/Color_White" />
-
+    android:layout_height="match_parent"
+    >
+    
+    <LinearLayout
+	    android:orientation="vertical"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:padding="20dp">
+		
+	    <ToggleButton
+	        android:id="@+id/ftpswitch"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="文件共享" />
+	
+	    <EditText 
+	        android:id="@+id/ftp_username"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:hint="@string/ftp_username" />
+	    
+	    <EditText 
+	        android:id="@+id/ftp_password"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:hint="@string/ftp_password" />
+	    
+	    <EditText 
+	        android:id="@+id/ftp_port"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:hint="@string/ftp_port" />
+	    
+		<TextView
+	        android:id="@+id/connhint"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="打开后可以在其他设备上管理本设备的文件" />
+	
+	    <TextView
+	        android:id="@+id/ftpaddr"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:background="@drawable/button"
+	        android:textColor="@color/Color_White" />
+	</LinearLayout>
+	<LinearLayout
+	    android:id="@+id/progress_wait"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:gravity="center"
+	    android:orientation="vertical"
+	    android:clickable="true"
+	    android:longClickable="true"
+	    android:background="@color/color_transparent">
+	    
+	    <LinearLayout 
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical"
+	        android:background="@color/color_light_gray_alpha">
+	        <ProgressBar 
+			    android:id="@+id/progress_bar"
+			    android:layout_width="144dp"
+			    android:layout_height="144dp"
+			    android:indeterminateDrawable="@drawable/progress_bar_drawable"
+			     />
+			<TextView 
+			    android:id="@+id/progress_description"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:layout_gravity="center" />
+	    </LinearLayout>
+		
+	</LinearLayout>
 </RelativeLayout>
