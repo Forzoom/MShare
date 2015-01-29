@@ -14,6 +14,7 @@
 	/>
 <!-- 输入电话号码的文本框 -->		
 <EditText
+    android:id="@+id/editFTPHost"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:hint="请填写新的FTP服务器地址"
@@ -30,6 +31,7 @@
 	/>
 <!-- 输入电话号码的文本框 -->		
 <EditText
+    android:id="@+id/editFTPPort"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:hint="请填写服务器端口"
@@ -46,6 +48,7 @@
 	/>
 <!-- 输入用户名的文本框 -->
 <EditText
+    android:id="@+id/editFTPUser"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:hint="请填写登录帐号"
@@ -61,6 +64,7 @@
 	/>
 <!-- 输入密码的文本框 -->	
 <EditText
+    android:id="@+id/editPassword"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:hint="请填写密码"	
