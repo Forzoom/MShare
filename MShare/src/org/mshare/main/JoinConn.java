@@ -13,16 +13,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import org.mshare.main.R;
-import org.mshare.main.FtpMainActivity.CmdCWD;
-import org.mshare.main.FtpMainActivity.CmdConnect;
-import org.mshare.main.FtpMainActivity.CmdDELE;
-import org.mshare.main.FtpMainActivity.CmdDisConnect;
-import org.mshare.main.FtpMainActivity.CmdFactory;
-import org.mshare.main.FtpMainActivity.CmdLIST;
-import org.mshare.main.FtpMainActivity.CmdPWD;
-import org.mshare.main.FtpMainActivity.CmdRENAME;
-import org.mshare.main.FtpMainActivity.DameonFtpConnector;
-import org.mshare.main.FtpMainActivity.FtpCmd;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -32,9 +22,11 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -135,7 +127,12 @@ public class JoinConn extends Activity {
 	{
 		//装载/res/layout/login.xml界面布局
 		TableLayout loginForm = (TableLayout)getLayoutInflater()
-			.inflate( R.layout.login, null);		
+			.inflate( R.layout.login, null);	
+		final EditText editHost = (EditText) findViewById(R.id.editFTPHost);
+		final EditText editPort= (EditText) findViewById(R.id.editFTPPort);
+		editPort.setText("2121");
+		final EditText editUser = (EditText) findViewById(R.id.editFTPUser);
+		final EditText editPasword= (EditText) findViewById(R.id.editPassword);
 		new AlertDialog.Builder(this)
 			// 设置对话框的图标
 			.setIcon(R.drawable.app_default_icon)
@@ -150,6 +147,27 @@ public class JoinConn extends Activity {
 				public void onClick(DialogInterface dialog,
 						int which)
 				{
+					if (TextUtils.isEmpty(editHost.getText()) || 
+							TextUtils.isEmpty(editPort.getText()) || 
+							TextUtils.isEmpty(editUser.getText()) ||
+							TextUtils.isEmpty(editUser.getText())) {
+						  toast("请将资料填写完整");
+						  JoinConn.this.finish();
+						  return ;
+					}
+					try{
+					    mFTPPort = Integer.parseInt(editPort.getText().toString().trim());
+					}
+					catch(NumberFormatException nfEx){
+						nfEx.printStackTrace();
+						toast("端口输入有误，请重试");
+						return ;
+					}
+					mFTPHost = editHost.getText().toString().trim();
+					mFTPUser = editUser.getText().toString().trim();
+					mFTPPassword = editPasword.getText().toString().trim();
+					Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
+							+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
 					// 此处可执行登录处理
 					mThreadPool.execute(mCmdFactory.createCmdConnect());
 				}
