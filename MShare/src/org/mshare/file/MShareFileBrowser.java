@@ -29,6 +29,9 @@ import org.mshare.main.MShareUtil;
  */
 public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
 
+	public static final int ITEM_ID_SHARE = 4;
+	public static final int ITEM_ID_UNSHARE = 5;
+	
 	private static final String TAG = "MShareFileBrowser";
 	
 	private Context context = null;
@@ -78,10 +81,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		// create grid view
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
-//		gridView.setOnL
 		
-		// 注册长按监听
-		((Activity)context).registerForContextMenu(gridView);
 		
 		// 检测扩展存储是否可用
 		setEnabled(MShareUtil.isExternalStorageUsable());
@@ -90,6 +90,9 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			return null;
 		} else {
 			// set adapter
+			if (adapter != null) {
+				adapter.release();
+			}
 			adapter = new FileAdapter(context, files); 
 			gridView.setAdapter(adapter);
 			return fileBrowserLayout;
@@ -146,6 +149,10 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 */
 	public void refreshGridView(MShareFile[] files) {
 		// 新的适配器，用于刷新GridView
+		// TODO 在adapter中注册长按监听器
+		if (adapter != null) {
+			adapter.release();
+		}
 		adapter = new FileAdapter(context, files);
 		gridView.setAdapter(adapter);
 		
@@ -211,9 +218,9 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 					
 					if (file != null && file.canRead()) { // 文件夹可以打开 
 						pushCrumb(file);
-						refreshGridView(file.getFiles());
+						refreshGridView(file);
 					} else { // 文件夹无法打开
-						Toast.makeText(context, "文件夹无法访问", Toast.LENGTH_LONG).show();
+						Toast.makeText(context, "文件夹无法访问", Toast.LENGTH_SHORT).show();
 					}
 				} else {
 					// 是文件
