@@ -17,19 +17,19 @@
 	        android:layout_height="wrap_content"
 	        android:text="文件共享" />
 	
-	    <EditText 
+	    <TextView 
 	        android:id="@+id/ftp_username"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:hint="@string/ftp_username" />
 	    
-	    <EditText 
+	    <TextView 
 	        android:id="@+id/ftp_password"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:hint="@string/ftp_password" />
 	    
-	    <EditText 
+	    <TextView 
 	        android:id="@+id/ftp_port"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"

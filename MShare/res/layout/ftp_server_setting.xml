@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="5dp" >
+    
+    <LinearLayout 
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+	    android:layout_height="wrap_content" >
+	    
+        <TextView 
+            android:id="@+id/ftp_username_label"
+            android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="用户名" />
+        <TextView
+            android:id="@+id/ftp_password_label" 
+            android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="密码" />
+        <TextView 
+            android:id="@+id/ftp_port_label"
+            android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="端口" />
+        
+    </LinearLayout>
+	
+    <LinearLayout 
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+	    android:layout_height="wrap_content" >
+        <EditText 
+	        android:id="@+id/ftp_username"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:hint="@string/ftp_username" />
+	    <EditText 
+	        android:id="@+id/ftp_password"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:hint="@string/ftp_password" />
+	    
+	    <EditText 
+	        android:id="@+id/ftp_port"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:hint="@string/ftp_port" />
+    </LinearLayout>
+</LinearLayout>

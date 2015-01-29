@@ -37,8 +37,7 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     
-    <string name="confirm">Confirm</string>
-    <string name="cancel">Cancel</string>
+    <string name="cancel">取消</string>
     
     <string name="scanning">scanning...</string>
     
@@ -185,4 +184,9 @@
     
     <!-- 扩展存储 -->
     <string name="external_storage_removed">扩展存储不可用</string>
+    
+    <!-- ActionBar -->
+    <string name="two_dimensions_bar">二维码</string>
+    <string name="setting">配置</string>
+    <string name="confirm">确定</string>
 </resources>

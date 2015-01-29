@@ -2,11 +2,13 @@ package org.mshare.main;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.zip.Inflater;
 
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -20,6 +22,9 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -38,9 +43,9 @@ public class NewConn extends Activity {
 	
 	// 所有和配置有关的空间
 	private ToggleButton ftpSwitch;
-	private EditText ftpUsername;
-	private EditText ftpPassword;
-	private EditText ftpPort;
+	private TextView ftpUsername;
+	private TextView ftpPassword;
+	private TextView ftpPort;
 	
 	private TextView ftpaddr;
 	private TextView connhint;
@@ -84,10 +89,10 @@ public class NewConn extends Activity {
 		ftpaddr = (TextView) findViewById(R.id.ftpaddr);
 		connhint = (TextView) findViewById(R.id.connhint);
 		
-		// 服务器设置
-		ftpUsername = (EditText)findViewById(R.id.ftp_username);
-		ftpPassword = (EditText)findViewById(R.id.ftp_password);
-		ftpPort = (EditText)findViewById(R.id.ftp_port);
+		// 服务器设置显示
+		ftpUsername = (TextView)findViewById(R.id.ftp_username);
+		ftpPassword = (TextView)findViewById(R.id.ftp_password);
+		ftpPort = (TextView)findViewById(R.id.ftp_port);
 		
 		// 设置默认的参数
 		ftpUsername.setText(FsSettings.getUsername());
@@ -155,6 +160,38 @@ public class NewConn extends Activity {
 		}
 	}
 	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// TODO 添加二维码启动
+		
+		MenuInflater infalter = getMenuInflater();
+		infalter.inflate(R.menu.ftp_new_conn, menu);
+		
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// TODO 启动一个新的Activity ServerSettingActivity
+		
+		switch (item.getItemId()) {
+			case R.id.menu_set_ftp_server_qrcode:
+				Log.v(TAG, "qrcode");
+				Intent startQRCode = new Intent();
+				startQRCode.setClass(this, QRCodeLogin.class);
+				startActivity(startQRCode);
+				break;
+			case R.id.menu_set_ftp_server_setting:
+				Log.v(TAG, "setting");
+				Intent startSetting = new Intent();
+				startSetting.setClass(this, ServerSettingActivity.class);
+				startActivity(startSetting);
+				break;
+		}
+		
+		return super.onOptionsItemSelected(item);
+	}
+	
 	/**
 	 * 当其中的状态发生改变
 	 * 服务器状态:1.启动2.启动中3.停止4.停止中
@@ -208,26 +245,10 @@ public class NewConn extends Activity {
 	}
 	
 	/**
-	 * 检测Setting，并修改
-	 */
-	private void checkSetting() {
-		String username = ftpUsername.getText().toString();
-		String password = ftpPassword.getText().toString();
-		String port = ftpPort.getText().toString();
-		
-		FsSettings.setUsername(username);
-		FsSettings.setPassword(password);
-		// TODO:需要对port进行检测
-		FsSettings.setPort(port);
-	}
-	
-	/**
 	 * 启动服务器
 	 */
 	private void startServer() {
 		// 设置新的配置内容
-		checkSetting();
-		
 		sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
 		changeState(SERVER_STATE_STARTING);
 		setHintText("正在尝试启动服务器");
