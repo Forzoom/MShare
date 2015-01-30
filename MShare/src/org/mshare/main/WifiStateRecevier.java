@@ -11,10 +11,10 @@ import android.util.Log;
  * @author HM
  *
  */
-public class WifiConnectRecevier extends BroadcastReceiver {
+public class WifiStateRecevier extends BroadcastReceiver {
 
-	private static final String TAG = WifiConnectRecevier.class.getSimpleName();
-	private OnWifiConnectChangeListener listener;
+	private static final String TAG = WifiStateRecevier.class.getSimpleName();
+	private OnWifiStateChangeListener listener;
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
@@ -30,11 +30,11 @@ public class WifiConnectRecevier extends BroadcastReceiver {
 		}
 	}
 
-	public void setListener(OnWifiConnectChangeListener listener) {
+	public void setListener(OnWifiStateChangeListener listener) {
 		this.listener = listener;
 	}
 	
-	interface OnWifiConnectChangeListener {
+	interface OnWifiStateChangeListener {
 		/**
 		 * 当前wifi状态是否可用，
 		 * @param connected

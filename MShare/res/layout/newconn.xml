@@ -11,7 +11,7 @@
 	    android:layout_height="match_parent"
 	    android:padding="20dp">
 		
-	    <ToggleButton
+	    <Swtich
 	        android:id="@+id/ftpswitch"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
@@ -47,6 +47,24 @@
 	        android:layout_height="wrap_content"
 	        android:background="@drawable/button"
 	        android:textColor="@color/Color_White" />
+	    
+	    <TextView
+	        android:id="@+id/ftp_wifi_ap_state"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:background="@drawable/button"
+	        android:textColor="@color/Color_White" />
+	    
+	    <Button 
+	        android:id="@+id/ftp_ap_test"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="尝试获得Ap的Ip地址" />
+	    
+	    <TextView 
+	        android:id="@+id/ftp_ap_ip"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content" />
 	</LinearLayout>
 	<LinearLayout
 	    android:id="@+id/progress_wait"

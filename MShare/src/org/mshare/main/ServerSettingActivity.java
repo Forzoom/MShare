@@ -47,6 +47,7 @@ public class ServerSettingActivity extends Activity {
 		// 
 		switch (item.getItemId()) {
 			case R.id.ftp_server_setting_confirm:
+				checkSetting();
 				break;
 		}
 		return true;

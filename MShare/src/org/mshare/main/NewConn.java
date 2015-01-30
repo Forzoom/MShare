@@ -12,6 +12,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Switch;
@@ -34,7 +36,8 @@ import android.widget.ToggleButton;
 import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.TextView;
 
-import org.mshare.main.WifiConnectRecevier.OnWifiConnectChangeListener;
+import org.mshare.main.WifiApStateReceiver.OnWifiApStateChangeListener;
+import org.mshare.main.WifiStateRecevier.OnWifiStateChangeListener;
 import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
 
 public class NewConn extends Activity {
@@ -42,20 +45,24 @@ public class NewConn extends Activity {
 	private static final String TAG = NewConn.class.getSimpleName();
 	
 	// 所有和配置有关的空间
-	private ToggleButton ftpSwitch;
+	private Switch ftpSwitch;
 	private TextView ftpUsername;
 	private TextView ftpPassword;
 	private TextView ftpPort;
 	
 	private TextView ftpaddr;
 	private TextView connhint;
+	private TextView ftpApState;
+	private Button ftpApTest;
+	private TextView ftpApIp;
 	
 	// 用于等待完成的等待进度条
 	private LinearLayout progressWait;
 	
 	// 监听状态对UI界面进行控制
-	private WifiConnectRecevier wifiConnectReceiver;
+	private WifiStateRecevier wifiStateReceiver;
 	private ServerStateRecevier serverStateReceiver;
+	private WifiApStateReceiver wifiApStateReceiver;
 	
 	// 总共是6种状态
 	private static final int SERVER_STATE_STARTING = 0x1;
@@ -71,10 +78,6 @@ public class NewConn extends Activity {
 	// 没有任何状态
 	private int state = 0;
 	
-	private boolean isServerRunning = false;
-	
-	
-	
 	protected void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.newconn);
@@ -85,9 +88,12 @@ public class NewConn extends Activity {
 		msg.setText("服务器启动中");  
 		
 		// 服务器开关
-		ftpSwitch = (ToggleButton) findViewById(R.id.ftpswitch);
+		ftpSwitch = (Switch) findViewById(R.id.ftpswitch);
 		ftpaddr = (TextView) findViewById(R.id.ftpaddr);
 		connhint = (TextView) findViewById(R.id.connhint);
+		ftpApState = (TextView)findViewById(R.id.ftp_wifi_ap_state);
+		ftpApTest = (Button)findViewById(R.id.ftp_ap_test);
+		ftpApIp = (TextView)findViewById(R.id.ftp_ap_ip);
 		
 		// 服务器设置显示
 		ftpUsername = (TextView)findViewById(R.id.ftp_username);
@@ -123,18 +129,33 @@ public class NewConn extends Activity {
 		}
 		
 		// 简单的BroadcastReceiver，可能存在安全风险
-		wifiConnectReceiver = new WifiConnectRecevier();
+		wifiStateReceiver = new WifiStateRecevier();
 		WifiConectionChangeListener wccListener = new WifiConectionChangeListener();
 		// 设置监听器
-		wifiConnectReceiver.setListener(wccListener);
+		wifiStateReceiver.setListener(wccListener);
 		
 		// 设置IntentFilter
 		IntentFilter wifiConnectFilter = new IntentFilter();
 		wifiConnectFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		wifiConnectFilter.addAction(WifiManager.RSSI_CHANGED_ACTION);
 		
-		registerReceiver(wifiConnectReceiver, wifiConnectFilter);
+		registerReceiver(wifiStateReceiver, wifiConnectFilter);
 		
+		/*
+		 * WifiAp状态监听器
+		 */
+		wifiApStateReceiver = new WifiApStateReceiver();
+		WifiApStateChangeListener wascListener = new WifiApStateChangeListener();
+		wifiApStateReceiver.setOnWifiApStateChangeListener(wascListener);
+		
+		IntentFilter wifiApStateFilter = new IntentFilter();
+		wifiApStateFilter.addAction(FsService.WIFI_AP_STATE_CHANGED_ACTION);
+		
+		registerReceiver(wifiApStateReceiver, wifiApStateFilter);
+		
+		/*
+		 * 服务器状态监听器
+		 */
 		serverStateReceiver = new ServerStateRecevier();
 		ServerStateChangeListener sscListener = new ServerStateChangeListener();
 		serverStateReceiver.setListener(sscListener);
@@ -151,8 +172,12 @@ public class NewConn extends Activity {
 	protected void onStop() {
 		// TODO 解除注册
 		super.onStop();
-		if (wifiConnectReceiver != null) {
-			unregisterReceiver(wifiConnectReceiver);
+		if (wifiStateReceiver != null) {
+			unregisterReceiver(wifiStateReceiver);
+		}
+		
+		if (wifiApStateReceiver != null) {
+			unregisterReceiver(wifiApStateReceiver);
 		}
 		
 		if (serverStateReceiver != null) {
@@ -320,7 +345,7 @@ public class NewConn extends Activity {
 	 * @author HM
 	 *
 	 */
-	private class WifiConectionChangeListener implements OnWifiConnectChangeListener {
+	private class WifiConectionChangeListener implements OnWifiStateChangeListener {
 
 		@Override
 		public void onWifiConnectChange(boolean connected) {
@@ -357,6 +382,29 @@ public class NewConn extends Activity {
 				setHintText("服务器已经停止");
 			}
 		}
-		
+	}
+	
+	private class WifiApStateChangeListener implements OnWifiApStateChangeListener {
+
+		@Override
+		public void onWifiApStateChange(boolean enable) {
+			Context context = MShareApp.getAppContext();
+			if (enable) {
+				ftpApState.setText("当前Ap可用");
+				byte[] address = FsService.getLocalInetAddress().getAddress();
+				String addressStr = "";
+				for (int i = 0, len = address.length; i < len; i++) {
+					byte b = address[i];
+					addressStr += String.valueOf(((int)b + 256)) + " ";
+				}
+				ftpApIp.setText(addressStr);
+				ftpApIp.setVisibility(View.VISIBLE);
+			} else {
+				ftpApState.setText("当前Ap不可用");
+				ftpApIp.setText("");
+				ftpApIp.setVisibility(View.VISIBLE);
+			}
+			
+		}
 	}
 }

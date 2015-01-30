@@ -33,9 +33,15 @@
             android:name="org.mshare.main.NewConn"
             android:label="@string/app_name" >
         </activity>
+        <!-- 修改服务器配置 -->
         <activity
             android:name="org.mshare.main.ServerSettingActivity"
-            android:label="修改配置" >
+            android:label="修改配置"
+            android:parentActivityName="org.mshare.main.NewConn" >
+        	<!-- Parent activity meta-data to support API level 7+ -->
+	        <meta-data
+	            android:name="android.support.PARENT_ACTIVITY"
+	            android:value="org.mshare.main.NewConn" />
 		</activity>
 		<activity
             android:name="org.mshare.main.FtpMainActivity"
