@@ -11,8 +11,8 @@
 	    android:layout_height="match_parent"
 	    android:padding="20dp">
 		
-	    <Swtich
-	        android:id="@+id/ftpswitch"
+	    <android.widget.Switch
+	        android:id="@+id/ftp_switch"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:text="文件共享" />
@@ -55,14 +55,19 @@
 	        android:background="@drawable/button"
 	        android:textColor="@color/Color_White" />
 	    
-	    <Button 
+	    <ToggleButton 
 	        android:id="@+id/ftp_ap_test"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
-	        android:text="尝试获得Ap的Ip地址" />
+	        android:text="尝试启动Ap" />
 	    
 	    <TextView 
 	        android:id="@+id/ftp_ap_ip"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content" />
+	    
+	    <TextView 
+	        android:id="@+id/ap_ssid"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content" />
 	</LinearLayout>

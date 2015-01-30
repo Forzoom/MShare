@@ -1,5 +1,7 @@
 package org.mshare.main;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.zip.Inflater;
@@ -18,9 +20,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
-import android.view.View.OnClickListener;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.Menu;
@@ -28,12 +29,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Switch;
-import android.widget.TableLayout;
 import android.widget.ToggleButton;
-import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.TextView;
 
 import org.mshare.main.WifiApStateReceiver.OnWifiApStateChangeListener;
@@ -53,7 +51,7 @@ public class NewConn extends Activity {
 	private TextView ftpaddr;
 	private TextView connhint;
 	private TextView ftpApState;
-	private Button ftpApTest;
+	private ToggleButton ftpApTest;
 	private TextView ftpApIp;
 	
 	// 用于等待完成的等待进度条
@@ -88,11 +86,12 @@ public class NewConn extends Activity {
 		msg.setText("服务器启动中");  
 		
 		// 服务器开关
-		ftpSwitch = (Switch) findViewById(R.id.ftpswitch);
+		ftpSwitch = (Switch) findViewById(R.id.ftp_switch);
 		ftpaddr = (TextView) findViewById(R.id.ftpaddr);
 		connhint = (TextView) findViewById(R.id.connhint);
 		ftpApState = (TextView)findViewById(R.id.ftp_wifi_ap_state);
-		ftpApTest = (Button)findViewById(R.id.ftp_ap_test);
+		// 尝试启动AP
+		ftpApTest = (ToggleButton)findViewById(R.id.ftp_ap_test);
 		ftpApIp = (TextView)findViewById(R.id.ftp_ap_ip);
 		
 		// 服务器设置显示
@@ -107,7 +106,8 @@ public class NewConn extends Activity {
 		
 		Log.v(TAG, ((Context)this).toString());
 		
-		ftpSwitch.setOnClickListener(new OnStartStopServerListener());
+		ftpSwitch.setOnClickListener(new StartStopServerListener());
+		ftpApTest.setOnClickListener(new WifiApControlListener());
 	}
 	
 	@Override
@@ -230,41 +230,45 @@ public class NewConn extends Activity {
 			state = state & (~WIFI_STATE_MASK) | s;
 		}
 		
-		switch (state) {
-			case (SERVER_STATE_STARTING | WIFI_STATE_CONNECTED):
-				setSwitchChecked(true);
-				setSwitchEnable(false);
-				setSettingChanged(false);
-				setProgressShow(true);
-				break;
-			case (SERVER_STATE_STARTED | WIFI_STATE_CONNECTED):
-				setSwitchChecked(true);
-				setSwitchEnable(true);
-				setSettingChanged(false);
-				setProgressShow(false);
-				break;
-			case (SERVER_STATE_STOPING | WIFI_STATE_CONNECTED):
-				setSwitchChecked(false);
-				setSwitchEnable(false);
-				setSettingChanged(false);
-				setProgressShow(true);
-				break;
-			case (SERVER_STATE_STOPPED | WIFI_STATE_CONNECTED):
-				setSwitchChecked(false);
-				setSwitchEnable(true);
-				setSettingChanged(true);
-				setProgressShow(false);
-				break;
-			case (SERVER_STATE_STARTING | WIFI_STATE_DISCONNECTED):
-			case (SERVER_STATE_STARTED | WIFI_STATE_DISCONNECTED):
-			case (SERVER_STATE_STOPING | WIFI_STATE_DISCONNECTED):
-			case (SERVER_STATE_STOPPED | WIFI_STATE_DISCONNECTED):
+		int networkState = state & WIFI_STATE_MASK;
+		int serverState = state & SERVER_STATE_MASK;
+		
+		if (networkState == WIFI_STATE_CONNECTED) {
+			switch (serverState) {
+				case (SERVER_STATE_STARTING):
+					setSwitchChecked(true);
+					setSwitchEnable(false);
+					setProgressShow(true);
+					break;
+				case (SERVER_STATE_STARTED):
+					setSwitchChecked(true);
+					setSwitchEnable(true);
+					setProgressShow(false);
+					break;
+				case (SERVER_STATE_STOPING):
+					setSwitchChecked(false);
+					setSwitchEnable(false);
+					setProgressShow(true);
+					break;
+				case (SERVER_STATE_STOPPED):
+					setSwitchChecked(false);
+					setSwitchEnable(true);
+					setProgressShow(false);
+					break;
+				default:
+					break;
+			}
+		} else if (networkState == WIFI_STATE_DISCONNECTED) {
+			switch(serverState) {
+			case (SERVER_STATE_STARTING):
+			case (SERVER_STATE_STARTED):
+			case (SERVER_STATE_STOPING):
+			case (SERVER_STATE_STOPPED):
 				setSwitchChecked(FsService.isRunning());
 				setSwitchEnable(false);
-				setSettingChanged(false);
 				setProgressShow(false);
-			default:
 				break;
+			}
 		}
 		
 	}
@@ -288,6 +292,33 @@ public class NewConn extends Activity {
 		setHintText("正在尝试停止服务器");
 	}
 	
+	/**
+	 * 尝试启动WifiAp
+	 */
+	private void setWifiApEnabled(boolean enable) {
+		// TODO 需要了解更多关于java反射的内容
+		WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
+		
+		
+		
+		try {
+			// 用于获得WifiConfiguration
+			Method getWifiApConfigurationMethod = wm.getClass().getDeclaredMethod("getWifiApConfiguration");
+			WifiConfiguration config = (WifiConfiguration)getWifiApConfigurationMethod.invoke(wm);
+			
+			
+			
+			Method setWifiApEnabledMethod = wm.getClass().getDeclaredMethod("setWifiApEnabled");
+			setWifiApEnabledMethod.invoke(wm, config, enable);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void setHintText(String hint) {
 		connhint.setText(hint);
 	}
@@ -305,15 +336,6 @@ public class NewConn extends Activity {
 		ftpSwitch.setChecked(b);
 	}
 	
-	/**
-	 * 是否允许改动服务器设置
-	 */
-	private void setSettingChanged(boolean canChange) {
-		ftpUsername.setEnabled(canChange);
-		ftpPassword.setEnabled(canChange);
-		ftpPort.setEnabled(canChange);
-	}
-	
 	private void setProgressShow(boolean show) {
 		if (show) {
 			progressWait.setVisibility(View.VISIBLE);
@@ -327,7 +349,7 @@ public class NewConn extends Activity {
 	 * @author HM
 	 *
 	 */
-	private class OnStartStopServerListener implements View.OnClickListener {
+	private class StartStopServerListener implements View.OnClickListener {
 		
 		@Override
 		public void onClick(View arg0) {
@@ -340,6 +362,19 @@ public class NewConn extends Activity {
 		}
 	}
 
+	private class WifiApControlListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			if (ftpApTest.isChecked()) {
+				setWifiApEnabled(true);
+			} else {
+				setWifiApEnabled(false);
+			}
+		}
+		
+	}
+	
 	/**
 	 * wifi状态变化监听器
 	 * @author HM

@@ -1,5 +1,6 @@
 package org.mshare.main;
 
+import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 
 import android.app.ActionBar;
@@ -9,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class ServerSettingActivity extends Activity {
 
@@ -47,7 +49,12 @@ public class ServerSettingActivity extends Activity {
 		// 
 		switch (item.getItemId()) {
 			case R.id.ftp_server_setting_confirm:
-				checkSetting();
+				// TODO 需要对当前server是否正在运行进行检测
+				if (!FsService.isRunning()) {
+					checkSetting();
+				} else {
+					Toast.makeText(this, "服务器正在运行，不能修改", Toast.LENGTH_SHORT).show();
+				}
 				break;
 		}
 		return true;
