@@ -166,6 +166,10 @@
     <string name="video">Video</string>
     <string name="picture">Image</string>
     
+    <!-- Activity -->
+    <string name="activity_label_server_setting">修改配置</string>
+    <string name="activity_label_qrcode_login">二维码</string>
+    
     <!-- 文件浏览器 -->
     <string name="activity_not_found">Application is not installed on your device.</string>
     <string name="action_settings">setting</string>
@@ -191,6 +195,9 @@
     <string name="confirm">确定</string>
     
     <!-- 二维码 -->
+    <string name="please_scan">请扫描下面的二维码，接受文件共享</string>
+    
+    <!-- 二维码(引入) -->
 	<string name="app_picker_name">Applications</string>
 	<string name="bookmark_picker_name">Bookmarks</string>
 	<string name="button_add_calendar">Add to calendar</string>

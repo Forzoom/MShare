@@ -49,7 +49,7 @@ public class ServerSettingActivity extends Activity {
 			case R.id.ftp_server_setting_confirm:
 				break;
 		}
-		return true;
+		return super.onOptionsItemSelected(item);
 	}
 	
 	/**
