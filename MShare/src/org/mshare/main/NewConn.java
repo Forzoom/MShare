@@ -90,6 +90,7 @@ public class NewConn extends Activity {
 		ftpaddr = (TextView) findViewById(R.id.ftpaddr);
 		connhint = (TextView) findViewById(R.id.connhint);
 		ftpApState = (TextView)findViewById(R.id.ftp_wifi_ap_state);
+		
 		// 尝试启动AP
 		ftpApTest = (ToggleButton)findViewById(R.id.ftp_ap_test);
 		ftpApIp = (TextView)findViewById(R.id.ftp_ap_ip);
@@ -130,7 +131,7 @@ public class NewConn extends Activity {
 		
 		// 简单的BroadcastReceiver，可能存在安全风险
 		wifiStateReceiver = new WifiStateRecevier();
-		WifiConectionChangeListener wccListener = new WifiConectionChangeListener();
+		WifiStateChangeListener wccListener = new WifiStateChangeListener();
 		// 设置监听器
 		wifiStateReceiver.setListener(wccListener);
 		
@@ -367,9 +368,12 @@ public class NewConn extends Activity {
 		@Override
 		public void onClick(View v) {
 			if (ftpApTest.isChecked()) {
+				// TODO 尝试对WIFIAP进行操作，但是可能这样做会让代码太过分散，所以使用状态来表最好
 				setWifiApEnabled(true);
+				ftpApTest.setEnabled(false);
 			} else {
 				setWifiApEnabled(false);
+				ftpApTest.setEnabled(false);
 			}
 		}
 		
@@ -380,7 +384,7 @@ public class NewConn extends Activity {
 	 * @author HM
 	 *
 	 */
-	private class WifiConectionChangeListener implements OnWifiStateChangeListener {
+	private class WifiStateChangeListener implements OnWifiStateChangeListener {
 
 		@Override
 		public void onWifiConnectChange(boolean connected) {
@@ -418,13 +422,20 @@ public class NewConn extends Activity {
 			}
 		}
 	}
-	
+
+	/**
+	 * 监听WIFIAp状态
+	 * @author HM
+	 *
+	 */
 	private class WifiApStateChangeListener implements OnWifiApStateChangeListener {
 
 		@Override
 		public void onWifiApStateChange(boolean enable) {
 			Context context = MShareApp.getAppContext();
 			if (enable) {
+				// 设置是否可用
+				ftpApTest.setEnabled(true);
 				ftpApState.setText("当前Ap可用");
 				byte[] address = FsService.getLocalInetAddress().getAddress();
 				String addressStr = "";
@@ -435,6 +446,9 @@ public class NewConn extends Activity {
 				ftpApIp.setText(addressStr);
 				ftpApIp.setVisibility(View.VISIBLE);
 			} else {
+				// 设置是否可用
+				ftpApTest.setEnabled(false);
+				
 				ftpApState.setText("当前Ap不可用");
 				ftpApIp.setText("");
 				ftpApIp.setVisibility(View.VISIBLE);

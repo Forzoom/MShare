@@ -55,7 +55,7 @@
 	        android:background="@drawable/button"
 	        android:textColor="@color/Color_White" />
 	    
-	    <ToggleButton 
+	    <ToggleButton
 	        android:id="@+id/ftp_ap_test"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
