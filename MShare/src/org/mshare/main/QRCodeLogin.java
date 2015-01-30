@@ -6,7 +6,9 @@ import android.os.Bundle;
 public class QRCodeLogin extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
+		// TODO 能够创建出一个二维码
 		super.onCreate(savedInstanceState);
+		
+		
 	}
 }
