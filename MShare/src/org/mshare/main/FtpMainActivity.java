@@ -225,54 +225,9 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 			return createLoadDialog();
 		case DIALOG_RENAME:
 			return createRenameDialog();
-		case DIALOG_FTP_LOGIN :
-			return createFTPLoginDialog();
 		default:
 			return null;
 		}
-	}
-
-	private Dialog createFTPLoginDialog() {
-
-		View rootLoadView = getLayoutInflater().inflate(R.layout.dialog_ftp_login,
-				null);
-		final EditText editHost = (EditText) rootLoadView.findViewById(R.id.editFTPHost);
-		final EditText editPort= (EditText) rootLoadView.findViewById(R.id.editFTPPort);
-		editPort.setText("2121");
-		final EditText editUser = (EditText) rootLoadView.findViewById(R.id.editFTPUser);
-		final EditText editPasword= (EditText) rootLoadView.findViewById(R.id.editPassword);
-		return new AlertDialog.Builder(this)
-				.setTitle("请输入FTP信息")
-				.setView(rootLoadView)
-				.setPositiveButton("连接FTP", new DialogInterface.OnClickListener() {
-
-					@Override
-					public void onClick(DialogInterface uploadDialog, int which) {
-						
-						if (TextUtils.isEmpty(editHost.getText()) || 
-								TextUtils.isEmpty(editPort.getText()) || 
-								TextUtils.isEmpty(editUser.getText()) ||
-								TextUtils.isEmpty(editUser.getText())) {
-							  toast("请将资料填写完整");
-							  FtpMainActivity.this.finish();
-							  return ;
-						}
-						try{
-						    mFTPPort = Integer.parseInt(editPort.getText().toString().trim());
-						}
-						catch(NumberFormatException nfEx){
-							nfEx.printStackTrace();
-							toast("端口输入有误，请重试");
-							return ;
-						}
-						mFTPHost = editHost.getText().toString().trim();
-						mFTPUser = editUser.getText().toString().trim();
-						mFTPPassword = editPasword.getText().toString().trim();
-						Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
-								+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
-						executeConnectRequest();
-					}
-				}).create();
 	}
 	
 	private Dialog createLoadDialog() {

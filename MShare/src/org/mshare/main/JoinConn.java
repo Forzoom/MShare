@@ -19,6 +19,7 @@ import org.mshare.main.FtpMainActivity.CmdFactory;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -215,10 +216,13 @@ public class JoinConn extends Activity {
 	    gridview.setOnItemClickListener(new OnItemClickListener(){
 
 			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
+			public void onItemClick(AdapterView<?> parent, View view, int position,
+					long id) {
 				// TODO Auto-generated method stub
 				Log.v(TAG,"test onItemSelected");
+				Intent intent = new Intent(view.getContext(), FtpFileManage.class);
+                intent.putExtra("id", "1");
+                view.getContext().startActivity(intent);
 			}
 	    	
 	    });
