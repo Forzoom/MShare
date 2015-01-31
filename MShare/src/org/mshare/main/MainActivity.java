@@ -1,6 +1,7 @@
 package org.mshare.main;
 
 import org.mshare.file.FileAdapter.ItemContainer;
+import org.mshare.file.MShareFileBrowser;
 import org.mshare.main.R;
 
 import android.app.ActionBar;
@@ -15,11 +16,15 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.ContextMenu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.TableLayout;
+import android.widget.TextView;
 
 /**
  * 
@@ -29,6 +34,8 @@ import android.widget.TableLayout;
 public class MainActivity extends FragmentActivity
 	implements ActionBar.TabListener
 {
+	private static final String TAG = MainActivity.class.getSimpleName();
+	private static final int GROUP_FILE_BROWSER = 1;
 	ViewPager viewPager;
 	ActionBar actionBar;
 	Button newconn,joinconn;
@@ -115,17 +122,44 @@ public class MainActivity extends FragmentActivity
 			ContextMenuInfo menuInfo) {
 		
 		// TODO 需要判断长按的是否是gridView中的内容，使用instance判断v是否是ItemContainer的实例
-
+		
 		Object tag = v.getTag();
+		ItemContainer item = null;
+		
 		if (tag != null) {
-			ItemContainer item = (ItemContainer)tag;
+			item = (ItemContainer)tag;
 			menu.setHeaderTitle(item.file.getName());
 		}
-		menu.add(0, 0, 0, "剪切");
-		menu.add(0, 1, 1, "复制");
-		menu.add(0, 2, 2, "粘贴");
-		menu.add(0, 3, 3, "删除");
+		
+		menu.add(GROUP_FILE_BROWSER, 0, 0, "剪切");
+		menu.add(GROUP_FILE_BROWSER, 1, 1, "复制");
+		menu.add(GROUP_FILE_BROWSER, 2, 2, "粘贴");
+		menu.add(GROUP_FILE_BROWSER, 3, 3, "删除");
+		
+		// 判断当前文件是否是共享文件
+		if (!item.file.isShared()) {
+			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.ITEM_ID_SHARE, 4, "共享");
+		} else {
+			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.ITEM_ID_UNSHARE, 4, "不共享");
+		}
+		
 		super.onCreateContextMenu(menu, v, menuInfo);
+	}
+	
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		
+		int itemId = item.getItemId();
+		
+		switch (itemId) {
+			case MShareFileBrowser.ITEM_ID_SHARE: // 当点击的是共享
+				
+				break;
+			case MShareFileBrowser.ITEM_ID_UNSHARE: // 点击的是不共享
+				break;
+		}
+		
+		return super.onContextItemSelected(item);
 	}
 	
 	@Override

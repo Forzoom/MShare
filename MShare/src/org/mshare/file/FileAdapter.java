@@ -1,6 +1,7 @@
 package org.mshare.file;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.mshare.main.R;
@@ -10,6 +11,7 @@ import org.mshare.main.R.layout;
 
 
 import android.R.color;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -21,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
@@ -40,17 +43,15 @@ public class FileAdapter extends BaseAdapter {
 	 */
 	private MShareFile[] files = null;
 	/**
-	 * 显示在文件浏览器中的图片
-	 */
-	private Drawable drawable = null;
-	/**
 	 * 保存所有支持类型的图片，静态类型以提供给所有的FileAdapter实例使用，因为刷新GridView的时候将生成新的FileAdapter
 	 */
 	private static HashMap<String, Drawable> DRAWABLES = new HashMap<String, Drawable>();
 	/**
-	 * 
+	 * 所有的DRAWABLE是否都已经加载好了
 	 */
 	private static boolean DRAWABLE_PREPARED = false;
+	
+	private ArrayList<View> convertViews;
 	
 	/**
 	 * GridView中的Item所包含的内容
@@ -58,10 +59,11 @@ public class FileAdapter extends BaseAdapter {
 	 *
 	 */
 	public class ItemContainer {
+		public ImageView fileIcon = null;
 		/**
 		 * 对应GridView中的TextView内容
 		 */
-		public TextView fileNameView = null;
+		public TextView fileName = null;
 		/**
 		 * 和TextView相对应的file文件
 		 */
@@ -72,6 +74,8 @@ public class FileAdapter extends BaseAdapter {
 		super();
 		this.context = context;
 		this.files = files;
+		
+		convertViews = new ArrayList<View>();
 		
 		initDrawable(context);
 	}
@@ -119,19 +123,16 @@ public class FileAdapter extends BaseAdapter {
 	
 	@Override
 	public int getCount() {
-		// TODO Auto-generated method stub
 		return files.length;
 	}
 
 	@Override
 	public Object getItem(int position) {
-		// TODO Auto-generated method stub
 		return files[position];
 	}
 
 	@Override
 	public long getItemId(int position) {
-		// TODO Auto-generated method stub
 		return position;
 	}
 
@@ -141,73 +142,34 @@ public class FileAdapter extends BaseAdapter {
 		if (convertView != null) {
 			ItemContainer item = (ItemContainer)convertView.getTag();
 			if (item != null) {
-				item.fileNameView.setText(files[position].getName());
+				// 更新file
+				item.file = files[position];
+				item.fileName.setText(files[position].getName());
+				item.fileIcon.setImageDrawable(getDrawable(item.file));
 			}
 		} else { // 第一次使用的convertView
 			convertView = (View)LayoutInflater.from(context).inflate(R.layout.grid_item, null);
+			
+			// TODO 添加到ArrayList中以便释放，如果有更好的方法来使用LongClickListener就好了
+			convertViews.add(convertView);
+			
+			// TODO 为convertView设置长按响应，但是资源没有办法得到释放，而且如果不是一个Activity注册的，那么就会出问题
+			((Activity)context).registerForContextMenu(convertView);
 			
 			// create content
 			ItemContainer item = new ItemContainer();
 			
 			// 设置文件内容和对应的图标
 			item.file = files[position];
-			item.fileNameView = (TextView)convertView.findViewById(R.id.item_file_name);
-			
+			item.fileIcon = (ImageView)convertView.findViewById(R.id.item_file_image);
+			item.fileName = (TextView)convertView.findViewById(R.id.item_file_name);
+			item.fileName.setTextColor(Color.BLACK);
 			Drawable icon = getDrawable(item.file);
-			
 			String displayName = item.file.getDisplayName();
-//			paint
-			
-			Rect bound = new Rect();
-			item.fileNameView.getPaint().getTextBounds(displayName, 0, displayName.length(), bound);
-			
-			// 将定padding所设置的就是字的内容的偏移
-			
-			int iconWidth = icon.getIntrinsicWidth();
-			// 最大的长度
-			int maxTextWidth = (int)(iconWidth * 2);
-			// 最小长度
-			int minTextWidth = (int)(iconWidth * 1.1);
-			// 所测试的文件的长度
-			int textWidth = bound.width();
-			// 所要设置的长度
-			int resultWidth = (int)(iconWidth * 1.1);
-			if (iconWidth < textWidth && textWidth < maxTextWidth) {
-				resultWidth = (int)(textWidth * 1.1);
-			} else if (textWidth >= maxTextWidth) {
-				resultWidth = maxTextWidth;
-			} else if (textWidth <= iconWidth) {
-				resultWidth = minTextWidth;
-				// 需要用空格补齐内容
-				Rect blankBounds = new Rect();
-				String _fix = " a";
-				item.fileNameView.getPaint().getTextBounds(_fix, 0, _fix.length(), blankBounds);
-				int blankWidth = blankBounds.width();
-				Log.v(TAG, "blankWidth : " + blankWidth);
-				Log.v(TAG, "blankHeight : " + blankBounds.height());
-
-				_fix = " a a  a";
-				item.fileNameView.getPaint().getTextBounds(_fix, 0, _fix.length(), blankBounds);
-				Log.v(TAG, "blankWidth : " + blankBounds.width());
-				Log.v(TAG, "blankHeight : " + blankBounds.height());
-				
-				int fixCount = (iconWidth - textWidth) / 2 / blankWidth;
-				int fixIndex = 1;
-				String fix = " ";
-				while (fixIndex < fixCount) {
-					fix += " ";
-				}
-				item.file.setDisplayName(fix);
-			}
-			
-			item.fileNameView.setWidth(resultWidth);
-			
-			item.fileNameView.setText(displayName);
-			item.fileNameView.setCompoundDrawables(null, icon, null, null);
-			item.fileNameView.setPadding(0, 20, 0, 0);
-			item.fileNameView.setTextColor(Color.BLACK);
-			
-			Log.v(TAG, "displayName : " + displayName + bound.width() + " " + iconWidth + " " + item.fileNameView.getTextSize());
+			item.fileName.setText(displayName);
+			item.fileIcon.setImageDrawable(getDrawable(item.file));
+			int maxTextWidth = (int)(icon.getIntrinsicWidth() * 1.5);
+			item.fileName.setWidth(maxTextWidth);
 			
 			// register for long click
 			
@@ -244,4 +206,16 @@ public class FileAdapter extends BaseAdapter {
 		return drawable; 
 	}
 	
+	/**
+	 * 释放所有的convertView的LongClick
+	 * 在确认该FileAdapter不使用前不要调用
+	 */
+	public void release() {
+		// 上下文
+		Activity activity = (Activity)context;
+		for (int i = 0, len = convertViews.size(); i < len; i++) {
+			View view = convertViews.get(i);
+			activity.unregisterForContextMenu(view);
+		}
+	}
 }

@@ -1,35 +1,43 @@
 package org.mshare.main;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.zip.Inflater;
 
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
-import android.view.View.OnClickListener;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Switch;
-import android.widget.TableLayout;
+import android.widget.Toast;
 import android.widget.ToggleButton;
-import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.TextView;
 
-import org.mshare.main.WifiConnectRecevier.OnWifiConnectChangeListener;
+import org.mshare.main.NetworkStateRecevier.OnWifiApStateChangeListener;
+import org.mshare.main.NetworkStateRecevier.OnNetworkStateChangeListener;
 import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
 
 public class NewConn extends Activity {
@@ -38,18 +46,29 @@ public class NewConn extends Activity {
 	
 	// 所有和配置有关的空间
 	private ToggleButton ftpSwitch;
-	private EditText ftpUsername;
-	private EditText ftpPassword;
-	private EditText ftpPort;
+	private TextView ftpUsernameView;
+	private TextView ftpPasswordView;
+	private TextView ftpPortView;
 	
-	private TextView ftpaddr;
-	private TextView connhint;
+	private TextView ftpAddrView;
+	// 服务器状态
+	private TextView serverStateView;
+	// 网络状态:WIFI/MOBILE
+	private TextView networkStateView;
+	private TextView ftpApState;
+	private ToggleButton ftpApTest;
+	private TextView ftpApIp;
+	
+	// 服务器当前有多少用户连接
+	private TextView ftpCurrentSessionsView;
+	// 显示服务器允许多少用户连接
+	private TextView ftpMaxSessionsView;
 	
 	// 用于等待完成的等待进度条
 	private LinearLayout progressWait;
 	
 	// 监听状态对UI界面进行控制
-	private WifiConnectRecevier wifiConnectReceiver;
+	private NetworkStateRecevier networkStateReceiver;
 	private ServerStateRecevier serverStateReceiver;
 	
 	// 总共是6种状态
@@ -66,37 +85,46 @@ public class NewConn extends Activity {
 	// 没有任何状态
 	private int state = 0;
 	
-	private boolean isServerRunning = false;
-	
-	
-	
 	protected void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.newconn);
 		
 		// 设置等待滚动条 
-		progressWait = (LinearLayout)findViewById(R.id.progress_wait);  
-		TextView msg = (TextView)findViewById(R.id.progress_description);  
-		msg.setText("服务器启动中");  
+//		progressWait = (LinearLayout)findViewById(R.id.progress_wait);  
+//		TextView msg = (TextView)findViewById(R.id.progress_description);  
+//		msg.setText("服务器启动中");
+		// TODO 暂时将其设置为不可见
+//		progressWait.setVisibility(View.GONE);
 		
 		// 服务器开关
-		ftpSwitch = (ToggleButton) findViewById(R.id.ftpswitch);
-		ftpaddr = (TextView) findViewById(R.id.ftpaddr);
-		connhint = (TextView) findViewById(R.id.connhint);
+		ftpSwitch = (ToggleButton) findViewById(R.id.ftp_switch);
 		
-		// 服务器设置
-		ftpUsername = (EditText)findViewById(R.id.ftp_username);
-		ftpPassword = (EditText)findViewById(R.id.ftp_password);
-		ftpPort = (EditText)findViewById(R.id.ftp_port);
+		// 显示当前地址的内容
+		ftpAddrView = (TextView) findViewById(R.id.ftp_addr);
+		ftpApState = (TextView)findViewById(R.id.ftp_wifi_ap_state);
+		
+		serverStateView = (TextView)findViewById(R.id.server_state);
+		// 显示当前的网络连接情况
+		networkStateView = (TextView)findViewById(R.id.network_state);
+		
+		// 尝试启动AP
+		ftpApTest = (ToggleButton)findViewById(R.id.ftp_ap_test);
+		ftpApIp = (TextView)findViewById(R.id.ftp_ap_ip);
+		
+		// 服务器设置显示
+		ftpUsernameView = (TextView)findViewById(R.id.ftp_username);
+		ftpPasswordView = (TextView)findViewById(R.id.ftp_password);
+		ftpPortView = (TextView)findViewById(R.id.ftp_port);
 		
 		// 设置默认的参数
-		ftpUsername.setText(FsSettings.getUsername());
-		ftpPassword.setText(FsSettings.getPassword());
-		ftpPort.setText(String.valueOf(FsSettings.getPort()));
+		ftpUsernameView.setText(FsSettings.getUsername());
+		ftpPasswordView.setText(FsSettings.getPassword());
+		ftpPortView.setText(String.valueOf(FsSettings.getPort()));
 		
 		Log.v(TAG, ((Context)this).toString());
 		
-		ftpSwitch.setOnClickListener(new OnStartStopServerListener());
+		ftpSwitch.setOnClickListener(new StartStopServerListener());
+		ftpApTest.setOnClickListener(new WifiApControlListener());
 	}
 	
 	@Override
@@ -104,32 +132,50 @@ public class NewConn extends Activity {
 		// TODO 可能需要使用更加安全的BroadcastReceiver注册方式
 		super.onStart();
 		
+		// TODO 临时设置的检测当前是否是3G信号，提醒用户，不知道ethernet是否是3G的内容
+//		if (MShareUtil.isConnectedUsing(ConnectivityManager.TYPE_ETHERNET)) {
+//			Toast.makeText(this, "当前正在使用移动蜂窝信号网络，可能产生流量", Toast.LENGTH_LONG).show();
+//		}
+		
+		// 显示当前所使用的网络
+		ConnectivityManager cm = (ConnectivityManager)getSystemService(Service.CONNECTIVITY_SERVICE);
+		NetworkInfo ni = cm.getActiveNetworkInfo();
+		String networkTypeName = ni.getTypeName();
+		networkStateView.setText(networkTypeName);
+		
 		// 先设置当前的状态
-		// TODO 先设置监听器
 		changeState(SERVER_STATE_STOPPED);
-		if (MShareUtil.isConnectedUsingWifi()) {
+		if (MShareUtil.isConnectedUsing(MShareUtil.WIFI)) {
 			changeState(WIFI_STATE_CONNECTED);
-			ftpaddr.setText(FsService.getLocalInetAddress().getHostAddress());
+			ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
 		} else {
 			changeState(WIFI_STATE_DISCONNECTED);
 			if (FsService.isRunning()) {
 				stopServer();
 			}
 		}
+
+		// 注册简单的BroadcastReceiver用来监听设备的网络状况变化，可能存在安全风险
+		networkStateReceiver = new NetworkStateRecevier();
+		NetworkStateChangeListener wccListener = new NetworkStateChangeListener();
 		
-		// 简单的BroadcastReceiver，可能存在安全风险
-		wifiConnectReceiver = new WifiConnectRecevier();
-		WifiConectionChangeListener wccListener = new WifiConectionChangeListener();
-		// 设置监听器
-		wifiConnectReceiver.setListener(wccListener);
+		// 设置网络变化和WifiAp变化监听器
+		networkStateReceiver.setOnNetworkStateChangeListener(wccListener);
+		WifiApStateChangeListener wacListener = new WifiApStateChangeListener();
+		networkStateReceiver.setOnWifiApStateChangeListener(wacListener);
 		
 		// 设置IntentFilter
 		IntentFilter wifiConnectFilter = new IntentFilter();
 		wifiConnectFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		wifiConnectFilter.addAction(WifiManager.RSSI_CHANGED_ACTION);
+		// 监听WifiAp的状态
+		wifiConnectFilter.addAction(FsService.WIFI_AP_STATE_CHANGED_ACTION);
 		
-		registerReceiver(wifiConnectReceiver, wifiConnectFilter);
+		registerReceiver(networkStateReceiver, wifiConnectFilter);
 		
+		/*
+		 * 服务器状态监听器
+		 */
 		serverStateReceiver = new ServerStateRecevier();
 		ServerStateChangeListener sscListener = new ServerStateChangeListener();
 		serverStateReceiver.setListener(sscListener);
@@ -144,15 +190,58 @@ public class NewConn extends Activity {
 	
 	@Override
 	protected void onStop() {
-		// TODO 解除注册
 		super.onStop();
-		if (wifiConnectReceiver != null) {
-			unregisterReceiver(wifiConnectReceiver);
+		if (networkStateReceiver != null) {
+			unregisterReceiver(networkStateReceiver);
 		}
 		
 		if (serverStateReceiver != null) {
 			unregisterReceiver(serverStateReceiver);
 		}
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		
+		MenuInflater infalter = getMenuInflater();
+		infalter.inflate(R.menu.ftp_new_conn, menu);
+		
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// TODO 启动一个新的Activity ServerSettingActivity
+		
+		switch (item.getItemId()) {
+			case R.id.menu_set_ftp_server_qrcode:
+				Log.v(TAG, "qrcode");
+				Intent startQRCode = new Intent();
+				startQRCode.setClass(this, QRCodeLogin.class);
+				// 写入二维码需要显示的内容
+				// 需要和扫描相对应
+				// 需要内容:1.ip 2.port 3.username 4.password
+				// 需要如何传送这些内容呢?使用字符隔开,在username和password中不允许有空格
+				String address = "192.168.137.1";
+				String port = "2121";
+				String username = "username";
+				String password = "password";
+				
+				// 使用空格分隔
+				String content = address + " " + port + " " + username + " " + password;
+				
+				startQRCode.putExtra(QRCodeLogin.EXTRA_CONTENT, content);
+				startActivity(startQRCode);
+				break;
+			case R.id.menu_set_ftp_server_setting:
+				Log.v(TAG, "setting");
+				Intent startSetting = new Intent();
+				startSetting.setClass(this, ServerSettingActivity.class);
+				startActivity(startSetting);
+				break;
+		}
+		
+		return super.onOptionsItemSelected(item);
 	}
 	
 	/**
@@ -168,57 +257,85 @@ public class NewConn extends Activity {
 			state = state & (~WIFI_STATE_MASK) | s;
 		}
 		
-		switch (state) {
-			case (SERVER_STATE_STARTING | WIFI_STATE_CONNECTED):
-				setSwitchChecked(true);
-				setSwitchEnable(false);
-				setSettingChanged(false);
-				setProgressShow(true);
-				break;
-			case (SERVER_STATE_STARTED | WIFI_STATE_CONNECTED):
-				setSwitchChecked(true);
-				setSwitchEnable(true);
-				setSettingChanged(false);
-				setProgressShow(false);
-				break;
-			case (SERVER_STATE_STOPING | WIFI_STATE_CONNECTED):
-				setSwitchChecked(false);
-				setSwitchEnable(false);
-				setSettingChanged(false);
-				setProgressShow(true);
-				break;
-			case (SERVER_STATE_STOPPED | WIFI_STATE_CONNECTED):
-				setSwitchChecked(false);
-				setSwitchEnable(true);
-				setSettingChanged(true);
-				setProgressShow(false);
-				break;
-			case (SERVER_STATE_STARTING | WIFI_STATE_DISCONNECTED):
-			case (SERVER_STATE_STARTED | WIFI_STATE_DISCONNECTED):
-			case (SERVER_STATE_STOPING | WIFI_STATE_DISCONNECTED):
-			case (SERVER_STATE_STOPPED | WIFI_STATE_DISCONNECTED):
+		int networkState = state & WIFI_STATE_MASK;
+		int serverState = state & SERVER_STATE_MASK;
+		
+		// TODO 在其中添加了关于服务器状态的内容
+		
+		if (networkState == WIFI_STATE_CONNECTED) {
+			switch (serverState) {
+				case (SERVER_STATE_STARTING):
+					setSwitchChecked(true);
+					setSwitchEnable(false);
+					setProgressShow(true);
+					
+					serverStateView.setText("服务器启动中");
+					
+					break;
+				case (SERVER_STATE_STARTED):
+					setSwitchChecked(true);
+					setSwitchEnable(true);
+					setProgressShow(false);
+					
+					serverStateView.setText("服务器已启动");
+					
+					break;
+				case (SERVER_STATE_STOPING):
+					setSwitchChecked(false);
+					setSwitchEnable(false);
+					setProgressShow(true);
+					
+					serverStateView.setText("服务器关闭中");
+					
+					break;
+				case (SERVER_STATE_STOPPED):
+					setSwitchChecked(false);
+					setSwitchEnable(true);
+					setProgressShow(false);
+					
+					serverStateView.setText("服务器已关闭");
+					
+					break;
+				default:
+					break;
+			}
+		} else if (networkState == WIFI_STATE_DISCONNECTED) {
+			switch(serverState) {
+			case (SERVER_STATE_STARTING):
 				setSwitchChecked(FsService.isRunning());
 				setSwitchEnable(false);
-				setSettingChanged(false);
 				setProgressShow(false);
-			default:
+				
+				serverStateView.setText("服务器启动中");
+				
 				break;
+			case (SERVER_STATE_STARTED):
+				setSwitchChecked(FsService.isRunning());
+				setSwitchEnable(false);
+				setProgressShow(false);
+				
+				serverStateView.setText("服务器已启动");
+				
+				break;
+			case (SERVER_STATE_STOPING):
+				setSwitchChecked(FsService.isRunning());
+				setSwitchEnable(false);
+				setProgressShow(false);
+				
+				serverStateView.setText("服务器关闭中");
+				
+				break;
+			case (SERVER_STATE_STOPPED):
+				setSwitchChecked(FsService.isRunning());
+				setSwitchEnable(false);
+				setProgressShow(false);
+				
+				serverStateView.setText("服务器已关闭");
+				
+				break;
+			}
 		}
 		
-	}
-	
-	/**
-	 * 检测Setting，并修改
-	 */
-	private void checkSetting() {
-		String username = ftpUsername.getText().toString();
-		String password = ftpPassword.getText().toString();
-		String port = ftpPort.getText().toString();
-		
-		FsSettings.setUsername(username);
-		FsSettings.setPassword(password);
-		// TODO:需要对port进行检测
-		FsSettings.setPort(port);
 	}
 	
 	/**
@@ -226,11 +343,8 @@ public class NewConn extends Activity {
 	 */
 	private void startServer() {
 		// 设置新的配置内容
-		checkSetting();
-		
 		sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
 		changeState(SERVER_STATE_STARTING);
-		setHintText("正在尝试启动服务器");
 	}
 	
 	/**
@@ -238,12 +352,53 @@ public class NewConn extends Activity {
 	 */
 	private void stopServer() {
 		sendBroadcast(new Intent(FsService.ACTION_STOP_FTPSERVER));
+		changeState(SERVER_STATE_STOPING);
 		setProgressShow(true);
-		setHintText("正在尝试停止服务器");
 	}
 	
-	private void setHintText(String hint) {
-		connhint.setText(hint);
+	/**
+	 * 尝试启动WifiAp
+	 */
+	private void setWifiApEnabled(boolean enable) {
+		// TODO 需要了解更多关于java反射的内容
+		WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
+		
+		try {
+			// 用于获得WifiConfiguration
+			Method getWifiApConfigurationMethod = wm.getClass().getDeclaredMethod("getWifiApConfiguration");
+			WifiConfiguration config = (WifiConfiguration)getWifiApConfigurationMethod.invoke(wm);
+			
+			Method setWifiApEnabledMethod = wm.getClass().getDeclaredMethod("setWifiApEnabled");
+			setWifiApEnabledMethod.invoke(wm, config, enable);
+			
+			// 当上面的方法调用完成后，没有发生错误
+			// 将状态设置为开启中/关闭中
+			if (enable) {
+				ftpApState.setText("AP启动中");
+			} else {
+				ftpApState.setText("AP关闭中");
+			}
+			
+		} catch (NoSuchMethodException e) {
+			ftpApState.setText("AP无法启动");
+			ftpApTest.setEnabled(false);
+			ftpApTest.setChecked(false);
+			Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO 添加对应的响应
+			ftpApState.setText("AP无法启动");
+			ftpApTest.setEnabled(false);
+			ftpApTest.setChecked(false);
+			Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			ftpApState.setText("AP无法启动");
+			ftpApTest.setEnabled(false);
+			ftpApTest.setChecked(false);
+			Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -259,21 +414,13 @@ public class NewConn extends Activity {
 		ftpSwitch.setChecked(b);
 	}
 	
-	/**
-	 * 是否允许改动服务器设置
-	 */
-	private void setSettingChanged(boolean canChange) {
-		ftpUsername.setEnabled(canChange);
-		ftpPassword.setEnabled(canChange);
-		ftpPort.setEnabled(canChange);
-	}
-	
 	private void setProgressShow(boolean show) {
-		if (show) {
-			progressWait.setVisibility(View.VISIBLE);
-		} else {
-			progressWait.setVisibility(View.GONE);
-		}
+		// TODO 暂时设置为不可使用
+//		if (show) {
+//			progressWait.setVisibility(View.VISIBLE);
+//		} else {
+//			progressWait.setVisibility(View.GONE);
+//		}
 	}
 	
 	/**
@@ -281,11 +428,10 @@ public class NewConn extends Activity {
 	 * @author HM
 	 *
 	 */
-	private class OnStartStopServerListener implements View.OnClickListener {
+	private class StartStopServerListener implements View.OnClickListener {
 		
 		@Override
 		public void onClick(View arg0) {
-			// TODO Auto-generated method stub
 			if (ftpSwitch.isChecked()) {
 				startServer();
 			} else {
@@ -295,30 +441,51 @@ public class NewConn extends Activity {
 	}
 
 	/**
-	 * wifi状态变化监听器
+	 * 响应Activity中的点击事件，用来启动和关闭WifiAp
 	 * @author HM
 	 *
 	 */
-	private class WifiConectionChangeListener implements OnWifiConnectChangeListener {
+	private class WifiApControlListener implements View.OnClickListener {
 
 		@Override
-		public void onWifiConnectChange(boolean connected) {
-			// TODO Auto-generated method stub
+		public void onClick(View v) {
+			if (ftpApTest.isChecked()) {
+				// TODO 尝试对WIFIAP进行操作，但是可能这样做会让代码太过分散，所以使用状态来表最好
+				setWifiApEnabled(true);
+				ftpApTest.setEnabled(false);
+			} else {
+				setWifiApEnabled(false);
+				ftpApTest.setEnabled(false);
+			}
+		}
+		
+	}
+	
+	/**
+	 * 网络状态变化监听器
+	 * @author HM
+	 *
+	 */
+	private class NetworkStateChangeListener implements OnNetworkStateChangeListener {
+
+		@Override
+		public void onNetworkStateChange(String typeName, int type) {
+			Log.v(TAG, "接受到网络状态变化广播");
 			// 只有在Wifi的情况下才允许启动服务器
-			if (connected) {
+			
+			networkStateView.setText(typeName);
+			
+			if (type == ConnectivityManager.TYPE_WIFI) {
 				changeState(WIFI_STATE_CONNECTED);
-				setHintText("当前WIFI连接中");
-				ftpaddr.setText(FsService.getLocalInetAddress().getHostAddress());
+				ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
 			} else {
 				changeState(WIFI_STATE_DISCONNECTED);
-				setHintText("当前WIFI未连接");
 				if (FsService.isRunning()) {
 					// 尝试关闭服务器
 					stopServer();
 				}
 			}
 		}
-		
 	}
 	
 	private class ServerStateChangeListener implements OnServerStateChangeListener {
@@ -330,12 +497,52 @@ public class NewConn extends Activity {
 			// 接受到了反馈，所以将Progress设置为不可见
 			if (start) {
 				changeState(SERVER_STATE_STARTED);
-				setHintText("服务器已经启动");
 			} else {
 				changeState(SERVER_STATE_STOPPED);
-				setHintText("服务器已经停止");
 			}
 		}
-		
+	}
+
+	/**
+	 * 监听WifiAp状态
+	 * @author HM
+	 *
+	 */
+	private class WifiApStateChangeListener implements OnWifiApStateChangeListener {
+
+		@Override
+		public void onWifiApStateChange(boolean enable) {
+			Context context = MShareApp.getAppContext();
+			
+			// 做出了响应，将ToggleButton设置为可用
+			ftpApTest.setEnabled(true);
+			
+			// 对WifiAp的状态变化做出响应
+			if (enable) {
+				
+				ftpApTest.setChecked(true);
+				ftpApState.setText("AP已启动");
+				
+				// TODO 地址可能并不是这样设置的，所以暂时将这些撤销
+				// 设置地址
+//				byte[] address = FsService.getLocalInetAddress().getAddress();
+//				String addressStr = "";
+//				for (int i = 0, len = address.length; i < len; i++) {
+//					byte b = address[i];
+//					addressStr += String.valueOf(((int)b + 256)) + " ";
+//				}
+//				ftpApIp.setText(addressStr);
+//				ftpApIp.setVisibility(View.VISIBLE);
+			} else {
+				
+				ftpApTest.setChecked(false);
+				ftpApState.setText("AP已关闭");
+				
+				// TODO 暂时不处理IP
+				
+//				ftpApIp.setText("");
+//				ftpApIp.setVisibility(View.VISIBLE);
+			}
+		}
 	}
 }

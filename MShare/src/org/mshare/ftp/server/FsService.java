@@ -61,6 +61,16 @@ public class FsService extends Service implements Runnable {
     // 有一个Receiver的存在用于监听下面的内容，用于启动和停止服务器
 	public static final String ACTION_START_FTPSERVER = "org.mshare.ftp.server.ACTION_START_FTPSERVER";
     public static final String ACTION_STOP_FTPSERVER = "org.mshare.ftp.server.ACTION_STOP_FTPSERVER";
+    
+    // TODO 使用反射来获得WifiAp状态改变的广播
+    public static final String WIFI_AP_STATE_CHANGED_ACTION = "android.net.wifi.WIFI_AP_STATE_CHANGED";
+    public static final int WIFI_AP_STATE_DISABLING = 10;
+    public static final int WIFI_AP_STATE_DISABLED = 11;
+    public static final int WIFI_AP_STATE_ENABLING = 12;
+    public static final int WIFI_AP_STATE_ENABLED = 13;
+    public static final int WIFI_AP_STATE_FAILED = 14;
+    public static final String EXTRA_WIFI_AP_STATE = "wifi_state";
+    
     // server thread
     protected static Thread serverThread = null;
     protected boolean shouldExit = false;
@@ -80,7 +90,6 @@ public class FsService extends Service implements Runnable {
     // wifi和唤醒锁
     private WakeLock wakeLock;
     private WifiLock wifiLock = null;
-    
     
     /**
      * 当start被调用的时候，即尝试启动一个新的服务器线程
@@ -182,6 +191,10 @@ public class FsService extends Service implements Runnable {
     public void run() {
         Log.d(TAG, "Server thread running");
 
+        // TODO 检测当前的网络状态，根据当前的网络状态来确定是否应当开启服务器
+        // 只有当网络状态是WIFI或者是自己启动的AP的时候才可以启动服务器
+        // 同时注意当3G启动的时候需要提醒可能会产生流量
+        
         // 如果不是在local network的情形下，将无法启动FTP服务器
         if (isConnectedToLocalNetwork() == false) {
             Log.w(TAG, "run: There is no local network, bailing out");
@@ -315,7 +328,7 @@ public class FsService extends Service implements Runnable {
             return null;
         }
         // TODO: next if block could probably be removed
-        if (MShareUtil.isConnectedUsingWifi() == true) {
+        if (MShareUtil.isConnectedUsing(MShareUtil.WIFI) == true) {
             Context context = MShareApp.getAppContext();
             WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             // 获得WIFI环境下的IP地址
@@ -366,7 +379,6 @@ public class FsService extends Service implements Runnable {
         
         if (connected == false) {
             Log.d(TAG, "Device not connected to a network, see if it is an AP");
-            // wifi管理器
             WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             // isWifiApEnabled是被hide annotation注释的内容，需要通过java反射机制绕过hide annotation
             try {
@@ -379,6 +391,24 @@ public class FsService extends Service implements Runnable {
         return connected;
     }
 
+    /**
+     * 检测当前WifiAp是否可用
+     * @return
+     */
+    public static boolean isConnectedUsingWifiAp() {
+    	boolean connect = false;
+    	Context context = MShareApp.getAppContext();
+        WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        // isWifiApEnabled是被隐藏的API
+        try {
+            Method method = wm.getClass().getDeclaredMethod("isWifiApEnabled");
+            connect = (Boolean) method.invoke(wm);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return connect;
+    }
+    
     /**
      * All messages server<->client are also send to this call
      * 
