@@ -7,6 +7,9 @@ import android.os.Environment;
 
 public class MShareUtil {
 
+	public static final int WIFI = ConnectivityManager.TYPE_WIFI;
+	public static final int ETHERNET = ConnectivityManager.TYPE_ETHERNET;
+	
 	/**
 	 * 检查扩展存储是否可用
 	 * @return
@@ -22,12 +25,12 @@ public class MShareUtil {
      * 检测是否是WIFI环境
      * @return true if connected using wifi
      */
-    public static boolean isConnectedUsingWifi() {
+    public static boolean isConnectedUsing(int type) {
         Context context = MShareApp.getAppContext();
         ConnectivityManager cm = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = cm.getActiveNetworkInfo();
         return ni != null && ni.isConnected() == true
-                && ni.getType() == ConnectivityManager.TYPE_WIFI;
+                && (ni.getType() & type) != 0;
     }
 }

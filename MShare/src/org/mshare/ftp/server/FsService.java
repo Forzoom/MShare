@@ -191,6 +191,10 @@ public class FsService extends Service implements Runnable {
     public void run() {
         Log.d(TAG, "Server thread running");
 
+        // TODO 检测当前的网络状态，根据当前的网络状态来确定是否应当开启服务器
+        // 只有当网络状态是WIFI或者是自己启动的AP的时候才可以启动服务器
+        // 同时注意当3G启动的时候需要提醒可能会产生流量
+        
         // 如果不是在local network的情形下，将无法启动FTP服务器
         if (isConnectedToLocalNetwork() == false) {
             Log.w(TAG, "run: There is no local network, bailing out");
@@ -324,7 +328,7 @@ public class FsService extends Service implements Runnable {
             return null;
         }
         // TODO: next if block could probably be removed
-        if (MShareUtil.isConnectedUsingWifi() == true) {
+        if (MShareUtil.isConnectedUsing(MShareUtil.WIFI) == true) {
             Context context = MShareApp.getAppContext();
             WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             // 获得WIFI环境下的IP地址

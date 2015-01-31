@@ -11,66 +11,184 @@
 	    android:layout_height="match_parent"
 	    android:padding="20dp">
 		
-	    <android.widget.Switch
+	    <ToggleButton
 	        android:id="@+id/ftp_switch"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:text="文件共享" />
 	
-	    <TextView 
-	        android:id="@+id/ftp_username"
+	    <!-- Username -->
+	    <RelativeLayout
 	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:hint="@string/ftp_username" />
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="@string/ftp_username" />
+	        <TextView 
+		        android:id="@+id/ftp_username"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:hint="@string/ftp_username" />
+	    </RelativeLayout>
 	    
-	    <TextView 
-	        android:id="@+id/ftp_password"
+	    <!-- Password -->
+	    <RelativeLayout
 	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:hint="@string/ftp_password" />
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="@string/ftp_password" />
+	        <TextView 
+		        android:id="@+id/ftp_password"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:hint="@string/ftp_password" />
+	    </RelativeLayout>
 	    
-	    <TextView 
+	    <!-- Port -->
+	    <RelativeLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView
+	            android:layout_gravity="left" 
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="@string/ftp_port" />
+	        <TextView 
 	        android:id="@+id/ftp_port"
-	        android:layout_width="match_parent"
+	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true"
 	        android:hint="@string/ftp_port" />
+	    </RelativeLayout>
 	    
-		<TextView
-	        android:id="@+id/connhint"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:text="打开后可以在其他设备上管理本设备的文件" />
-	
+	    <!-- 要如何制造出label的感觉呢 -->
+	    <!-- SessionState -->
+	    <RelativeLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView 
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="当前连接情况" />
+	        <TextView 
+		        android:id="@+id/ftp_session_state"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:text="0/8" />
+	    </RelativeLayout>
+	    
+		<!-- 显示当前网络的地址 -->
 	    <TextView
-	        android:id="@+id/ftpaddr"
+	        android:id="@+id/ftp_addr"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
 	        android:background="@drawable/button"
 	        android:textColor="@color/Color_White" />
 	    
-	    <TextView
-	        android:id="@+id/ftp_wifi_ap_state"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:background="@drawable/button"
-	        android:textColor="@color/Color_White" />
+	    <!-- ServerState -->
+	    <RelativeLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView 
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="服务器状态" />
+	        <TextView 
+		        android:id="@+id/server_state"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:text="未知" />
+	    </RelativeLayout>
 	    
-	    <ToggleButton
-	        android:id="@+id/ftp_ap_test"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:text="尝试启动Ap" />
+	    <!-- NetworkState -->
+	    <RelativeLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView 
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="网络状态" />
+	        <TextView 
+		        android:id="@+id/network_state"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:text="未知" />
+	    </RelativeLayout>
+	    
+	    <RelativeLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView
+	            android:id="@+id/ap_test_label" 
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="启动/关闭AP" />
+	        <ToggleButton
+		        android:id="@+id/ftp_ap_test"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:layout_toRightOf="@id/ap_test_label"
+		         />
+	    </RelativeLayout>
+	    
+	    <RelativeLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" 
+	        >
+	        <TextView 
+	            android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:text="AP状态" />
+	        <TextView
+		        android:id="@+id/ftp_wifi_ap_state"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:text="未知" />
+	    </RelativeLayout>
+	    
 	    
 	    <TextView 
 	        android:id="@+id/ftp_ap_ip"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content" />
 	    
+	    <!-- 暂时不尝试显示AP对应的ssid -->
+	    <!-- 
 	    <TextView 
 	        android:id="@+id/ap_ssid"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content" />
+		 -->
 	</LinearLayout>
+	
+    <!-- TODO:暂时不使用progress_wait  -->
+    
+	<!-- 
 	<LinearLayout
 	    android:id="@+id/progress_wait"
 	    android:layout_width="match_parent"
@@ -100,4 +218,6 @@
 	    </LinearLayout>
 		
 	</LinearLayout>
+	
+	 -->
 </RelativeLayout>
