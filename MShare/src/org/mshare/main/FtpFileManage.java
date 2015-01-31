@@ -1,77 +1,79 @@
 package org.mshare.main;
 
-import it.sauronsoftware.ftp4j.FTPClient;
-import it.sauronsoftware.ftp4j.FTPException;
-import it.sauronsoftware.ftp4j.FTPFile;
-import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
-
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.mshare.main.R;
-import org.mshare.main.FtpMainActivity.CmdFactory;
+import org.mshare.main.UploadFileChooserAdapter.FileInfo;
 
+import it.sauronsoftware.ftp4j.FTPClient;
+import it.sauronsoftware.ftp4j.FTPDataTransferListener;
+import it.sauronsoftware.ftp4j.FTPException;
+import it.sauronsoftware.ftp4j.FTPFile;
+import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.graphics.drawable.Drawable;
+import android.app.Dialog;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
-import android.widget.TableLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.SimpleAdapter.ViewBinder;
 
-
-public class JoinConn extends Activity {
+public class FtpFileManage extends Activity{
 	
 	private static String TAG = FtpMainActivity.class.getName();
 	
-	private GridView gridview;
-	private Button btftp;
-	private ArrayList<HashMap<String, Object>> listImageItem;  
-    private SimpleAdapter simpleAdapter;
-    
-    private ListView mListView;
-    private String mSdcardRootPath;
-    private Object mLock = new Object();
+	private CmdFactory mCmdFactory;
+	private FTPClient mFTPClient;
+	private ExecutorService mThreadPool;
+
+	private static String mAtSDCardPath;
+
+	private ProgressBar mPbLoad = null;
+
+	private ListView mListView;
+	private FtpFileAdapter mAdapter;
+	private List<FTPFile> mFileList = new ArrayList<FTPFile>();
+	private Object mLock = new Object();
 	private int mSelectedPosistion = -1;
 
 	private String mCurrentPWD; // 当前远程目录
-    
-    private CmdFactory mCmdFactory;
-	private FTPClient mFTPClient;
-	private ExecutorService mThreadPool;
+	private static final String OLIVE_DIR_NAME = "OliveDownload";
+
+	// Upload
+	private GridView mGridView;
+	private View fileChooserView;
+	private TextView mTvPath;
+	private String mSdcardRootPath;
+	private String mLastFilePath;
+	private List<FileInfo> mUploadFileList;
+	private UploadFileChooserAdapter mUploadAdapter;
+	//
+
+	private Dialog progressDialog;
+	private Dialog uploadDialog;
+
+	private Thread mDameonThread = null ;
+	private boolean mDameonRunning = true;
 	
 	private String mFTPHost ;
 	private int mFTPPort ;
 	private String mFTPUser ;
 	private String mFTPPassword ;
-	
-	private Thread mDameonThread = null ;
-	private boolean mDameonRunning = true;
-	
-	private FtpFileAdapter mAdapter;
-	private List<FTPFile> mFileList = new ArrayList<FTPFile>();
 	
 	private static final int MAX_THREAD_NUMBER = 5;
 	private static final int MAX_DAMEON_TIME_WAIT = 2 * 1000; // millisecond
@@ -96,177 +98,53 @@ public class JoinConn extends Activity {
 	private static final int DIALOG_LOAD = MENU_OPTIONS_BASE + 40;
 	private static final int DIALOG_RENAME = MENU_OPTIONS_BASE + 41;
 	private static final int DIALOG_FTP_LOGIN = MENU_OPTIONS_BASE + 42;
-    
-	protected void onCreate(Bundle savedInstanceState){
+
+	
+	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.slidelistview);
-		gridview = (GridView) findViewById(R.id.gridview);
-	    btftp = (Button) findViewById(R.id.btnewftp);
-	    listImageItem = new ArrayList<HashMap<String, Object>>();  
-	    
-	    mSdcardRootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+		setContentView(R.layout.activity_main);
+		initView();
+		registerForContextMenu(mListView);
+		
+		mSdcardRootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
 		mCmdFactory = new CmdFactory();
 		mFTPClient = new FTPClient();
 		mThreadPool = Executors.newFixedThreadPool(MAX_THREAD_NUMBER);
-      
-	    simpleAdapter = new SimpleAdapter(  
-	            this, listImageItem,  
-	            R.layout.labelicon, new String[] {  
-	                    "ItemImage", "ItemText" }, new int[] { R.id.imageview,  
-	                    R.id.textview });  
-	    //添加图片绑定  
-//	    simpleAdapter.setViewBinder(new ViewBinder() {  
-//	        public boolean setViewValue(View view, Object data,  
-//	                String textRepresentation) {  
-//	            if (view instanceof ImageView && data instanceof Drawable) {  
-//	                ImageView iv = (ImageView) view;  
-//	                iv.setImageDrawable((Drawable) data);  
-//	                return true;  
-//	            } else  
-//	                return false;  
-//	        }  
-//	    });  
-//	    gridview.setAdapter(simpleAdapter); 
 	}
 	
-	public void customView(View source)
-	{
-		//装载/res/layout/login.xml界面布局
-		TableLayout loginForm = (TableLayout)getLayoutInflater()
-			.inflate( R.layout.login, null);	
-		final EditText editHost = (EditText) loginForm.findViewById(R.id.editFTPHost);
-		final EditText editPort= (EditText) loginForm.findViewById(R.id.editFTPPort);
-		editPort.setText("3721");
-		final EditText editUser = (EditText) loginForm.findViewById(R.id.editFTPUser);
-		final EditText editPasword= (EditText) loginForm.findViewById(R.id.editPassword);
-		new AlertDialog.Builder(this)
-			// 设置对话框的图标
-			.setIcon(R.drawable.app_default_icon)
-			// 设置对话框的标题
-			.setTitle("新建FTP服务器")
-			// 设置对话框显示的View对象
-			.setView(loginForm)
-			// 为对话框设置一个“确定”按钮
-			.setPositiveButton("确定" , new OnClickListener()
-			{
-				@Override
-				public void onClick(DialogInterface dialog,
-						int which)
-				{
-					if (TextUtils.isEmpty(editHost.getText()) || 
-							TextUtils.isEmpty(editPort.getText()) || 
-							TextUtils.isEmpty(editUser.getText()) ||
-							TextUtils.isEmpty(editUser.getText())) {
-						  toast("请将资料填写完整");
-//						  JoinConn.this.finish();
-						  return ;
-					}
-					try{
-					    mFTPPort = Integer.parseInt(editPort.getText().toString().trim());
-					}
-					catch(NumberFormatException nfEx){
-						nfEx.printStackTrace();
-						toast("端口输入有误，请重试");
-						return ;
-					}
-					mFTPHost = editHost.getText().toString().trim();
-					mFTPUser = editUser.getText().toString().trim();
-					mFTPPassword = editPasword.getText().toString().trim();
-					Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
-							+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
-					// 此处可执行登录处理
-					executeConnectRequest();
-				}
-			})
-			// 为对话框设置一个“取消”按钮
-			.setNegativeButton("取消", new OnClickListener()
-			{
-				@Override
-				public void onClick(DialogInterface dialog,
-						int which)
-				{
-					// 取消登录，不做任何事情。
-				}
-			})
-			// 创建、并显示对话框
-			.create()
-			.show();
-	}
-	
-	private void buildOrUpdateDataset() {
-		HashMap<String, Object> map = new HashMap<String, Object>();  
-		map.put("ItemImage", R.drawable.folder);// 添加图像资源的ID  
-        map.put("ItemText", mFTPHost);// 按FTPHost做ItemText  
-        listImageItem.add(map);
-        
-	    //添加图片绑定  
-	    simpleAdapter.setViewBinder(new ViewBinder() {  
-	        public boolean setViewValue(View view, Object data,  
-	                String textRepresentation) {  
-	            if (view instanceof ImageView && data instanceof Drawable) {  
-	                ImageView iv = (ImageView) view;  
-	                iv.setImageDrawable((Drawable) data);  
-	                return true;  
-	            } else  
-	                return false;  
-	        }  
-	    });  
-	    gridview.setAdapter(simpleAdapter);
-	    gridview.setOnItemClickListener(new OnItemClickListener(){
+	private void initView() {
+		mListView = (ListView) findViewById(R.id.listviewApp);
+
+		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
-				// TODO Auto-generated method stub
-				Log.v(TAG,"test onItemSelected");
+			public void onItemClick(AdapterView<?> adapterView, View view,
+					int positioin, long id) {
+				if (mFileList.get(positioin).getType() == FTPFile.TYPE_DIRECTORY) {
+					executeCWDRequest(mFileList.get(positioin).getName());
+				}
 			}
-	    	
-	    });
-//		if (mAdapter == null) {
-//			mAdapter = new FtpFileAdapter(this, mFileList);
-//			mListView.setAdapter(mAdapter);
-//		}
-//		mAdapter.notifyDataSetChanged();
-	}
-	
-	private void executeConnectRequest() {
-		if(mThreadPool==null)
-			Log.v(TAG, "mThreadPool is null");
-		if(mCmdFactory==null)
-			Log.v(TAG, "mCmdFactory is null");
-		mThreadPool.execute(mCmdFactory.createCmdConnect());
-	}
+		});
 
-	private void executeDisConnectRequest() {
-		mThreadPool.execute(mCmdFactory.createCmdDisConnect());
-	}
+		mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
-	private void executePWDRequest() {
-		mThreadPool.execute(mCmdFactory.createCmdPWD());
-	}
+					@Override
+					public boolean onItemLongClick(AdapterView<?> adapterView,
+							View view, int positioin, long id) {
+						mSelectedPosistion = positioin;
+						return false;
+					}
+				});
 
-	private void executeLISTRequest() {
-		mThreadPool.execute(mCmdFactory.createCmdLIST());
-	}
+		mListView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
 
-	private void executeCWDRequest(String path) {
-		mThreadPool.execute(mCmdFactory.createCmdCWD(path));
-	}
+					@Override
+					public void onCreateContextMenu(ContextMenu menu, View v,
+							ContextMenuInfo menuInfo) {
+						Log.v(TAG, "onCreateContextMenu ");
+					}
 
-	private void executeDELERequest(String path, boolean isDirectory) {
-		mThreadPool.execute(mCmdFactory.createCmdDEL(path, isDirectory));
-	}
-
-	private void executeREANMERequest(String newPath) {
-		mThreadPool.execute(mCmdFactory.createCmdRENAME(newPath));
-	}
-	
-	private void logv(String log) {
-		Log.v(TAG, log);
-	}
-	
-	private void toast(String hint) {
-		Toast.makeText(this, hint, Toast.LENGTH_SHORT).show();
+				});
 	}
 	
 	private Handler mHandler = new Handler() {
@@ -323,6 +201,98 @@ public class JoinConn extends Activity {
 		}
 	};
 	
+	private void buildOrUpdateDataset() {
+		if (mAdapter == null) {
+			mAdapter = new FtpFileAdapter(this, mFileList);
+			mListView.setAdapter(mAdapter);
+		}
+		mAdapter.notifyDataSetChanged();
+	}
+
+	private void executeConnectRequest() {
+		mThreadPool.execute(mCmdFactory.createCmdConnect());
+	}
+
+	private void executeDisConnectRequest() {
+		mThreadPool.execute(mCmdFactory.createCmdDisConnect());
+	}
+
+	private void executePWDRequest() {
+		mThreadPool.execute(mCmdFactory.createCmdPWD());
+	}
+
+	private void executeLISTRequest() {
+		mThreadPool.execute(mCmdFactory.createCmdLIST());
+	}
+
+	private void executeCWDRequest(String path) {
+		mThreadPool.execute(mCmdFactory.createCmdCWD(path));
+	}
+
+	private void executeDELERequest(String path, boolean isDirectory) {
+		mThreadPool.execute(mCmdFactory.createCmdDEL(path, isDirectory));
+	}
+
+	private void executeREANMERequest(String newPath) {
+		mThreadPool.execute(mCmdFactory.createCmdRENAME(newPath));
+	}
+
+	
+	private void logv(String log) {
+		Log.v(TAG, log);
+	}
+
+	private void toast(String hint) {
+		Toast.makeText(this, hint, Toast.LENGTH_SHORT).show();
+	}
+	
+	private static String getParentRootPath() {
+		if (Environment.getExternalStorageState().equals(
+				Environment.MEDIA_MOUNTED)) {
+			if (mAtSDCardPath != null) {
+				return mAtSDCardPath;
+			} else {
+				mAtSDCardPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + OLIVE_DIR_NAME;
+				File rootFile = new File(mAtSDCardPath);
+				if (!rootFile.exists()) {
+					rootFile.mkdir();
+				}
+				return mAtSDCardPath;
+			}
+		}
+		return null;
+	}
+	
+	public class CmdFactory {
+
+		public FtpCmd createCmdConnect() {
+			return new CmdConnect();
+		}
+
+		public FtpCmd createCmdDisConnect() {
+			return new CmdDisConnect();
+		}
+
+		public FtpCmd createCmdPWD() {
+			return new CmdPWD();
+		}
+
+		public FtpCmd createCmdLIST() {
+			return new CmdLIST();
+		}
+
+		public FtpCmd createCmdCWD(String path) {
+			return new CmdCWD(path);
+		}
+
+		public FtpCmd createCmdDEL(String path, boolean isDirectory) {
+			return new CmdDELE(path, isDirectory);
+		}
+
+		public FtpCmd createCmdRENAME(String newPath) {
+			return new CmdRENAME(newPath);
+		}
+	}
 	public class DameonFtpConnector implements Runnable {
 
 		@Override
@@ -346,7 +316,7 @@ public class JoinConn extends Activity {
 			}
 		}
 	}
-	
+
 	public abstract class FtpCmd implements Runnable {
 
 		public abstract void run();
@@ -500,38 +470,127 @@ public class JoinConn extends Activity {
 			}
 		}
 	}
+
+	public class CmdDownLoad extends AsyncTask<Void, Integer, Boolean> {
+
+		public CmdDownLoad() {
+
+		}
+
+		@Override
+		protected Boolean doInBackground(Void... params) {
+			try {
+				String localPath = getParentRootPath() + File.separator
+						+ mFileList.get(mSelectedPosistion).getName();
+				mFTPClient.download(
+						mFileList.get(mSelectedPosistion).getName(),
+						new File(localPath),
+						new DownloadFTPDataTransferListener(mFileList.get(
+								mSelectedPosistion).getSize()));
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				return false;
+			}
+
+			return true;
+		}
+
+		protected void onProgressUpdate(Integer... progress) {
+
+		}
+
+		protected void onPostExecute(Boolean result) {
+			toast(result ? "下载成功" : "下载失败");
+			progressDialog.dismiss();
+		}
+	}
+
+	public class CmdUpload extends AsyncTask<String, Integer, Boolean> {
+
+		String path;
+
+		public CmdUpload() {
+
+		}
+
+		@Override
+		protected Boolean doInBackground(String... params) {
+			path = params[0];
+			try {
+				File file = new File(path);
+				mFTPClient.upload(file, new DownloadFTPDataTransferListener(
+						file.length()));
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				return false;
+			}
+
+			return true;
+		}
+
+		protected void onProgressUpdate(Integer... progress) {
+
+		}
+
+		protected void onPostExecute(Boolean result) {
+			toast(result ? path + "上传成功" : "上传失败");
+			progressDialog.dismiss();
+		}
+	}
+
+	private class DownloadFTPDataTransferListener implements
+			FTPDataTransferListener {
+
+		private int totolTransferred = 0;
+		private long fileSize = -1;
+
+		public DownloadFTPDataTransferListener(long fileSize) {
+			if (fileSize <= 0) {
+				throw new RuntimeException(
+						"the size of file muset be larger than zero.");
+			}
+			this.fileSize = fileSize;
+		}
+
+		@Override
+		public void aborted() {
+			// TODO Auto-generated method stub
+			logv("FTPDataTransferListener : aborted");
+		}
+
+		@Override
+		public void completed() {
+			// TODO Auto-generated method stub
+			logv("FTPDataTransferListener : completed");
+			setLoadProgress(mPbLoad.getMax());
+		}
+
+		@Override
+		public void failed() {
+			// TODO Auto-generated method stub
+			logv("FTPDataTransferListener : failed");
+		}
+
+		@Override
+		public void started() {
+			// TODO Auto-generated method stub
+			logv("FTPDataTransferListener : started");
+		}
+
+		@Override
+		public void transferred(int length) {
+			totolTransferred += length;
+			float percent = (float) totolTransferred / this.fileSize;
+			logv("FTPDataTransferListener : transferred # percent @@" + percent);
+			setLoadProgress((int) (percent * mPbLoad.getMax()));
+		}
+	}
 	
-	public class CmdFactory {
-
-		public FtpCmd createCmdConnect() {
-			return new CmdConnect();
-		}
-
-		public FtpCmd createCmdDisConnect() {
-			return new CmdDisConnect();
-		}
-
-		public FtpCmd createCmdPWD() {
-			return new CmdPWD();
-		}
-
-		public FtpCmd createCmdLIST() {
-			return new CmdLIST();
-		}
-
-		public FtpCmd createCmdCWD(String path) {
-			return new CmdCWD(path);
-		}
-
-		public FtpCmd createCmdDEL(String path, boolean isDirectory) {
-			return new CmdDELE(path, isDirectory);
-		}
-
-		public FtpCmd createCmdRENAME(String newPath) {
-			return new CmdRENAME(newPath);
+	public void setLoadProgress(int progress) {
+		if (mPbLoad != null) {
+			mPbLoad.setProgress(progress);
 		}
 	}
 }
-
 
 
