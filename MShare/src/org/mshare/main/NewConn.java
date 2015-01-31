@@ -218,6 +218,19 @@ public class NewConn extends Activity {
 				Log.v(TAG, "qrcode");
 				Intent startQRCode = new Intent();
 				startQRCode.setClass(this, QRCodeLogin.class);
+				// 写入二维码需要显示的内容
+				// 需要和扫描相对应
+				// 需要内容:1.ip 2.port 3.username 4.password
+				// 需要如何传送这些内容呢?使用字符隔开,在username和password中不允许有空格
+				String address = "192.168.137.1";
+				String port = "2121";
+				String username = "username";
+				String password = "password";
+				
+				// 使用空格分隔
+				String content = address + " " + port + " " + username + " " + password;
+				
+				startQRCode.putExtra(QRCodeLogin.EXTRA_CONTENT, content);
 				startActivity(startQRCode);
 				break;
 			case R.id.menu_set_ftp_server_setting:

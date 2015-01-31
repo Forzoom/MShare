@@ -47,4 +47,13 @@ public class MShareApp extends Application {
         }
         return sContext;
     }
+    private static String guessAppropriateEncoding(CharSequence contents) {
+		// Very crude at the moment
+		for (int i = 0; i < contents.length(); i++) {
+			if (contents.charAt(i) > 0xFF) {
+				return "UTF-8";
+			}
+		}
+		return null;
+    }
 }

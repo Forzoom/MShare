@@ -19,6 +19,10 @@
   	<!-- 服务器 -->
   	<color name="color_light_gray_alpha">#55eeeeee</color>
   	
+  	<!-- 二维码 -->
+  	<color name="contents_text">#ff000000</color>
+  	<color name="encode_view">#ffffffff</color>
+  	
 	<drawable name="tv_normal">#FFFFFF</drawable>
 	<drawable name="tv_focused">#1F2FAB</drawable>
 	<drawable name="tv_pressed">#00cccc</drawable>

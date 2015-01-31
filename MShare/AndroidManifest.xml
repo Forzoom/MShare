@@ -36,12 +36,20 @@
         <!-- 修改服务器配置 -->
         <activity
             android:name="org.mshare.main.ServerSettingActivity"
-            android:label="修改配置"
+			android:label="@string/activity_label_server_setting"
             android:parentActivityName="org.mshare.main.NewConn" >
         	<!-- Parent activity meta-data to support API level 7+ -->
-	        <meta-data
-	            android:name="android.support.PARENT_ACTIVITY"
-	            android:value="org.mshare.main.NewConn" />
+            <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="org.mshare.main.NewConn" />
+		</activity>
+		<activity
+            android:name="org.mshare.main.QRCodeLogin"
+            android:label="@string/activity_label_qrcode_login"
+            android:parentActivityName="org.mshare.main.NewConn" >
+            <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="org.mshare.main.NewConn" />
 		</activity>
 		<activity
             android:name="org.mshare.main.FtpMainActivity"

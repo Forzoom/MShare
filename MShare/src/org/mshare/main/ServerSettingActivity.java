@@ -57,7 +57,7 @@ public class ServerSettingActivity extends Activity {
 				}
 				break;
 		}
-		return true;
+		return super.onOptionsItemSelected(item);
 	}
 	
 	/**
