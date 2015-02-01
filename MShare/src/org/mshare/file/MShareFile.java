@@ -15,6 +15,9 @@ public class MShareFile extends File {
 	// 默认不分享
 	private boolean shared = false;
 	
+	// TODO 如果设置了总共有多少个子文件被共享的话，就需要在文件浏览器中进行更多的操作
+	// 但是这样是否是有必要的呢？
+	
 	/**
 	 * 用于显示在文件浏览器中的名字
 	 * TODO 可能要改名为iconName

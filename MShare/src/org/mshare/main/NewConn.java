@@ -141,13 +141,13 @@ public class NewConn extends Activity {
 		// TODO 在NetworkStateReceiver中也有类似的代码，是否可以合并?
 		ConnectivityManager cm = (ConnectivityManager)getSystemService(Service.CONNECTIVITY_SERVICE);
 		NetworkInfo ni = cm.getActiveNetworkInfo();
+		String networkTypeName = "";
 		if (ni != null) {
-			String networkTypeName = ni.getTypeName();
-			networkStateView.setText(networkTypeName);
+			networkTypeName = ni.getTypeName();
 		} else {
-			String networkTypeName = "NONE";
-			networkStateView.setText("NONE");
+			networkTypeName = "NONE";
 		}
+		networkStateView.setText(networkTypeName);
 		
 		// 显示当前的AP启动状态
 		// TODO 需要处理的内容太多了，可能考虑不加入开启AP的功能

@@ -38,7 +38,7 @@ public class DummyFragment extends Fragment
 	private static final String TAG = DummyFragment.class.getSimpleName();
 //	private Button btftp;
 	private RelativeLayout relative;
-	private ArrayList<HashMap<String, Object>> listImageItem;  
+	private ArrayList<HashMap<String, Object>> listImageItem;
     private SimpleAdapter simpleAdapter;
     
     private MShareFileBrowser mFileBrowser = null;

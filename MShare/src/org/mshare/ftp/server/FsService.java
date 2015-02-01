@@ -360,6 +360,16 @@ public class FsService extends Service implements Runnable {
     }
 
     /**
+     * 判断当前的网络环境是否可以开启服务器
+     * @return
+     */
+    public static boolean isNetworkAccess() {
+    	// WIFI或者WIFIP2P或者AP情况下允许开启网络
+    	
+    	return false;
+    }
+    
+    /**
      * Checks to see if we are connected to a local network, for instance wifi or ethernet
      * 检测当前是否是在一个局域网内。
      * @return true if connected to a local network

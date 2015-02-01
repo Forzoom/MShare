@@ -51,8 +51,6 @@ public class FileAdapter extends BaseAdapter {
 	 */
 	private static boolean DRAWABLE_PREPARED = false;
 	
-	private ArrayList<View> convertViews;
-	
 	/**
 	 * GridView中的Item所包含的内容
 	 * @author HM
@@ -74,9 +72,6 @@ public class FileAdapter extends BaseAdapter {
 		super();
 		this.context = context;
 		this.files = files;
-		
-		convertViews = new ArrayList<View>();
-		
 		initDrawable(context);
 	}
 	
@@ -150,20 +145,9 @@ public class FileAdapter extends BaseAdapter {
 		} else { // 第一次使用的convertView
 			convertView = (View)LayoutInflater.from(context).inflate(R.layout.grid_item, null);
 			
-			// TODO 添加到ArrayList中以便释放，如果有更好的方法来使用LongClickListener就好了
-			convertViews.add(convertView);
-			
-			// TODO 为convertView设置长按响应，但是资源没有办法得到释放，而且如果不是一个Activity注册的，那么就会出问题
-			// 因为没有办法手动开启一个ContextMenu
-			((Activity)context).registerForContextMenu(convertView);
-			convertView.setOnLongClickListener(new View.OnLongClickListener() {
-				
-				@Override
-				public boolean onLongClick(View v) {
-					
-					return false;
-				}
-			});
+			// 为convertView设置长按响应
+			// TODO 尝试为GridView添加LongClick监听器
+			convertView.setOnLongClickListener(new OnItemLongClickListener());
 			
 			// create content
 			ItemContainer item = new ItemContainer();
@@ -214,17 +198,22 @@ public class FileAdapter extends BaseAdapter {
 		
 		return drawable; 
 	}
-	
-	/**
-	 * 释放所有的convertView的LongClick
-	 * 在确认该FileAdapter不使用前不要调用
-	 */
-	public void release() {
-		// 上下文
-		Activity activity = (Activity)context;
-		for (int i = 0, len = convertViews.size(); i < len; i++) {
-			View view = convertViews.get(i);
-			activity.unregisterForContextMenu(view);
+
+	private class OnItemLongClickListener implements View.OnLongClickListener {
+
+		@Override
+		public boolean onLongClick(View v) {
+			// 针对convertView进行处理
+			Object tag = v.getTag();
+			if (tag != null) {
+				// 可能会出现问题
+				ItemContainer item = (ItemContainer)tag;
+//				item.file
+			}
+			
+			return false;
 		}
+		
 	}
+	
 }
