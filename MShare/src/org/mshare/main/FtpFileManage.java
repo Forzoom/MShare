@@ -1,59 +1,42 @@
 package org.mshare.main;
 
-import it.sauronsoftware.ftp4j.FTPClient;
-import it.sauronsoftware.ftp4j.FTPDataTransferListener;
-import it.sauronsoftware.ftp4j.FTPException;
-import it.sauronsoftware.ftp4j.FTPFile;
-import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
-
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mshare.main.UploadFileChooserAdapter.FileInfo;
 
+import it.sauronsoftware.ftp4j.FTPClient;
+import it.sauronsoftware.ftp4j.FTPDataTransferListener;
+import it.sauronsoftware.ftp4j.FTPException;
+import it.sauronsoftware.ftp4j.FTPFile;
+import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.view.View.OnClickListener;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class FtpMainActivity extends Activity implements OnClickListener {
-
+public class FtpFileManage extends Activity{
+	
 	private static String TAG = FtpMainActivity.class.getName();
-
+	
 	private CmdFactory mCmdFactory;
 	private FTPClient mFTPClient;
 	private ExecutorService mThreadPool;
@@ -115,8 +98,9 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 	private static final int DIALOG_LOAD = MENU_OPTIONS_BASE + 40;
 	private static final int DIALOG_RENAME = MENU_OPTIONS_BASE + 41;
 	private static final int DIALOG_FTP_LOGIN = MENU_OPTIONS_BASE + 42;
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
+
+	
+	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		initView();
@@ -126,10 +110,8 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 		mCmdFactory = new CmdFactory();
 		mFTPClient = new FTPClient();
 		mThreadPool = Executors.newFixedThreadPool(MAX_THREAD_NUMBER);
-		
-        showDialog(DIALOG_FTP_LOGIN);
 	}
-
+	
 	private void initView() {
 		mListView = (ListView) findViewById(R.id.listviewApp);
 
@@ -164,157 +146,7 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 
 				});
 	}
-
-	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v,
-			ContextMenuInfo menuInfo) {
-		if (v.getId() == R.id.listviewApp) {
-			menu.setHeaderTitle("文件操作");
-			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DOWNLOAD, Menu.NONE, "下载");
-			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_RENAME, Menu.NONE, "重命名");
-			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DELETE, Menu.NONE, "删除");
-		}
-	}
-
-	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-		if (mSelectedPosistion < 0 || mFileList.size() < 0) {
-			return false;
-		}
-		AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
-				.getMenuInfo();
-		switch (item.getItemId()) {
-		case MENU_OPTIONS_DOWNLOAD:
-			if (mFileList.get(mSelectedPosistion).getType() == FTPFile.TYPE_FILE) {
-				showDialog(DIALOG_LOAD);
-				new CmdDownLoad().execute();
-			} else {
-				toast("只能上传文件");
-			}
-			break;
-		case MENU_OPTIONS_RENAME:
-			showDialog(DIALOG_RENAME);
-			break;
-		case MENU_OPTIONS_DELETE:
-			executeDELERequest(
-					mFileList.get(mSelectedPosistion).getName(),
-					mFileList.get(mSelectedPosistion).getType() == FTPFile.TYPE_DIRECTORY);
-
-			break;
-		default:
-			return super.onContextItemSelected(item);
-		}
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// TODO Auto-generated method stub
-		switch (item.getItemId()) {
-		case R.id.menu_updownload:
-			openFileDialog();
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
-
-	protected Dialog onCreateDialog(int id) {
-		switch (id) {
-		case DIALOG_LOAD:
-			return createLoadDialog();
-		case DIALOG_RENAME:
-			return createRenameDialog();
-		default:
-			return null;
-		}
-	}
 	
-	private Dialog createLoadDialog() {
-
-		View rootLoadView = getLayoutInflater().inflate(
-				R.layout.dialog_load_file, null);
-		mPbLoad = (ProgressBar) rootLoadView.findViewById(R.id.pbLoadFile);
-
-		progressDialog = new AlertDialog.Builder(this).setTitle("请稍等片刻...")
-				.setView(rootLoadView).setCancelable(false).create();
-
-		progressDialog
-				.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
-					@Override
-					public void onDismiss(DialogInterface dialog) {
-						// TODO Auto-generated method stub
-						setLoadProgress(0);
-					}
-				});
-
-		return progressDialog;
-	}
-
-	private Dialog createRenameDialog() {
-
-		View rootLoadView = getLayoutInflater().inflate(R.layout.dialog_rename,
-				null);
-		final EditText edit = (EditText) rootLoadView
-				.findViewById(R.id.editNewPath);
-
-		return new AlertDialog.Builder(this)
-				.setTitle("重命名...")
-				.setView(rootLoadView)
-				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-
-					@Override
-					public void onClick(DialogInterface uploadDialog, int which) {
-						// TODO Auto-generated method stub
-						if (!TextUtils.isEmpty(edit.getText())) {
-							executeREANMERequest(edit.getText().toString());
-						}
-					}
-				})
-				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-
-					@Override
-					public void onClick(DialogInterface uploadDialog, int which) {
-						// TODO Auto-generated method stub
-
-					}
-				}).create();
-	}
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
-	}
-	
-	@Override
-	protected void onDestroy() {
-		mDameonRunning = false ;
-		Thread thread = new Thread(mCmdFactory.createCmdDisConnect()) ;
-		thread.start();
-		//等待连接中断
-		try {
-			thread.join(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		mThreadPool.shutdownNow();
-		super.onDestroy();
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_main, menu);
-		return true;
-	}
-
-	@Override
-	public void onClick(View v) {
-		// TODO Auto-generated method stub
-
-	}
-
 	private Handler mHandler = new Handler() {
 
 		@Override
@@ -368,7 +200,7 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 			}
 		}
 	};
-
+	
 	private void buildOrUpdateDataset() {
 		if (mAdapter == null) {
 			mAdapter = new FtpFileAdapter(this, mFileList);
@@ -405,6 +237,7 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 		mThreadPool.execute(mCmdFactory.createCmdRENAME(newPath));
 	}
 
+	
 	private void logv(String log) {
 		Log.v(TAG, log);
 	}
@@ -412,115 +245,7 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 	private void toast(String hint) {
 		Toast.makeText(this, hint, Toast.LENGTH_SHORT).show();
 	}
-    
-	//文件选择器相关功能实现
-	private void openFileDialog() {
-		initDialog();
-		uploadDialog = new AlertDialog.Builder(this).create();
-		Window window = uploadDialog.getWindow();
-		WindowManager.LayoutParams lp = window.getAttributes();
-		window.setAttributes(lp);
-		uploadDialog.show();
-		uploadDialog.getWindow().setContentView(fileChooserView,
-				new RelativeLayout.LayoutParams(400, 640));
-	}
-
-	private void initDialog() {
-		fileChooserView = getLayoutInflater().inflate(
-				R.layout.filechooser_show, null);
-		fileChooserView.findViewById(R.id.imgBackFolder).setOnClickListener(
-				mClickListener);
-		mTvPath = (TextView) fileChooserView.findViewById(R.id.tvPath);
-		mGridView = (GridView) fileChooserView.findViewById(R.id.gvFileChooser);
-		mGridView.setEmptyView(fileChooserView.findViewById(R.id.tvEmptyHint));
-		mGridView.setOnItemClickListener(mItemClickListener);
-		setGridViewAdapter(mSdcardRootPath);
-	}
-
-	private void setGridViewAdapter(String filePath) {
-		updateFileItems(filePath);
-		mUploadAdapter = new UploadFileChooserAdapter(this, mUploadFileList);
-		mGridView.setAdapter(mUploadAdapter);
-	}
-
-	private void updateFileItems(String filePath) {
-		mLastFilePath = filePath;
-		mTvPath.setText(mLastFilePath);
-
-		if (mUploadFileList == null)
-			mUploadFileList = new ArrayList<FileInfo>();
-		if (!mUploadFileList.isEmpty())
-			mUploadFileList.clear();
-
-		File[] files = folderScan(filePath);
-
-		for (int i = 0; i < files.length; i++) {
-			if (files[i].isHidden()) // Ignore the hidden file
-				continue;
-
-			String fileAbsolutePath = files[i].getAbsolutePath();
-			String fileName = files[i].getName();
-			boolean isDirectory = false;
-			if (files[i].isDirectory()) {
-				isDirectory = true;
-			}
-			FileInfo fileInfo = new FileInfo(fileAbsolutePath, fileName,
-					isDirectory);
-
-			mUploadFileList.add(fileInfo);
-		}
-		// When first enter , the object of mAdatper don't initialized
-		if (mUploadAdapter != null)
-			mUploadAdapter.notifyDataSetChanged();
-	}
-
-	private File[] folderScan(String path) {
-		File file = new File(path);
-		File[] files = file.listFiles();
-		return files;
-	}
-
-	private AdapterView.OnItemClickListener mItemClickListener = new OnItemClickListener() {
-		public void onItemClick(AdapterView<?> adapterView, View view,
-				int position, long id) {
-			FileInfo fileInfo = (FileInfo) (((UploadFileChooserAdapter) adapterView
-					.getAdapter()).getItem(position));
-			if (fileInfo.isDirectory()) {
-				updateFileItems(fileInfo.getFilePath());
-			} else {
-				showDialog(DIALOG_LOAD);
-				new CmdUpload().execute(fileInfo.getFilePath());
-			}
-		}
-	};
-
-	private View.OnClickListener mClickListener = new OnClickListener() {
-		public void onClick(View v) {
-			switch (v.getId()) {
-			case R.id.imgBackFolder:
-				backProcess();
-				break;
-			}
-		}
-	};
-
-	public void backProcess() {
-		if (!mLastFilePath.equals(mSdcardRootPath)) {
-			File thisFile = new File(mLastFilePath);
-			String parentFilePath = thisFile.getParent();
-			updateFileItems(parentFilePath);
-		} else {
-			setResult(RESULT_CANCELED);
-			uploadDialog.dismiss();
-		}
-	}
-
-	public void setLoadProgress(int progress) {
-		if (mPbLoad != null) {
-			mPbLoad.setProgress(progress);
-		}
-	}
-
+	
 	private static String getParentRootPath() {
 		if (Environment.getExternalStorageState().equals(
 				Environment.MEDIA_MOUNTED)) {
@@ -568,7 +293,6 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 			return new CmdRENAME(newPath);
 		}
 	}
-
 	public class DameonFtpConnector implements Runnable {
 
 		@Override
@@ -861,4 +585,12 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 			setLoadProgress((int) (percent * mPbLoad.getMax()));
 		}
 	}
+	
+	public void setLoadProgress(int progress) {
+		if (mPbLoad != null) {
+			mPbLoad.setProgress(progress);
+		}
+	}
 }
+
+

@@ -11,20 +11,27 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.mshare.main.R;
+import org.mshare.main.FtpMainActivity.CmdFactory;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -46,6 +53,7 @@ public class JoinConn extends Activity {
     private SimpleAdapter simpleAdapter;
     
     private ListView mListView;
+    private String mSdcardRootPath;
     private Object mLock = new Object();
 	private int mSelectedPosistion = -1;
 
@@ -96,12 +104,11 @@ public class JoinConn extends Activity {
 		gridview = (GridView) findViewById(R.id.gridview);
 	    btftp = (Button) findViewById(R.id.btnewftp);
 	    listImageItem = new ArrayList<HashMap<String, Object>>();  
-        for (int i = 0; i < 4; i++) {  
-            HashMap<String, Object> map = new HashMap<String, Object>();  
-            map.put("ItemImage", R.drawable.folder);// 添加图像资源的ID  
-            map.put("ItemText", "192.168.2."+i);// 按序号做ItemText  
-            listImageItem.add(map);  
-        }  
+	    
+	    mSdcardRootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+		mCmdFactory = new CmdFactory();
+		mFTPClient = new FTPClient();
+		mThreadPool = Executors.newFixedThreadPool(MAX_THREAD_NUMBER);
       
 	    simpleAdapter = new SimpleAdapter(  
 	            this, listImageItem,  
@@ -109,18 +116,18 @@ public class JoinConn extends Activity {
 	                    "ItemImage", "ItemText" }, new int[] { R.id.imageview,  
 	                    R.id.textview });  
 	    //添加图片绑定  
-	    simpleAdapter.setViewBinder(new ViewBinder() {  
-	        public boolean setViewValue(View view, Object data,  
-	                String textRepresentation) {  
-	            if (view instanceof ImageView && data instanceof Drawable) {  
-	                ImageView iv = (ImageView) view;  
-	                iv.setImageDrawable((Drawable) data);  
-	                return true;  
-	            } else  
-	                return false;  
-	        }  
-	    });  
-	    gridview.setAdapter(simpleAdapter); 
+//	    simpleAdapter.setViewBinder(new ViewBinder() {  
+//	        public boolean setViewValue(View view, Object data,  
+//	                String textRepresentation) {  
+//	            if (view instanceof ImageView && data instanceof Drawable) {  
+//	                ImageView iv = (ImageView) view;  
+//	                iv.setImageDrawable((Drawable) data);  
+//	                return true;  
+//	            } else  
+//	                return false;  
+//	        }  
+//	    });  
+//	    gridview.setAdapter(simpleAdapter); 
 	}
 	
 	public void customView(View source)
@@ -128,11 +135,11 @@ public class JoinConn extends Activity {
 		//装载/res/layout/login.xml界面布局
 		TableLayout loginForm = (TableLayout)getLayoutInflater()
 			.inflate( R.layout.login, null);	
-		final EditText editHost = (EditText)loginForm.findViewById(R.id.editFTPHost);
-		final EditText editPort= (EditText)loginForm.findViewById(R.id.editFTPPort);
-		editPort.setText("2121");
-		final EditText editUser = (EditText)loginForm.findViewById(R.id.editFTPUser);
-		final EditText editPasword= (EditText)loginForm.findViewById(R.id.editPassword);
+		final EditText editHost = (EditText) loginForm.findViewById(R.id.editFTPHost);
+		final EditText editPort= (EditText) loginForm.findViewById(R.id.editFTPPort);
+		editPort.setText("3721");
+		final EditText editUser = (EditText) loginForm.findViewById(R.id.editFTPUser);
+		final EditText editPasword= (EditText) loginForm.findViewById(R.id.editPassword);
 		new AlertDialog.Builder(this)
 			// 设置对话框的图标
 			.setIcon(R.drawable.app_default_icon)
@@ -152,7 +159,7 @@ public class JoinConn extends Activity {
 							TextUtils.isEmpty(editUser.getText()) ||
 							TextUtils.isEmpty(editUser.getText())) {
 						  toast("请将资料填写完整");
-						  JoinConn.this.finish();
+//						  JoinConn.this.finish();
 						  return ;
 					}
 					try{
@@ -169,7 +176,7 @@ public class JoinConn extends Activity {
 					Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
 							+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
 					// 此处可执行登录处理
-					mThreadPool.execute(mCmdFactory.createCmdConnect());
+					executeConnectRequest();
 				}
 			})
 			// 为对话框设置一个“取消”按钮
@@ -188,14 +195,49 @@ public class JoinConn extends Activity {
 	}
 	
 	private void buildOrUpdateDataset() {
-		if (mAdapter == null) {
-			mAdapter = new FtpFileAdapter(this, mFileList);
-			mListView.setAdapter(mAdapter);
-		}
-		mAdapter.notifyDataSetChanged();
+		HashMap<String, Object> map = new HashMap<String, Object>();  
+		map.put("ItemImage", R.drawable.folder);// 添加图像资源的ID  
+        map.put("ItemText", mFTPHost);// 按FTPHost做ItemText  
+        listImageItem.add(map);
+        
+	    //添加图片绑定  
+	    simpleAdapter.setViewBinder(new ViewBinder() {  
+	        public boolean setViewValue(View view, Object data,  
+	                String textRepresentation) {  
+	            if (view instanceof ImageView && data instanceof Drawable) {  
+	                ImageView iv = (ImageView) view;  
+	                iv.setImageDrawable((Drawable) data);  
+	                return true;  
+	            } else  
+	                return false;  
+	        }  
+	    });  
+	    gridview.setAdapter(simpleAdapter);
+	    gridview.setOnItemClickListener(new OnItemClickListener(){
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position,
+					long id) {
+				// TODO Auto-generated method stub
+				Log.v(TAG,"test onItemSelected");
+				Intent intent = new Intent(view.getContext(), FtpFileManage.class);
+                intent.putExtra("id", "1");
+                view.getContext().startActivity(intent);
+			}
+	    	
+	    });
+//		if (mAdapter == null) {
+//			mAdapter = new FtpFileAdapter(this, mFileList);
+//			mListView.setAdapter(mAdapter);
+//		}
+//		mAdapter.notifyDataSetChanged();
 	}
 	
 	private void executeConnectRequest() {
+		if(mThreadPool==null)
+			Log.v(TAG, "mThreadPool is null");
+		if(mCmdFactory==null)
+			Log.v(TAG, "mCmdFactory is null");
 		mThreadPool.execute(mCmdFactory.createCmdConnect());
 	}
 
