@@ -154,7 +154,16 @@ public class FileAdapter extends BaseAdapter {
 			convertViews.add(convertView);
 			
 			// TODO 为convertView设置长按响应，但是资源没有办法得到释放，而且如果不是一个Activity注册的，那么就会出问题
+			// 因为没有办法手动开启一个ContextMenu
 			((Activity)context).registerForContextMenu(convertView);
+			convertView.setOnLongClickListener(new View.OnLongClickListener() {
+				
+				@Override
+				public boolean onLongClick(View v) {
+					
+					return false;
+				}
+			});
 			
 			// create content
 			ItemContainer item = new ItemContainer();

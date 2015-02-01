@@ -29,6 +29,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.mshare.main.MShareApp;
+import org.mshare.main.MShareUtil;
 /**
  * 目前使用原本的设置方法，即使用SharedPreference
  * @author HM
@@ -90,12 +91,16 @@ public class FsSettings {
         return sp.getBoolean(KEY_ALLOW_ANONYMOUS, VALUE_ALLOW_ANONYMOUS_DEFAULT);
     }
 
+    /**
+     * 即便扩展存储不可使用，仍旧需要将chroot作为一个文件返回， 因为File并不是一个真正的文件
+     * @return
+     */
     public static File getChrootDir() {
         final SharedPreferences sp = getSharedPreferences();
         String dirName = sp.getString("chrootDir", "");
         File chrootDir = new File(dirName);
         if (dirName.equals("")) {
-            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            if (MShareUtil.isExternalStorageUsable()) {
                 chrootDir = Environment.getExternalStorageDirectory();
             } else {
                 chrootDir = new File("/");
