@@ -138,10 +138,39 @@ public class NewConn extends Activity {
 //		}
 		
 		// 显示当前所使用的网络
+		// TODO 在NetworkStateReceiver中也有类似的代码，是否可以合并?
 		ConnectivityManager cm = (ConnectivityManager)getSystemService(Service.CONNECTIVITY_SERVICE);
 		NetworkInfo ni = cm.getActiveNetworkInfo();
-		String networkTypeName = ni.getTypeName();
-		networkStateView.setText(networkTypeName);
+		if (ni != null) {
+			String networkTypeName = ni.getTypeName();
+			networkStateView.setText(networkTypeName);
+		} else {
+			String networkTypeName = "NONE";
+			networkStateView.setText("NONE");
+		}
+		
+		// 显示当前的AP启动状态
+		// TODO 需要处理的内容太多了，可能考虑不加入开启AP的功能
+		try {
+			boolean wifiApEnabled = isWifiApEnabled();
+			ftpApTest.setChecked(wifiApEnabled);
+		} catch (IllegalAccessException e) {
+			ftpApTest.setEnabled(false);
+			ftpApState.setText("AP无法启动");
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			ftpApTest.setEnabled(false);
+			ftpApState.setText("AP无法启动");
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			ftpApTest.setEnabled(false);
+			ftpApState.setText("AP无法启动");
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			ftpApTest.setEnabled(false);
+			ftpApState.setText("AP无法启动");
+			e.printStackTrace();
+		}
 		
 		// 先设置当前的状态
 		changeState(SERVER_STATE_STOPPED);
@@ -242,6 +271,23 @@ public class NewConn extends Activity {
 		}
 		
 		return super.onOptionsItemSelected(item);
+	}
+	
+	/**
+	 * 调用WifiManager中的同名方法
+	 * @return
+	 * @throws InvocationTargetException 
+	 * @throws IllegalArgumentException 
+	 * @throws IllegalAccessException 
+	 * @throws NoSuchMethodException 
+	 */
+	public static boolean isWifiApEnabled() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException {
+		// TODO 根据java反射机制补全其中的内容
+		Context context = MShareApp.getAppContext();
+		WifiManager wm = (WifiManager)context.getSystemService(Service.WIFI_SERVICE);
+		Method isWifiApEnabledMethod = wm.getClass().getDeclaredMethod("isWifiApEnabled");
+		isWifiApEnabledMethod.invoke(wm);
+		return false;
 	}
 	
 	/**

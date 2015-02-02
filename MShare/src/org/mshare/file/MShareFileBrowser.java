@@ -3,6 +3,7 @@ package org.mshare.file;
 import java.io.File;
 import org.mshare.main.*;
 import org.mshare.file.FileAdapter.ItemContainer;
+import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
 
 import android.widget.AdapterView;
@@ -29,10 +30,11 @@ import org.mshare.main.MShareUtil;
  */
 public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
 
-	public static final int ITEM_ID_SHARE = 4;
-	public static final int ITEM_ID_UNSHARE = 5;
+	// TODO 暂时放置在这里，使用内容在MainActivity中
+	public static final int CM_ITEM_ID_SHARE = 4;
+	public static final int CM_ITEM_ID_UNSHARE = 5;
 	
-	private static final String TAG = "MShareFileBrowser";
+	private static final String TAG = MShareFileBrowser.class.getSimpleName();
 	
 	private Context context = null;
 	private ViewGroup container = null;
@@ -52,6 +54,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * 后退按钮
 	 */
 	private Button backBtn = null;
+	// TODO rootFile的设定必须和服务器中的内容相同
 	private MShareFile rootFile;
 	private boolean enable = false;
 	
@@ -69,7 +72,8 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		backBtn.setOnClickListener(new BackBtnListener(context));
 		
 		// 根目录路径，即扩展存储路径
-		rootFile = new MShareFile(Environment.getExternalStorageDirectory());
+		// TODO FsSettings.getChrootDir可能并不能获得正确的路径,虽然在使用FileBrowser之前已经判断了扩展存储是否可用
+		rootFile = new MShareFile(FsSettings.getChrootDir());
 		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
 		
 		// 面包屑导航控制器

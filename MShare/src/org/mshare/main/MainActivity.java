@@ -123,6 +123,10 @@ public class MainActivity extends FragmentActivity
 		
 		// TODO 需要判断长按的是否是gridView中的内容，使用instance判断v是否是ItemContainer的实例
 		
+		RuntimeException e = new RuntimeException("for print stack and heap");
+		e.fillInStackTrace();
+		e.printStackTrace();
+		
 		Object tag = v.getTag();
 		ItemContainer item = null;
 		
@@ -138,9 +142,9 @@ public class MainActivity extends FragmentActivity
 		
 		// 判断当前文件是否是共享文件
 		if (!item.file.isShared()) {
-			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.ITEM_ID_SHARE, 4, "共享");
+			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CM_ITEM_ID_SHARE, 4, "共享");
 		} else {
-			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.ITEM_ID_UNSHARE, 4, "不共享");
+			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CM_ITEM_ID_UNSHARE, 4, "不共享");
 		}
 		
 		super.onCreateContextMenu(menu, v, menuInfo);
@@ -152,10 +156,13 @@ public class MainActivity extends FragmentActivity
 		int itemId = item.getItemId();
 		
 		switch (itemId) {
-			case MShareFileBrowser.ITEM_ID_SHARE: // 当点击的是共享
+			case MShareFileBrowser.CM_ITEM_ID_SHARE: // 当点击的是共享
+				
+				// 获得当前被点击的对象
+				
 				
 				break;
-			case MShareFileBrowser.ITEM_ID_UNSHARE: // 点击的是不共享
+			case MShareFileBrowser.CM_ITEM_ID_UNSHARE: // 点击的是不共享
 				break;
 		}
 		
