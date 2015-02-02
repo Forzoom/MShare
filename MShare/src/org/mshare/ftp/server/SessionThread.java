@@ -48,7 +48,7 @@ public class SessionThread extends Thread {
     protected ByteBuffer buffer = ByteBuffer.allocate(Defaults.getInputBufferSize());
     protected boolean pasvMode = false;
     protected boolean binaryMode = false;
-    protected Account account = new Account();
+    private Account account = null;
     protected boolean userAuthenticated = false;
     // TODO 从数据存储中将原本的文件数据取出
     protected SharedFileSystem sharedFileSystem = new SharedFileSystem();
@@ -373,7 +373,12 @@ public class SessionThread extends Thread {
     public boolean isUserLoggedIn() {
         return userAuthenticated;
     }
-
+    // TODO 和上面的方法好像重复了
+    // 检测当前是否是登录成功了
+    public void authCheck() {
+    	
+    }
+    
     public void authAttempt(boolean authenticated) {
         if (authenticated) {
             Log.i(TAG, "Authentication complete");
