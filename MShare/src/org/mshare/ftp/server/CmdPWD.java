@@ -19,10 +19,8 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
-import java.io.IOException;
-
 import android.util.Log;
-
+// 经过了修改
 public class CmdPWD extends FtpCmd implements Runnable {
     private static final String TAG = CmdPWD.class.getSimpleName();
 
@@ -38,21 +36,14 @@ public class CmdPWD extends FtpCmd implements Runnable {
         // chroot directory. Therefore, we can just slice of the chroot
         // part of the current directory path in order to get the
         // user-visible path (inside the chroot directory).
-        try {
-            String currentDir = sessionThread.getWorkingDir().getCanonicalPath();
-            currentDir = currentDir.substring(FsSettings.getChrootDir().getCanonicalPath()
-                    .length());
-            // The root directory requires special handling to restore its
-            // leading slash
-            if (currentDir.length() == 0) {
-                currentDir = "/";
-            }
-            sessionThread.writeString("257 \"" + currentDir + "\"\r\n");
-        } catch (IOException e) {
-            // This shouldn't happen unless our input validation has failed
-            Log.e(TAG, "PWD canonicalize");
-            sessionThread.closeSocket(); // should cause thread termination
+        
+        String currentDir = sessionThread.getWorkingDir();
+        // The root directory requires special handling to restore its
+        // leading slash
+        if (currentDir.length() == 0) {
+            currentDir = "/";
         }
+        sessionThread.writeString("257 \"" + currentDir + "\"\r\n");
         Log.d(TAG, "PWD complete");
     }
 

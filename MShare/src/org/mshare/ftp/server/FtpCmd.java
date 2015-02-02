@@ -182,7 +182,7 @@ public abstract class FtpCmd implements Runnable {
         try {
             if (param.charAt(0) == '/') {
                 // The STOR contained an absolute path
-                File chroot = FsSettings.getChrootDir();
+                File chroot = FsSettings.getRootDir();
                 return new File(chroot, param);
             }
         } catch (Exception e) {
@@ -192,11 +192,16 @@ public abstract class FtpCmd implements Runnable {
         return new File(existingPrefix, param);
     }
 
+    /**
+     * 检测file是否是在所设置的根路径之内
+     * @param file
+     * @return
+     */
     public boolean violatesChroot(File file) {
         try {
             // taking the canonical path as new devices have sdcard symlinked
             // for multiuser support
-            File chroot = FsSettings.getChrootDir();
+            File chroot = FsSettings.getRootDir();
             String canonicalChroot = chroot.getCanonicalPath();
             String canonicalPath = file.getCanonicalPath();
             if (!canonicalPath.startsWith(canonicalChroot)) {

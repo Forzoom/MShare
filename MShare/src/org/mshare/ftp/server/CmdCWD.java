@@ -42,7 +42,7 @@ public class CmdCWD extends FtpCmd implements Runnable {
         String errString = null;
         mainblock: {
             newDir = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
-
+            
             // Ensure the new path does not violate the chroot restriction
             if (violatesChroot(newDir)) {
                 errString = "550 Invalid name or chroot violation\r\n";

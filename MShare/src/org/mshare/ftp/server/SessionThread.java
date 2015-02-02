@@ -31,12 +31,14 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+import org.mshare.file.SharedFileSystem;
+
 import android.util.Log;
 
 /**
  * 代表的应该是与Client的Thread
  * @author HM
- *
+ * TODO 主要是如果出现..的情况下的文件路径，可能会出现问题
  */
 public class SessionThread extends Thread {
     private static final String TAG = SessionThread.class.getSimpleName();
@@ -48,7 +50,10 @@ public class SessionThread extends Thread {
     protected boolean binaryMode = false;
     protected Account account = new Account();
     protected boolean userAuthenticated = false;
-    protected File workingDir = FsSettings.getChrootDir();
+    // TODO 从数据存储中将原本的文件数据取出
+    protected SharedFileSystem sharedFileSystem = new SharedFileSystem();
+    // 当前工作路径
+//    protected File workingDir = FsSettings.getChrootDir();
     // 
     protected Socket dataSocket = null;
     protected File renameFrom = null;
@@ -383,16 +388,16 @@ public class SessionThread extends Thread {
         }
     }
 
-    public File getWorkingDir() {
-        return workingDir;
+    public String getWorkingDir() {
+        return sharedFileSystem.getWorkingDir();
     }
 
-    public void setWorkingDir(File workingDir) {
-        try {
-            this.workingDir = workingDir.getCanonicalFile().getAbsoluteFile();
-        } catch (IOException e) {
-            Log.i(TAG, "SessionThread canonical error");
-        }
+    /**
+     * TODO 经过修改
+     * @param workingDir
+     */
+    public void setWorkingDir(String workingDir) {
+        sharedFileSystem.setWorkingDir(workingDir);
     }
 
     public Socket getDataSocket() {

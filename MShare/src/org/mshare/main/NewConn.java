@@ -125,6 +125,7 @@ public class NewConn extends Activity {
 		
 		ftpSwitch.setOnClickListener(new StartStopServerListener());
 		ftpApTest.setOnClickListener(new WifiApControlListener());
+		
 	}
 	
 	@Override

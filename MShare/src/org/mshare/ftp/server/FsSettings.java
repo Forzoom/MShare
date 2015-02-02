@@ -20,6 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
+import java.io.Externalizable;
 import java.io.File;
 
 import android.content.Context;
@@ -50,6 +51,10 @@ public class FsSettings {
     // 允许匿名
     public static final String KEY_ALLOW_ANONYMOUS = "allow_anonymous";
     public static final boolean VALUE_ALLOW_ANONYMOUS_DEFAULT = false;
+    
+    // FTP服务器所被限制的最大文件夹
+    public static final String KEY_ROOT_DIR = "root";
+    public static final String VALUE_ROOT_DIR_DEFAULT = Environment.getExternalStorageDirectory().getAbsolutePath();
     
     /**
      * 获得用户名称
@@ -95,22 +100,21 @@ public class FsSettings {
      * 即便扩展存储不可使用，仍旧需要将chroot作为一个文件返回， 因为File并不是一个真正的文件
      * @return
      */
-    public static File getChrootDir() {
+    public static File getRootDir() {
         final SharedPreferences sp = getSharedPreferences();
-        String dirName = sp.getString("chrootDir", "");
-        File chrootDir = new File(dirName);
-        if (dirName.equals("")) {
-            if (MShareUtil.isExternalStorageUsable()) {
-                chrootDir = Environment.getExternalStorageDirectory();
-            } else {
-                chrootDir = new File("/");
-            }
+        String dirName = sp.getString(KEY_ROOT_DIR, "");
+        File rootDir = new File(dirName);
+        
+        if (!dirName.equals("")) {
+            rootDir = Environment.getExternalStorageDirectory();
+        } else {
+            rootDir = new File(VALUE_ROOT_DIR_DEFAULT); // 当没有指定root的时候，默认将整个卷都视为可以操作的对象
         }
-        if (!chrootDir.isDirectory()) {
+        if (!rootDir.isDirectory()) {
             Log.e(TAG, "getChrootDir: not a directory");
             return null;
         }
-        return chrootDir;
+        return rootDir;
     }
 
     /**
@@ -144,6 +148,28 @@ public class FsSettings {
     	SharedPreferences.Editor editor = sp.edit();
     	editor.putString(KEY_PORT, port);
     	editor.commit();
+    }
+    /**
+     * 修改根路径，根路径的默认值是{@link #VALUE_ROOT_DIR_DEFAULT}，也就是扩展存储的路径，如果新的路径不是扩展存储路径的子路径，那么就不做任何动作
+     * 必须在上面情况下，文件存在并且是一个文件夹的情况下才会执行修改
+     * @param root
+     */
+    public static void setRootDir(String root) {
+    	
+    	if (root.length() >= VALUE_ROOT_DIR_DEFAULT.length() && root.startsWith(VALUE_ROOT_DIR_DEFAULT)) {
+    		
+    		File rootDir = new File(root);
+    		if (rootDir.exists() && rootDir.isDirectory()) {
+    			final SharedPreferences sp = getSharedPreferences();
+            	SharedPreferences.Editor editor = sp.edit();
+            	editor.putString(KEY_ROOT_DIR, root);
+            	editor.commit();
+    		} else {
+    			Log.w(TAG, "所指定的路径不是一个文件夹，不修改原路径");
+    		}
+    	} else {
+    		Log.w(TAG, "无效的路径，不修改原路径");
+    	}
     }
     
     /**

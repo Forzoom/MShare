@@ -52,6 +52,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         mainblock: {
             String param = getParameter(input);
             Log.d(TAG, "LIST parameter: " + param);
+            // 所有的LIST参数都将被忽略
             while (param.startsWith("-")) {
                 // Skip all dashed -args, if present
                 Log.d(TAG, "LIST is skipping dashed arg " + param);

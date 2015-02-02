@@ -58,13 +58,17 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * 后退按钮
 	 */
 	private Button backBtn = null;
-	// TODO rootFile的设定必须和服务器中的内容相同
+	/**
+	 * 根目录路径，即扩展存储路径
+	 */
 	private MShareFile rootFile;
+	
 	private boolean enable = false;
 	
-	public MShareFileBrowser(Context context, ViewGroup container) {
+	public MShareFileBrowser(Context context, ViewGroup container, String rootPath) {
 		this.context = context;
 		this.container = container;
+		this.rootFile = new MShareFile(rootPath);
 	}
 	
 	public View getView() {
@@ -75,9 +79,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backBtn.setOnClickListener(new BackBtnListener(context));
 		
-		// 根目录路径，即扩展存储路径
-		// TODO FsSettings.getChrootDir可能并不能获得正确的路径,虽然在使用FileBrowser之前已经判断了扩展存储是否可用
-		rootFile = new MShareFile(FsSettings.getChrootDir());
 		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
 		
 		// 面包屑导航控制器
