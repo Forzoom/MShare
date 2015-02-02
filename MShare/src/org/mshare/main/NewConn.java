@@ -39,6 +39,7 @@ import android.widget.TextView;
 import org.mshare.main.NetworkStateRecevier.OnWifiApStateChangeListener;
 import org.mshare.main.NetworkStateRecevier.OnNetworkStateChangeListener;
 import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
+import org.mshare.p2p.P2pActivity;
 
 public class NewConn extends Activity {
 	
@@ -240,9 +241,14 @@ public class NewConn extends Activity {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// TODO 启动一个新的Activity ServerSettingActivity
 		
 		switch (item.getItemId()) {
+			case R.id.menu_set_ftp_p2p:
+				Log.v(TAG, "P2P");
+				Intent startP2p = new Intent();
+				startP2p.setClass(this, P2pActivity.class);
+				startActivity(startP2p);
+				break;
 			case R.id.menu_set_ftp_server_qrcode:
 				Log.v(TAG, "qrcode");
 				Intent startQRCode = new Intent();

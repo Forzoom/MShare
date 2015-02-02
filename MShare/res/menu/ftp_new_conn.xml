@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item
+	    android:id="@+id/menu_set_ftp_p2p" 
+	    android:title="P2P"
+	    android:showAsAction="ifRoom" />
+    <item
 	    android:id="@+id/menu_set_ftp_server_qrcode" 
 	    android:title="@string/two_dimensions_bar"
 	    android:showAsAction="ifRoom" />
