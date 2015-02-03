@@ -1,77 +1,62 @@
 package org.mshare.file;
+// 所需要的内容 realPath和fakePath
+public class SharedFile extends SharedLink {
+	private int type = TYPE_FILE;
+	public SharedFile() {}
+	
+	@Override
+	public boolean isFile() {
+		return true;
+	}
+	@Override
+	public boolean isDirectory() {
+		return false;
+	}
+	@Override
+	public boolean isFakeDirectory() {
+		return false;
+	}
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
+	@Override
+	public SharedLink[] listFiles() {
+		return null;
+	}
 
-/**
- * 创建TreeNode的过程中，需要为其指定type
- * @author HM
- *
- */
-public class SharedFile {
-	// 需要文件关系的映射，输入的是需要的文件路径，返回的是真实的文件路径
-	// 但是这样可能会使调用者感觉到困难
-	
-	static final int TYPE_UNKNOWN = 0x0;
-	static final int TYPE_FILE = 0x1;
-	static final int TYPE_DIRECTORY = 0x2;
-	static final int TYPE_FAKE_DIRECTORY = 0x3;
-	
-	// 所有的子树用HashMap来包含
-	private HashMap<String, SharedFile> map = new HashMap<String, SharedFile>();
-	// 完整的路径
-	private SharedFile parent = null;
-	private String filePath = "";
-	private String fileName = "";
-	// 因为File只是一个包装，所以没关系
-	private String realPath = "";
-	int type = TYPE_UNKNOWN;
+	@Override
+	public long length() {
+		return getRealFile().length();
+	}
 
-	SharedFile(String realPath, String filePath, String fileName) {
-		this.realPath = realPath;
-		this.filePath = filePath;
-		this.fileName = fileName; 
+	@Override
+	public boolean canRead() {
+		return getRealFile().canRead();
+	}
+
+	@Override
+	public long lastModified() {
+		return getRealFile().lastModified();
+	}
+
+	/**
+	 * 删除一个文件，需要对存储文件的内容进行处理
+	 * 并不是真正地删除一个文件
+	 */
+	@Override
+	public void delete() {
+//		system.de
+	}
+
+	@Override
+	public boolean exists() {
+		return getRealFile().exists();
+	}
+
+	/**
+	 * do nothing
+	 */
+	@Override
+	public boolean mkdir() {
+		return false;
 	}
 	
-	void setType(int type) {
-		this.type = type;
-	}
-	
-	boolean isFile() {
-		return type == TYPE_FILE;
-	}
-	
-	boolean isDirectory() {
-		return type == TYPE_DIRECTORY;
-	}
-	
-	HashMap<String, SharedFile> list() {
-		if (isDirectory()) {
-			return map;
-		} else {
-			return null;
-		}
-	}
-	
-	public String getAbsolutePath() {
-		return filePath;
-	}
-	
-	// TODO 可能消耗大量的内存资源
-	void print() {
-		if (isDirectory()) {
-			System.out.println("(" + fileName);
-			Set<String> set = map.keySet();
-			Iterator<String> iterator = set.iterator();
-			while (iterator.hasNext()) {
-				String key = iterator.next();
-				map.get(key).print();
-			}
-			System.out.println(")");
-		} else if (isFile()) {
-			System.out.println(fileName);
-		}
-		
-	}
 }

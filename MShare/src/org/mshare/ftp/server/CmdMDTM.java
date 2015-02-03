@@ -43,7 +43,7 @@ public class CmdMDTM extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "run: MDTM executing, input: " + mInput);
         String param = getParameter(mInput);
-        File file = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
+        File file = inputPathToChrootedFile(sessionThread.getWorkingDirStr(), param);
 
         if (file.exists()) {
             long lastModified = file.lastModified();

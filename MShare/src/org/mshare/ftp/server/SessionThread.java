@@ -31,7 +31,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
-import org.mshare.file.SharedFileSystem;
+import org.mshare.file.SharedLinkSystem;
 
 import android.util.Log;
 
@@ -49,9 +49,8 @@ public class SessionThread extends Thread {
     protected boolean pasvMode = false;
     protected boolean binaryMode = false;
     private Account account = null;
-    protected boolean userAuthenticated = false;
     // TODO 从数据存储中将原本的文件数据取出
-    protected SharedFileSystem sharedFileSystem = new SharedFileSystem();
+    protected SharedLinkSystem sharedLinkSystem = null;
     // 当前工作路径
 //    protected File workingDir = FsSettings.getChrootDir();
     // 
@@ -63,7 +62,6 @@ public class SessionThread extends Thread {
     private boolean sendWelcomeBanner;
     protected String encoding = Defaults.SESSION_ENCODING;
     protected long offset = -1; // where to start append when using REST
-    int authFails = 0;
 
     public static int MAX_AUTH_FAILS = 3;
 
@@ -348,61 +346,60 @@ public class SessionThread extends Thread {
      * @return true if we should allow FTP opperations
      */
     public boolean isAuthenticated() {
-        if (userAuthenticated == true || FsSettings.allowAnoymous() == true) {
-            return true;
-        }
-        return false;
+    	Account account = getAccount();
+    	if (account != null) {
+    		return account.isLoggedIn();
+    	} else {
+    		return false;
+    	}
     }
 
     /**
      * @return true only when we are anonymously logged in
      */
     public boolean isAnonymouslyLoggedIn() {
-        if (userAuthenticated == true) {
-            return false;
-        }
-        if (FsSettings.allowAnoymous() == true) {
-            return true;
-        }
-        return false;
+    	Account account = getAccount();
+    	if (account != null) {
+    		return account.isLoggedIn() && account.isAnonymous();
+    	} else {
+    		return false;
+    	}
     }
 
     /**
      * @return true if a valid user has logged in
      */
     public boolean isUserLoggedIn() {
-        return userAuthenticated;
-    }
-    // TODO 和上面的方法好像重复了
-    // 检测当前是否是登录成功了
-    public void authCheck() {
-    	
+    	Account account = getAccount();
+    	if (account != null) {
+    		return account.isLoggedIn() && !account.isAnonymous();
+    	} else {
+    		return false;
+    	}
     }
     
-    public void authAttempt(boolean authenticated) {
-        if (authenticated) {
+    // TODO 和上面的方法好像重复了
+    // 检测当前是否是登录成功了
+    // 当每次登录PASS经过调用后就会被调用
+    public void authCheck() {
+    	Account account = getAccount();
+    	
+        if (account.isLoggedIn()) {
             Log.i(TAG, "Authentication complete");
-            userAuthenticated = true;
         } else {
-            authFails++;
-            Log.i(TAG, "Auth failed: " + authFails + "/" + MAX_AUTH_FAILS);
-            if (authFails > MAX_AUTH_FAILS) {
+            Log.i(TAG, "Auth failed: " + account.authFails + "/" + MAX_AUTH_FAILS);
+            if (account.authFails > MAX_AUTH_FAILS) {
                 Log.i(TAG, "Too many auth fails, quitting session");
                 quit();
             }
         }
-    }
-
-    public String getWorkingDir() {
-        return sharedFileSystem.getWorkingDir();
-    }
-
-    /**
-     * TODO 经过修改
-     * @param workingDir
-     */
-    public void setWorkingDir(String workingDir) {
-        sharedFileSystem.setWorkingDir(workingDir);
+        
+        // TODO 不知道将SharedLinkSystem放在这里生成是否好
+        sharedLinkSystem = new SharedLinkSystem();
+        // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
+        // LinkSystem是否需要形成一个自己的圈子呢
+        
+        
     }
 
     public Socket getDataSocket() {
@@ -416,7 +413,7 @@ public class SessionThread extends Thread {
     public File getRenameFrom() {
         return renameFrom;
     }
-
+    // TODO 需要修改
     public void setRenameFrom(File renameFrom) {
         this.renameFrom = renameFrom;
     }

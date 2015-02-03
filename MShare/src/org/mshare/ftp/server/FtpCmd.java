@@ -178,19 +178,19 @@ public abstract class FtpCmd implements Runnable {
         return getParameter(input, false);
     }
 
-    public static File inputPathToChrootedFile(File existingPrefix, String param) {
-        try {
-            if (param.charAt(0) == '/') {
-                // The STOR contained an absolute path
-                File chroot = FsSettings.getRootDir();
-                return new File(chroot, param);
-            }
-        } catch (Exception e) {
-        }
-
-        // The STOR contained a relative path
-        return new File(existingPrefix, param);
-    }
+//    public static File inputPathToChrootedFile(File existingPrefix, String param) {
+//        try {
+//            if (param.charAt(0) == '/') {
+//                // The STOR contained an absolute path
+//                File chroot = FsSettings.getRootDir();
+//                return new File(chroot, param);
+//            }
+//        } catch (Exception e) {
+//        }
+//
+//        // The STOR contained a relative path
+//        return new File(existingPrefix, param);
+//    }
 
     /**
      * 检测file是否是在所设置的根路径之内

@@ -36,7 +36,7 @@ public class Account {
     private String mPassword = null;
     private String mAttemptPassword = null;
     private boolean userAuthenticated = false;
-    private int authFails = 0;
+    public int authFails = 0;
     private static HashMap<String, String> accounts = new HashMap<String, String>(); 
     
     private Account(String username, String password) {
@@ -48,23 +48,16 @@ public class Account {
     // 检测当前是否是登录成功了
     // TODO 关键是内容可能无法返回
     public boolean authAttempt() {
-    	if (getUsername() != null && getPassword() != null) {
-    		// 当前账户是存在的，现在只要检测密码是否正确就可以了
-    		if (!mUserName.equals(AnonymousUsername)) {
-    			if (mAttemptPassword == null && mAttemptPassword.equals(mPassword)) {
-    				return true;
-    			} else {
-    				return false;
-    			}
-    		} else if (FsSettings.allowAnoymous() && mUserName.equals(AnonymousUsername)) {
-    			Log.i(TAG, "Guest logged in with password: " + mAttemptPassword);
-    			return true;
-    		} else {
-    			return false;
-    		}   
-    	} else {
-    		return false;
-    	}
+		if (!mUserName.equals(AnonymousUsername) && mAttemptPassword != null && mAttemptPassword.equals(mPassword)) {
+			userAuthenticated = true;
+		} else if (FsSettings.allowAnoymous() && mUserName.equals(AnonymousUsername)) {
+			Log.i(TAG, "Guest logged in with password: " + mAttemptPassword);
+			userAuthenticated = true;
+		} else {
+			authFails++;
+			userAuthenticated = false;
+		}
+		return userAuthenticated;
     }
     
 	public static Account getInstance(String username) {
@@ -82,6 +75,10 @@ public class Account {
 		}
 	}
 
+	public boolean isLoggedIn() {
+		return userAuthenticated;
+	}
+	
 	public boolean isAnonymous() {
 		return mUserName.equals(AnonymousUsername);
 	}

@@ -65,7 +65,7 @@ public class CmdMFMT extends FtpCmd implements Runnable {
         }
 
         String pathName = params[1];
-        File file = inputPathToChrootedFile(sessionThread.getWorkingDir(), pathName);
+        File file = inputPathToChrootedFile(sessionThread.getWorkingDirStr(), pathName);
 
         if (file.exists() == false) {
             sessionThread.writeString("550 file does not exist on server\r\n");

@@ -64,7 +64,7 @@ public class CmdPASS extends FtpCmd implements Runnable {
         	Log.i(TAG, "Failed authentication");
             Util.sleepIgnoreInterupt(1000); // sleep to foil brute force attack
             sessionThread.writeString("530 Login incorrect.\r\n");
-            sessionThread.authAttempt(false);
         }
+        sessionThread.authCheck();
     }
 }

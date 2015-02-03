@@ -37,9 +37,10 @@ public class CmdPWD extends FtpCmd implements Runnable {
         // part of the current directory path in order to get the
         // user-visible path (inside the chroot directory).
         
-        String currentDir = sessionThread.getWorkingDir();
+        String currentDir = sessionThread.sharedLinkSystem.getWorkingDir().getFakePath();
         // The root directory requires special handling to restore its
         // leading slash
+        // TODO 可能需要修改，看将来LinkSystem的发展
         if (currentDir.length() == 0) {
             currentDir = "/";
         }

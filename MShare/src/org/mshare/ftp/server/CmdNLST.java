@@ -28,6 +28,10 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
+import org.mshare.file.SharedFile;
+import org.mshare.file.SharedLink;
+import org.mshare.file.SharedLinkSystem;
+
 import android.util.Log;
 
 public class CmdNLST extends CmdAbstractListing implements Runnable {
@@ -52,19 +56,17 @@ public class CmdNLST extends CmdAbstractListing implements Runnable {
                 // Ignore options to list, which start with a dash
                 param = "";
             }
-            File fileToList = null;
+            SharedLink fileToList = null;
             if (param.equals("")) {
-                fileToList = sessionThread.getWorkingDir();
+                fileToList = sessionThread.sharedLinkSystem.getWorkingDir();
             } else {
                 if (param.contains("*")) {
                     errString = "550 NLST does not support wildcards\r\n";
                     break mainblock;
                 }
-                fileToList = new File(sessionThread.getWorkingDir(), param);
-                if (violatesChroot(fileToList)) {
-                    errString = "450 Listing target violates chroot\r\n";
-                    break mainblock;
-                } else if (fileToList.isFile()) {
+                // 所能接受的只是文件名, 所获得的是working directory中的内容
+                fileToList = sessionThread.sharedLinkSystem.getSharedLink(param);
+                if (fileToList.isFile()) {
                     // Bernstein suggests that NLST should fail when a
                     // parameter is given and the parameter names a regular
                     // file (not a directory).
@@ -103,8 +105,9 @@ public class CmdNLST extends CmdAbstractListing implements Runnable {
         // have already been handled by sendListing, so we can just quit now.
     }
 
+    // 只需要列出名字就可以了
     @Override
-    protected String makeLsString(File file) {
+    protected String makeLsString(SharedLink file) {
         if (!file.exists()) {
             Log.i(TAG, "makeLsString had nonexistent file");
             return null;

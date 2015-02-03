@@ -33,6 +33,7 @@ import java.io.RandomAccessFile;
 
 import android.util.Log;
 
+import org.mshare.file.SharedLink;
 import org.mshare.ftp.server.*;
 
 abstract public class CmdAbstractStore extends FtpCmd {
@@ -46,7 +47,8 @@ abstract public class CmdAbstractStore extends FtpCmd {
 
     public void doStorOrAppe(String param, boolean append) {
         Log.d(TAG, "STOR/APPE executing with append=" + append);
-        File storeFile = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
+        SharedLink storeFile = sessionThread.sharedLinkSystem
+        		.getSharedLink(param);
 
         String errString = null;
         OutputStream out = null;
@@ -55,10 +57,6 @@ abstract public class CmdAbstractStore extends FtpCmd {
         // myLog.l(Log.DEBUG, "STOR original priority: " + origPriority);
         storing: {
             // Get a normalized absolute path for the desired file
-            if (violatesChroot(storeFile)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break storing;
-            }
             if (storeFile.isDirectory()) {
                 errString = "451 Can't overwrite a directory\r\n";
                 break storing;

@@ -39,10 +39,11 @@ public class CmdRNTO extends FtpCmd implements Runnable {
         Log.d(TAG, "RNTO executing");
         String param = getParameter(input);
         String errString = null;
+        // 这需要文件的写权限
         File toFile = null;
         mainblock: {
             Log.i(TAG, "param: " + param);
-            toFile = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
+            toFile = inputPathToChrootedFile(sessionThread.getWorkingDirStr(), param);
             Log.i(TAG, "RNTO to file: " + toFile.getPath());
             if (violatesChroot(toFile)) {
                 errString = "550 Invalid name or chroot violation\r\n";
@@ -60,7 +61,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
             File tmpFile = null;
             try {
                 tmpFile = File.createTempFile("temp_" + fromFile.getName(), null,
-                        sessionThread.getWorkingDir());
+                        sessionThread.getWorkingDirStr());
                 if (fromFile.isDirectory()) {
                     String tmpFilePath = tmpFile.getPath();
                     tmpFile.delete();

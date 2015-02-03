@@ -29,7 +29,12 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import org.mshare.file.SharedLink;
 
 import android.util.Log;
 
@@ -58,34 +63,56 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
                 Log.d(TAG, "LIST is skipping dashed arg " + param);
                 param = getParameter(param);
             }
-            File fileToList = null;
-            if (param.equals("")) {
-                fileToList = sessionThread.getWorkingDir();
+            SharedLink fileToList = null;
+            if (param.equals("")) { // 没有参数
+                fileToList = sessionThread.sharedLinkSystem.getWorkingDir();
             } else {
                 if (param.contains("*")) {
                     errString = "550 LIST does not support wildcards\r\n";
                     break mainblock;
                 }
-                fileToList = new File(sessionThread.getWorkingDir(), param);
-                if (violatesChroot(fileToList)) {
-                    errString = "450 Listing target violates chroot\r\n";
-                    break mainblock;
-                }
+                fileToList = sessionThread.sharedLinkSystem.getFile(param);
+//                if (violatesChroot(fileToList)) {
+//                    errString = "450 Listing target violates chroot\r\n";
+//                    break mainblock;
+//                }
             }
             String listing;
-            if (fileToList.isDirectory()) {
+            if (fileToList.isFakeDirectory()) { // 当前是SFS中的文件夹
+            	// 列出所有的文件
+            	// TODO 可能其中太多的细节都被使用到
+            	Map<String, SharedLink> map = fileToList.list();
+            	
+            	Set<String> keySet = map.keySet();
+            	Iterator<String> iterator = keySet.iterator();
+            	
+            	StringBuilder builder = new StringBuilder();
+            	
+            	while (iterator.hasNext()) {
+            		String key = iterator.next();
+            		builder.append(makeLsString(map.get(key)));
+            	}
+            	
+            	listing = builder.toString();
+            	
+            } else if (fileToList.isDirectory()) { // 当前是一个共享的文件夹 TODO 需要了解共享文件夹中是否可以有其他的文件
+            	File realFile = fileToList.getRealFile();
                 StringBuilder response = new StringBuilder();
-                errString = listDirectory(response, fileToList);
+                errString = listDirectory(response, realFile);
                 if (errString != null) {
                     break mainblock;
                 }
                 listing = response.toString();
-            } else {
+            } else if (fileToList.isFile()) { // 当前是一个文件
                 listing = makeLsString(fileToList);
                 if (listing == null) {
                     errString = "450 Couldn't list that file\r\n";
                     break mainblock;
                 }
+            } else {
+            	listing = ""; // 消除错误
+            	errString = "500 internal server error\r\n";
+            	break mainblock;
             }
             errString = sendListing(listing);
             if (errString != null) {
@@ -103,10 +130,12 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         // have already been handled by sendListing, so we can just quit now.
     }
 
+    // TODO 所有的操作都是SharedFile相关，该函数将来可以删除
+    // 注意：只会添加文件的名字，和路径并没有关系
     // Generates a line of a directory listing in the traditional /bin/ls
     // format.
     @Override
-    protected String makeLsString(File file) {
+    protected String makeLsString(SharedLink file) {
         StringBuilder response = new StringBuilder();
 
         if (!file.exists()) {
@@ -162,4 +191,5 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         return response.toString();
     }
 
+    
 }
