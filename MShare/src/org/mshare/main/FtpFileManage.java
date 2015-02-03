@@ -185,11 +185,14 @@ public class FtpFileManage extends Activity{
 			
 			@Override
 			public boolean onKey(View source, int keycode, KeyEvent event) {
+				Log.v(null, "setOnKeyListener");
 				// TODO Auto-generated method stub
-				switch(event.getKeyCode())
-				{
-					case KeyEvent.KEYCODE_BACK:
-						executeCDURequest();
+				if(event.getAction() == KeyEvent.ACTION_DOWN){
+					switch(event.getKeyCode())
+					{
+						case KeyEvent.KEYCODE_BACK:
+							executeCDURequest();
+					}
 				}
 				return false;
 			}
