@@ -51,6 +51,41 @@ public abstract class FtpCmd implements Runnable {
             new CmdMap("SITE", CmdSITE.class), //
     };
 
+    private static Class<?>[] readCmds = {
+//    	CmdSYST.class, // 返回系统类型
+        CmdUSER.class, 
+        CmdPASS.class, 
+        CmdTYPE.class, 
+        CmdCWD.class, 
+        CmdPWD.class, 
+        CmdLIST.class, 
+        CmdPASV.class, 
+        CmdRETR.class, 
+        CmdNLST.class, 
+        CmdNOOP.class,
+//        CmdSTOR.class, // 存储文件 
+//        CmdDELE.class, // 删除文件
+//        CmdRNFR.class,  // 重命名
+//        CmdRNTO.class,
+//        CmdRMD.class, 
+//        CmdMKD.class,
+//        CmdOPTS.class, // 
+//        CmdPORT.class, // 好像是主动模式
+        CmdQUIT.class, 
+//        CmdFEAT.class, // 请求FTP服务器列出它的所有的扩展命令与扩展功能的。属于主动模式命令
+        CmdSIZE.class, 
+        CmdCDUP.class,
+//        CmdAPPE.class, 
+        CmdCDUP.class, 
+        CmdPWD.class, 
+        CmdMKD.class, 
+        CmdRMD.class, 
+        CmdMDTM.class, // 用来修改文件的最后修改时间
+        CmdMFMT.class, // 用来修改文件的最后修改时间
+        CmdREST.class, 
+        CmdSITE.class, 
+    };
+        
     private static Class<?>[] allowedCmdsWhileAnonymous = { CmdUSER.class, CmdPASS.class, //
             CmdCWD.class, CmdLIST.class, CmdMDTM.class, CmdNLST.class, CmdPASV.class, //
             CmdPWD.class, CmdQUIT.class, CmdRETR.class, CmdSIZE.class, CmdTYPE.class, //

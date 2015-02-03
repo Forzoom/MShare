@@ -37,7 +37,16 @@ public class Account {
     private String mAttemptPassword = null;
     private boolean userAuthenticated = false;
     public int authFails = 0;
-    private static HashMap<String, String> accounts = new HashMap<String, String>(); 
+    private static HashMap<String, String> accounts = new HashMap<String, String>();
+    public static final int PERMISSION_READ = 0040;
+    public static final int PERMISSION_WRITE = 0020;
+    // execute永远不开放
+    public static final int PERMISSION_EXECUTE = 0010;
+    
+    // 对于写权限来说就是可以使用所有的命令s
+    // TODO 需要了解最后一位的0表示的权限含义
+    // 默认值拥有读权限
+    private int permission = 0640;
     
     private Account(String username, String password) {
     	// TODO username,mPassword仍有可能是null
@@ -61,7 +70,8 @@ public class Account {
     }
     
 	public static Account getInstance(String username) {
-		if (username != null) {
+		// TODO 需要对账户名做更多的限制
+		if (username != null && username.matches("[0-9a-zA-Z]+")) {
 			Context context = MShareApp.getAppContext();
 			SharedPreferences sp = context.getSharedPreferences("accounts", Context.MODE_PRIVATE);
 			String password = sp.getString(username, "");
