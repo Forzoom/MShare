@@ -18,6 +18,7 @@
  */
 package it.sauronsoftware.ftp4j;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -25,7 +26,7 @@ import java.util.Date;
  * 
  * @author Carlo Pelliccia
  */
-public class FTPFile {
+public class FTPFile implements Serializable{
 
 	/**
 	 * The value for the type "file".

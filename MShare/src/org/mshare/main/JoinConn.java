@@ -6,6 +6,7 @@ import it.sauronsoftware.ftp4j.FTPFile;
 import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -221,7 +222,14 @@ public class JoinConn extends Activity {
 				// TODO Auto-generated method stub
 				Log.v(TAG,"test onItemSelected");
 				Intent intent = new Intent(view.getContext(), FtpFileManage.class);
-                intent.putExtra("id", "1");
+				Bundle data=new Bundle();
+				data.putSerializable("mFileList", (Serializable) mFileList);
+				data.putSerializable("mCurrentPWD", mCurrentPWD);
+				data.putSerializable("mFTPHost",mFTPHost);
+				data.putSerializable("mFTPPort",mFTPPort);
+				data.putSerializable("mFTPUser",mFTPUser);
+				data.putSerializable("mFTPPassword",mFTPPassword);
+                intent.putExtras(data);
                 view.getContext().startActivity(intent);
 			}
 	    	

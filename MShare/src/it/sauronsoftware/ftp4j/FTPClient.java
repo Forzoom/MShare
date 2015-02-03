@@ -54,6 +54,8 @@ import java.util.zip.InflaterInputStream;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import android.util.Log;
+
 /**
  * This class implements a FTP client.
  * 
@@ -1666,6 +1668,7 @@ public class FTPClient {
 			}
 			// Sends the CWD command.
 			communication.sendFTPCommand("CDUP");
+			Log.v(null, "CDUP");
 			FTPReply r = communication.readFTPReply();
 			touchAutoNoopTimer();
 			if (!r.isSuccessCode()) {
