@@ -8,7 +8,10 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.mshare.ftp.server.FsSettings;
+import org.mshare.main.MShareApp;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -115,7 +118,8 @@ public class SharedLinkSystem {
 			// TODO 被设置为共享的也有可能是一个文件夹
 			// TODO 被设置的内容可能是一个FakeDirectory
 			SharedLink newSharedLink = null;
-			if (realPath == null) { // 需要设置的是FakeDirectory
+			if (realPath == null) {
+				// realPath为空，需要设置的是FakeDirectory
 				newSharedLink = SharedLink.newFakeDirectory(this, fakePath);
 				file.list().put(fileName, newSharedLink);
 			} else {
@@ -145,8 +149,10 @@ public class SharedLinkSystem {
 	
 	/**
 	 * 持久化操作
+	 * 将所有的内容添加到SharedPreferences中，关于FakeDirectory，该怎么办？
 	 */
 	public void persist() {
+		Shared
 		
 	}
 	

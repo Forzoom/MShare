@@ -42,8 +42,9 @@ public class SharedFile extends SharedLink {
 	 * 并不是真正地删除一个文件
 	 */
 	@Override
-	public void delete() {
-//		system.de
+	public boolean delete() {
+		// SharedFile可能是持久化的，也可能不是持久化的
+		// 无论是否是持久化的，尝试将持久化内容删除，并删除文件树中的内容
 	}
 
 	@Override
@@ -57,6 +58,11 @@ public class SharedFile extends SharedLink {
 	@Override
 	public boolean mkdir() {
 		return false;
+	}
+
+	@Override
+	public boolean setLastModified(long time) {
+		return getRealFile().setLastModified(time);
 	}
 	
 }

@@ -24,6 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.mshare.file.SharedLink;
+
 import android.util.Log;
 
 /**
@@ -43,7 +45,7 @@ public class CmdMDTM extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "run: MDTM executing, input: " + mInput);
         String param = getParameter(mInput);
-        File file = inputPathToChrootedFile(sessionThread.getWorkingDirStr(), param);
+        SharedLink file = sessionThread.sharedLinkSystem.getSharedLink(param);
 
         if (file.exists()) {
             long lastModified = file.lastModified();

@@ -22,6 +22,8 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.io.IOException;
 
+import org.mshare.file.SharedLink;
+
 import android.util.Log;
 
 public class CmdRNTO extends FtpCmd implements Runnable {
@@ -40,21 +42,17 @@ public class CmdRNTO extends FtpCmd implements Runnable {
         String param = getParameter(input);
         String errString = null;
         // 这需要文件的写权限
-        File toFile = null;
+        SharedLink toFile = null;
         mainblock: {
             Log.i(TAG, "param: " + param);
-            toFile = inputPathToChrootedFile(sessionThread.getWorkingDirStr(), param);
-            Log.i(TAG, "RNTO to file: " + toFile.getPath());
-            if (violatesChroot(toFile)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break mainblock;
-            }
-            File fromFile = sessionThread.getRenameFrom();
+            toFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+            Log.i(TAG, "RNTO to file: " + toFile.getFakePath());
+            SharedLink fromFile = sessionThread.getRenameFrom();
             if (fromFile == null) {
                 errString = "550 Rename error, maybe RNFR not sent\r\n";
                 break mainblock;
             }
-            Log.i(TAG, "RNTO from file: " + fromFile.getPath());
+            Log.i(TAG, "RNTO from file: " + fromFile.getFakePath());
             // TODO: this code is working around a bug that java6 and before cannot
             // reliable move a file, once java7 is supported by Dalvik, this code can
             // be replaced with Files.move()

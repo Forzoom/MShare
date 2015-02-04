@@ -95,7 +95,8 @@ public abstract class SharedLink {
 	 */
 	public abstract boolean canRead();
 	public abstract long lastModified();
-	public abstract void delete();
+	public abstract boolean setLastModified(long time);
+	public abstract boolean delete();
 	public abstract boolean mkdir();
 	
 	public void setSystem(SharedLinkSystem system) {

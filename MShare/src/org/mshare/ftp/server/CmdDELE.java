@@ -21,6 +21,8 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
+import org.mshare.file.SharedLink;
+
 import android.util.Log;
 
 public class CmdDELE extends FtpCmd implements Runnable {
@@ -37,7 +39,8 @@ public class CmdDELE extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "DELE executing");
         String param = getParameter(input);
-        File storeFile = inputPathToChrootedFile(sessionThread.getWorkingDirStr(), param);
+        SharedLink storeFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+        
         String errString = null;
         if (storeFile.isDirectory()) {
             errString = "550 Can't DELE a directory\r\n";
@@ -50,6 +53,7 @@ public class CmdDELE extends FtpCmd implements Runnable {
             Log.i(TAG, "DELE failed: " + errString.trim());
         } else {
             sessionThread.writeString("250 File successfully deleted\r\n");
+            // TODO 这里必须了解MediaUpdater是干什么用的
             MediaUpdater.notifyFileDeleted(storeFile.getPath());
         }
         Log.d(TAG, "DELE finished");

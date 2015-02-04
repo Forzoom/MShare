@@ -51,47 +51,17 @@ public abstract class FtpCmd implements Runnable {
             new CmdMap("SITE", CmdSITE.class), //
     };
 
-    private static Class<?>[] readCmds = {
-//    	CmdSYST.class, // 返回系统类型
-        CmdUSER.class, 
-        CmdPASS.class, 
-        CmdTYPE.class, 
-        CmdCWD.class, 
-        CmdPWD.class, 
-        CmdLIST.class, 
-        CmdPASV.class, 
-        CmdRETR.class, 
-        CmdNLST.class, 
-        CmdNOOP.class,
-//        CmdSTOR.class, // 存储文件 
-//        CmdDELE.class, // 删除文件
-//        CmdRNFR.class,  // 重命名
-//        CmdRNTO.class,
-//        CmdRMD.class, 
-//        CmdMKD.class,
-//        CmdOPTS.class, // 
-//        CmdPORT.class, // 好像是主动模式
-        CmdQUIT.class, 
-//        CmdFEAT.class, // 请求FTP服务器列出它的所有的扩展命令与扩展功能的。属于主动模式命令
-        CmdSIZE.class, 
-        CmdCDUP.class,
-//        CmdAPPE.class, 
-        CmdCDUP.class, 
-        CmdPWD.class, 
-        CmdMKD.class, 
-        CmdRMD.class, 
-        CmdMDTM.class, // 用来修改文件的最后修改时间
-        CmdMFMT.class, // 用来修改文件的最后修改时间
-        CmdREST.class, 
-        CmdSITE.class, 
-    };
-        
-    private static Class<?>[] allowedCmdsWhileAnonymous = { CmdUSER.class, CmdPASS.class, //
+    // 所有读权限所能够发送的命令
+    private static Class<?>[] allowedCmdsWhileRead = { CmdUSER.class, CmdPASS.class, //
             CmdCWD.class, CmdLIST.class, CmdMDTM.class, CmdNLST.class, CmdPASV.class, //
             CmdPWD.class, CmdQUIT.class, CmdRETR.class, CmdSIZE.class, CmdTYPE.class, //
             CmdCDUP.class, CmdNOOP.class, CmdSYST.class, CmdPORT.class, //
     };
 
+    private static Class<?>[] allowedCmdsWhileNotLoggedIn = {
+    	CmdUSER.class, CmdPASS.class, CmdQUIT.class
+    };
+    
     public FtpCmd(SessionThread sessionThread) {
         this.sessionThread = sessionThread;
     }
@@ -154,11 +124,32 @@ public abstract class FtpCmd implements Runnable {
             return;
         }
 
-        if (session.isUserLoggedIn()) {
-            cmdInstance.run();
-        } else if (session.isAnonymouslyLoggedIn() == true) {
-            boolean validCmd = false;
-            for (Class<?> cl : allowedCmdsWhileAnonymous) {
+        Account account = session.getAccount();
+        
+        // 对于已经登录的用户，将无条件地执行所发送的命令
+        // TODO 低耦合
+        if (session.isUserLoggedIn() && account != null) {
+        	if (account.canWrite()) { // 检测写权限
+        		cmdInstance.run();
+        	} else if (account.canRead()) { // 检测读权限
+        		boolean validCmd = false;
+                for (Class<?> cl : allowedCmdsWhileRead) {
+                    if (cmdInstance.getClass().equals(cl)) {
+                        validCmd = true;
+                        break;
+                    }
+                }
+                if (validCmd == true) {
+                    cmdInstance.run();
+                } else {
+                    session.writeString("530 user is not allowed to use that command\r\n");
+                }
+        	} else {
+        		// TODO 将返回无法执行
+        	}
+        } else {
+        	boolean validCmd = false;
+            for (Class<?> cl : allowedCmdsWhileNotLoggedIn) {
                 if (cmdInstance.getClass().equals(cl)) {
                     validCmd = true;
                     break;
@@ -167,14 +158,8 @@ public abstract class FtpCmd implements Runnable {
             if (validCmd == true) {
                 cmdInstance.run();
             } else {
-                session.writeString("530 Guest user is not allowed to use that command\r\n");
+                session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
             }
-        } else if (cmdInstance.getClass().equals(CmdUSER.class)
-                || cmdInstance.getClass().equals(CmdPASS.class)
-                || cmdInstance.getClass().equals(CmdQUIT.class)) {
-            cmdInstance.run();
-        } else {
-            session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
         }
     }
 

@@ -73,4 +73,9 @@ public class SharedDirectory extends SharedLink {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public boolean setLastModified(long time) {
+		return getRealFile().setLastModified(time);
+	}
 }

@@ -42,6 +42,7 @@ public class CmdRNFR extends FtpCmd implements Runnable {
         String errString = null;
         SharedLink file = null;
         mainblock: {
+        	// 参数或者是文件名
             file = sessionThread.sharedLinkSystem.getSharedLink(param);
             if (!file.exists()) {
                 errString = "450 Cannot rename nonexistent file\r\n";

@@ -31,6 +31,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+import org.mshare.file.SharedLink;
 import org.mshare.file.SharedLinkSystem;
 
 import android.util.Log;
@@ -55,7 +56,7 @@ public class SessionThread extends Thread {
 //    protected File workingDir = FsSettings.getChrootDir();
     // 
     protected Socket dataSocket = null;
-    protected File renameFrom = null;
+    protected SharedLink renameFrom = null;
     protected LocalDataSocket localDataSocket;
     // 
     OutputStream dataOutputStream = null;
@@ -367,6 +368,7 @@ public class SessionThread extends Thread {
     }
 
     /**
+     * 通过身份认证或者是匿名登录的
      * @return true if a valid user has logged in
      */
     public boolean isUserLoggedIn() {
@@ -410,11 +412,11 @@ public class SessionThread extends Thread {
         this.dataSocket = dataSocket;
     }
 
-    public File getRenameFrom() {
+    public SharedLink getRenameFrom() {
         return renameFrom;
     }
     // TODO 需要修改
-    public void setRenameFrom(File renameFrom) {
+    public void setRenameFrom(SharedLink renameFrom) {
         this.renameFrom = renameFrom;
     }
 

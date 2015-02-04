@@ -63,6 +63,9 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
                 Log.d(TAG, "LIST is skipping dashed arg " + param);
                 param = getParameter(param);
             }
+            
+            // 筛除文件名不合格的文件
+            // 获得所需要列出的文件
             SharedLink fileToList = null;
             if (param.equals("")) { // 没有参数
                 fileToList = sessionThread.sharedLinkSystem.getWorkingDir();
@@ -71,34 +74,15 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
                     errString = "550 LIST does not support wildcards\r\n";
                     break mainblock;
                 }
-                fileToList = sessionThread.sharedLinkSystem.getFile(param);
-//                if (violatesChroot(fileToList)) {
-//                    errString = "450 Listing target violates chroot\r\n";
-//                    break mainblock;
-//                }
+                fileToList = sessionThread.sharedLinkSystem.getSharedLink(param);
             }
+            // 列表的结果
             String listing;
-            if (fileToList.isFakeDirectory()) { // 当前是SFS中的文件夹
-            	// 列出所有的文件
-            	// TODO 可能其中太多的细节都被使用到
-            	Map<String, SharedLink> map = fileToList.list();
-            	
-            	Set<String> keySet = map.keySet();
-            	Iterator<String> iterator = keySet.iterator();
-            	
-            	StringBuilder builder = new StringBuilder();
-            	
-            	while (iterator.hasNext()) {
-            		String key = iterator.next();
-            		builder.append(makeLsString(map.get(key)));
-            	}
-            	
-            	listing = builder.toString();
-            	
-            } else if (fileToList.isDirectory()) { // 当前是一个共享的文件夹 TODO 需要了解共享文件夹中是否可以有其他的文件
-            	File realFile = fileToList.getRealFile();
-                StringBuilder response = new StringBuilder();
-                errString = listDirectory(response, realFile);
+            // 当前是一个共享的文件夹 
+            // TODO 需要了解共享文件夹中是否可以有其他的文件
+            if (fileToList.isDirectory() || fileToList.isFakeDirectory()) {
+            	StringBuilder response = new StringBuilder();
+                errString = listDirectory(response, fileToList);
                 if (errString != null) {
                     break mainblock;
                 }

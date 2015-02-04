@@ -8,8 +8,9 @@ public class SharedFakeDirectory extends SharedLink {
 	private int mType = TYPE_FAKE_DIRECTORY;
 	private long mLastModified = 0l;
 	
-	public void setLastModified(long lastModified) {
+	public boolean setLastModified(long lastModified) {
 		mLastModified = lastModified;
+		return true;
 	}
 	
 	@Override
