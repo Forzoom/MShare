@@ -397,7 +397,7 @@ public class SessionThread extends Thread {
         }
         
         // TODO 不知道将SharedLinkSystem放在这里生成是否好
-        sharedLinkSystem = new SharedLinkSystem();
+        sharedLinkSystem = new SharedLinkSystem(this);
         // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
         // LinkSystem是否需要形成一个自己的圈子呢
         

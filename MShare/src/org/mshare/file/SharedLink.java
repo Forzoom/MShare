@@ -39,7 +39,11 @@ public abstract class SharedLink {
 	
 	int type = TYPE_UNKNOWN;
 	
-	public static final SharedLink newFile(String fakePath, String realPath) {
+	public SharedLink(SharedLinkSystem system) {
+		this.mSystem = system;
+	}
+	
+	public static final SharedLink newFile(SharedLinkSystem system, String fakePath, String realPath) {
 		
 		File realFile = new File(realPath);
 		if (!realFile.exists()) {
@@ -50,7 +54,7 @@ public abstract class SharedLink {
 			return null;
 		}
 	
-		SharedLink sf = new SharedFile();
+		SharedLink sf = new SharedFile(system);
 		sf.fakePath = fakePath; 
 		sf.realPath = realPath;
 		sf.realFile = realFile;
@@ -58,8 +62,7 @@ public abstract class SharedLink {
 	}
 	
 	public static final SharedLink newDirectory(SharedLinkSystem system, String fakePath, String realPath) {
-		SharedDirectory sd = new SharedDirectory();
-		sd.setSystem(system);
+		SharedDirectory sd = new SharedDirectory(system);
 		sd.fakePath = fakePath;
 		sd.realPath = realPath;
 		return null;
@@ -67,9 +70,8 @@ public abstract class SharedLink {
 	
 	// 需要设置lastModified来模拟文件夹创建
 	public static final SharedLink newFakeDirectory(SharedLinkSystem system, String fakePath) {
-		SharedFakeDirectory sfd = new SharedFakeDirectory();
+		SharedFakeDirectory sfd = new SharedFakeDirectory(system);
 		
-		sfd.setSystem(system);
 		sfd.fakePath = fakePath;
 		sfd.setLastModified(System.currentTimeMillis());
 		
@@ -99,8 +101,8 @@ public abstract class SharedLink {
 	public abstract boolean delete();
 	public abstract boolean mkdir();
 	
-	public void setSystem(SharedLinkSystem system) {
-		this.mSystem = system;
+	public SharedLinkSystem getSystem() {
+		return mSystem;
 	}
 	
 	public HashMap<String, SharedLink> list() {

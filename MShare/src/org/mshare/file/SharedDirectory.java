@@ -5,6 +5,10 @@ import java.io.File;
 public class SharedDirectory extends SharedLink {
 	private int type = TYPE_DIRECTORY;
 
+	public SharedDirectory(SharedLinkSystem system) {
+		super(system);
+	}
+	
 	@Override
 	public boolean isFile() {
 		return false;

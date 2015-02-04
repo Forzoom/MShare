@@ -2,7 +2,9 @@ package org.mshare.file;
 // 所需要的内容 realPath和fakePath
 public class SharedFile extends SharedLink {
 	private int type = TYPE_FILE;
-	public SharedFile() {}
+	public SharedFile(SharedLinkSystem system) {
+		super(system);
+	}
 	
 	@Override
 	public boolean isFile() {
@@ -45,6 +47,10 @@ public class SharedFile extends SharedLink {
 	public boolean delete() {
 		// SharedFile可能是持久化的，也可能不是持久化的
 		// 无论是否是持久化的，尝试将持久化内容删除，并删除文件树中的内容
+		getSystem().unpersist(fakePath);
+		getSystem().deleteSharedPath(fakePath);
+		// TODO 需要修改
+		return true;
 	}
 
 	@Override

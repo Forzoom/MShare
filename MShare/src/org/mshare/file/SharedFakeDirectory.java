@@ -8,6 +8,10 @@ public class SharedFakeDirectory extends SharedLink {
 	private int mType = TYPE_FAKE_DIRECTORY;
 	private long mLastModified = 0l;
 	
+	public SharedFakeDirectory(SharedLinkSystem system) {
+		super(system);
+	}
+	
 	public boolean setLastModified(long lastModified) {
 		mLastModified = lastModified;
 		return true;
@@ -66,9 +70,12 @@ public class SharedFakeDirectory extends SharedLink {
 	}
 
 	@Override
-	public void delete() {
-		// TODO Auto-generated method stub
-		
+	public boolean delete() {
+		// 因为fakeDirectory也是需要持久化的
+		getSystem().unpersist(fakePath);
+		getSystem().deleteSharedPath(fakePath);
+		// TODO 需要修改
+		return true;
 	}
 
 	@Override

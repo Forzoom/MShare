@@ -8,10 +8,12 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.mshare.ftp.server.FsSettings;
+import org.mshare.ftp.server.SessionThread;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -52,8 +54,10 @@ public class SharedLinkSystem {
 	// 写权限存在情况下所防止的位置
 	// TODO 即设置在扩展存储org.mshare文件夹下,并在该文件夹下设置账户对应的文件夹
 	private String writePath = null;
+	private SessionThread sessionThread;
 	
-	public SharedLinkSystem() {
+	public SharedLinkSystem(SessionThread sessionThread) {
+		this.sessionThread = sessionThread;
 		// TODO 暂时设定为扩展存储的路径
 		String realPath = Environment.getExternalStorageDirectory().getAbsolutePath();
 		root = SharedLink.newFakeDirectory(this, "");
@@ -125,7 +129,7 @@ public class SharedLinkSystem {
 			} else {
 				File realFile = new File(realPath);
 				if (realFile.isFile()) {
-					newSharedLink = SharedLink.newFile(file.getFakePath() + SEPARATOR + fileName, realPath);
+					newSharedLink = SharedLink.newFile(this, file.getFakePath() + SEPARATOR + fileName, realPath);
 					file.list().put(fileName, newSharedLink);
 				} else if (realFile.isDirectory()) {
 					newSharedLink = SharedLink.newDirectory(this, file.getFakePath() + SEPARATOR + fileName, realPath);
@@ -148,16 +152,53 @@ public class SharedLinkSystem {
 	}
 	
 	/**
+	 * 将文件树中的节点删除
+	 * @param fakePath
+	 */
+	public void deleteSharedPath(String fakePath) {
+		// getSharedLink并不是为了在这个时候使用的
+		// 因为如果fakePath中是文件名的话，那么就会得到working directory文件夹下的内容
+		// TODO 所以需要保证fakePath是相对路径
+		SharedLink toDelete = getSharedLink(fakePath);
+		SharedLink parent = toDelete.getParent();
+		// TODO 直接从文件树中删除，不知道是否会造成内存溢出
+		parent.list().remove(toDelete.getName());
+	}
+	
+	/**
 	 * 持久化操作
 	 * 将所有的内容添加到SharedPreferences中，关于FakeDirectory，该怎么办？
 	 */
-	public void persist() {
-		Shared
-		
+	public void persist(String fakePath, String realPath) {
+		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
+		// TODO 为了保存fakePath和realPath的联系，可能需要更好的持久化方式
+		Editor editor = sp.edit();
+		if (realPath != null && !realPath.equals("")) {
+			editor.putString(fakePath, realPath);
+		} else {
+			// TODO 将空改为
+			editor.putString(fakePath, "");
+		}
+		editor.commit();
 	}
 	
-	public void deleteSharedPath(String fakePath) {
-		
+	/**
+	 * 仅仅是为了删除被持久化的内容
+	 * @param fakePath
+	 */
+	public void unpersist(String fakePath) {
+		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
+		// 没法找到更好的defaultValue,使用文件名中不许可的
+		String realPath = sp.getString(fakePath, "|");
+		// 文件并不存在
+		if (realPath == "|") {
+			// do nothing
+		} else if (realPath.equals("")) { // 所对应的是fakeDirectory
+			Editor editor = sp.edit();
+			editor.putString(fakePath, null); // 设置null将删除对应内容
+		} else {
+			// 剩下的情况就是要将文件树中的内容删除
+		}
 	}
 	
 	// TODO 需要实现类似linux系统的内容,如果有更好的实现办法
