@@ -43,6 +43,7 @@ public class P2pReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
+		Log.v(TAG, "received :" + action);
 		
 		// 检测当前的WiFiP2P的情况
 		if (action.equals(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)) {
@@ -50,6 +51,7 @@ public class P2pReceiver extends BroadcastReceiver {
 			
 			if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
 				// WIFIP2P可用
+				Log.v(TAG, "wifi p2p state change enable");
 				wpm.discoverPeers(channel, new OnDiscoverPeersListener());
 			} else if (state == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
 				// WIFIP2P不可用
@@ -59,6 +61,7 @@ public class P2pReceiver extends BroadcastReceiver {
 		// 检测当前peer列表发生变化的情况
 		// discoverPeers()被调用后返回的结果,requestPeers()来获得结果
 		if (action.equals(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)) {
+			Log.v(TAG, "peers state change");
 			wpm.requestPeers(channel, new OnPeerListListener());
 		}
 
@@ -74,10 +77,12 @@ public class P2pReceiver extends BroadcastReceiver {
 		@Override
 		public void onSuccess() {
 			// 调用requestPeers放在了WIFI_P2P_PEERS的状态发生改变的时候
+			Log.v(TAG, "OnDiscoverPeersListener OnSuccess");
 		}
 
 		@Override
 		public void onFailure(int reason) {
+			Log.v(TAG, "OnDiscoverPeersListener OnFailure");
 			switch (reason) {
 			case WifiP2pManager.ERROR:
 				Log.e(TAG, "error");
@@ -103,11 +108,10 @@ public class P2pReceiver extends BroadcastReceiver {
 		@Override
 		public void onPeersAvailable(WifiP2pDeviceList peers) {
 			// TODO 列出所有的Peer列表
-			
+			Log.v(TAG, "onPeerListListener");
 			Context context = MShareApp.getAppContext();
 			Intent intent = new Intent(P2pActivity.ACTION_ON_PEERS_AVAILABLE);
-			Bundle b = new Bundle();
-//			intent.put
+			((P2pActivity)activity).showPeers(peers);
 //			context.sendBroadcast(intent);
 		}
 		

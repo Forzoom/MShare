@@ -45,7 +45,7 @@ public class NewConn extends Activity {
 	
 	private static final String TAG = NewConn.class.getSimpleName();
 	
-	// 所有和配置有关的空间
+	// 所有和配置有关的控件
 	private ToggleButton ftpSwitch;
 	private TextView ftpUsernameView;
 	private TextView ftpPasswordView;

@@ -14,62 +14,30 @@ import android.content.IntentFilter;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.os.Bundle;
+import android.util.Log;
 
+/**
+ * 使用wifip2p不知是否需要用户手动开启wifip2p
+ * 需要尝试在二维码扫描中，连接对于的AP或者的wifip2p peer
+ * 使用wifip2p已经大致掌握了，但无法测试
+ * wifip2p将如何尝试启动
+ * @author HM
+ *
+ */
 public class P2pActivity extends Activity {
 
+	private static final String TAG = P2pActivity.class.getSimpleName();
+	
 	private WifiP2pManager wpm;
 	private Channel channel;
 	private P2pReceiver pr;
 	private IntentFilter filter;
 	
 	public static final String ACTION_ON_PEERS_AVAILABLE = "org.mshare.p2p.ON_PEERS_AVAILABLE";
-	
-	/**
-	 * 通知当peers可以使用的时候
-	 * @author HM
-	 *
-	 */
-	private class OnPeersAvailableReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Collection<WifiP2pDevice> devices = peers.getDeviceList();
-			Iterator<WifiP2pDevice> iterator = devices.iterator();
-			if (iterator.hasNext()) {
-				WifiP2pConfig config = new WifiP2pConfig();
-				WifiP2pDevice device = iterator.next();
-				config.deviceAddress = device.deviceAddress;
-				config.wps.setup = WpsInfo.PBC;
-				
-				wpm.connect(channel, config, new WifiP2pManager.ActionListener() {
-
-					@Override
-					public void onSuccess() {
-						
-					}
-
-					@Override
-					public void onFailure(int reason) {
-						
-					}
-					
-				});
-			}
-			
-			/*
-			Iterator<WifiP2pDevice> iterator = devices.iterator();
-			while (iterator.hasNext()) {
-				WifiP2pConfig config = new WifiP2pConfig();
-				WifiP2pDevice device = iterator.next();
-				config.deviceAddress = device.deviceAddress;
-				config.wps.setup = WpsInfo.PBC;
-			}
-			*/
-		}
-	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +70,20 @@ public class P2pActivity extends Activity {
 	protected void onPause() {
 		super.onPause();
 		unregisterReceiver(pr);
+	}
+	
+	public void showPeers(WifiP2pDeviceList peers) {
+		Collection<WifiP2pDevice> devices = peers.getDeviceList();
+		Iterator<WifiP2pDevice> iterator = devices.iterator();
+		
+		while (iterator.hasNext()) {
+			WifiP2pDevice device = iterator.next();
+			String address = device.deviceAddress;
+			String name = device.deviceName;
+			Log.v(TAG, "address " + address);
+			Log.v(TAG, "name " + name);
+		}
+		
 	}
 	
 }
