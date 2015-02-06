@@ -137,10 +137,13 @@ public class JoinConn extends Activity {
 		TableLayout loginForm = (TableLayout)getLayoutInflater()
 			.inflate( R.layout.login, null);	
 		final EditText editHost = (EditText) loginForm.findViewById(R.id.editFTPHost);
+		editHost.setText("192.168.0.101");
 		final EditText editPort= (EditText) loginForm.findViewById(R.id.editFTPPort);
 		editPort.setText("3721");
 		final EditText editUser = (EditText) loginForm.findViewById(R.id.editFTPUser);
+		editUser.setText("123");
 		final EditText editPasword= (EditText) loginForm.findViewById(R.id.editPassword);
+		editPasword.setText("abc");
 		new AlertDialog.Builder(this)
 			// 设置对话框的图标
 			.setIcon(R.drawable.app_default_icon)

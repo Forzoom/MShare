@@ -8,10 +8,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.mshare.main.FtpMainActivity.CmdDownLoad;
-import org.mshare.main.FtpMainActivity.CmdUpload;
 import org.mshare.main.UploadFileChooserAdapter.FileInfo;
-
 import it.sauronsoftware.ftp4j.FTPClient;
 import it.sauronsoftware.ftp4j.FTPDataTransferListener;
 import it.sauronsoftware.ftp4j.FTPException;
@@ -20,12 +17,14 @@ import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
@@ -38,6 +37,8 @@ import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -66,7 +67,7 @@ public class FtpFileManage extends Activity{
 	private int mSelectedPosistion = -1;
 
 	private String mCurrentPWD; // 当前远程目录
-	private static final String OLIVE_DIR_NAME = "OliveDownload";
+	private static final String OLIVE_DIR_NAME = "MShareDownload";
 
 	// Upload
 	private GridView mGridView;
@@ -149,6 +150,27 @@ public class FtpFileManage extends Activity{
 	}
 	
 	private void initView() {
+		
+		Button mButton = (Button) findViewById(R.id.preFolder);
+		mButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				executeCDURequest();
+			}
+		});
+		
+		Button mUpload = (Button) findViewById(R.id.upload);
+		mUpload.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				openFileDialog();
+			}
+		});
+		
 		mListView = (ListView) findViewById(R.id.listviewApp);
 
 		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -181,22 +203,23 @@ public class FtpFileManage extends Activity{
 					}
 
 				});
-		mListView.setOnKeyListener(new OnKeyListener() {
-			
-			@Override
-			public boolean onKey(View source, int keycode, KeyEvent event) {
-				Log.v(null, "setOnKeyListener");
-				// TODO Auto-generated method stub
-				if(event.getAction() == KeyEvent.ACTION_DOWN){
-					switch(event.getKeyCode())
-					{
-						case KeyEvent.KEYCODE_BACK:
-							executeCDURequest();
-					}
-				}
-				return false;
-			}
-		});
+		
+//		mListView.setOnKeyListener(new OnKeyListener() {
+//			
+//			@Override
+//			public boolean onKey(View source, int keycode, KeyEvent event) {
+//				Log.v(null, "setOnKeyListener");
+//				// TODO Auto-generated method stub
+//				if(event.getAction() == KeyEvent.ACTION_DOWN){
+//					switch(event.getKeyCode())
+//					{
+//						case KeyEvent.KEYCODE_BACK:
+//							executeCDURequest();
+//					}
+//				}
+//				return false;
+//			}
+//		});
 	}
 	
 	@Override
@@ -223,7 +246,7 @@ public class FtpFileManage extends Activity{
 				showDialog(DIALOG_LOAD);
 				new CmdDownLoad().execute();
 			} else {
-				toast("只能上传文件");
+				toast("只能下载文件");
 			}
 			break;
 		case MENU_OPTIONS_RENAME:
@@ -251,6 +274,96 @@ public class FtpFileManage extends Activity{
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+	}
+	
+	protected Dialog onCreateDialog(int id) {
+		switch (id) {
+		case DIALOG_LOAD:
+			return createLoadDialog();
+		case DIALOG_RENAME:
+			return createRenameDialog();
+		default:
+			return null;
+		}
+	}
+	
+	private Dialog createLoadDialog() {
+
+		View rootLoadView = getLayoutInflater().inflate(
+				R.layout.dialog_load_file, null);
+		mPbLoad = (ProgressBar) rootLoadView.findViewById(R.id.pbLoadFile);
+
+		progressDialog = new AlertDialog.Builder(this).setTitle("请稍等片刻...")
+				.setView(rootLoadView).setCancelable(false).create();
+
+		progressDialog
+				.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+					@Override
+					public void onDismiss(DialogInterface dialog) {
+						// TODO Auto-generated method stub
+						setLoadProgress(0);
+					}
+				});
+
+		return progressDialog;
+	}
+
+	private Dialog createRenameDialog() {
+
+		View rootLoadView = getLayoutInflater().inflate(R.layout.dialog_rename,
+				null);
+		final EditText edit = (EditText) rootLoadView
+				.findViewById(R.id.editNewPath);
+
+		return new AlertDialog.Builder(this)
+				.setTitle("重命名...")
+				.setView(rootLoadView)
+				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface uploadDialog, int which) {
+						// TODO Auto-generated method stub
+						if (!TextUtils.isEmpty(edit.getText())) {
+							executeREANMERequest(edit.getText().toString());
+						}
+					}
+				})
+				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface uploadDialog, int which) {
+						// TODO Auto-generated method stub
+
+					}
+				}).create();
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		mDameonRunning = false ;
+		Thread thread = new Thread(mCmdFactory.createCmdDisConnect()) ;
+		thread.start();
+		//等待连接中断
+		try {
+			thread.join(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		mThreadPool.shutdownNow();
+		super.onDestroy();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.activity_main, menu);
+		return true;
 	}
 	
 	private Handler mHandler = new Handler() {
@@ -285,6 +398,13 @@ public class FtpFileManage extends Activity{
 				executeLISTRequest();
 				break;
 			case MSG_CMD_CWD_FAILED:
+				toast("请求数据失败。");
+				break;
+			case MSG_CMD_CDU_OK:
+				toast("请求数据成功。");
+				executeLISTRequest();
+				break;
+			case MSG_CMD_CDU_FAILED:
 				toast("请求数据失败。");
 				break;
 			case MSG_CMD_DELE_OK:
@@ -632,7 +752,7 @@ public class FtpFileManage extends Activity{
 		}
 
 		protected void onPostExecute(Boolean result) {
-			toast(result ? "下载成功" : "下载失败");
+			toast(result ? "下载成功,文件已保存到/MShareDownload" : "下载失败,请检查是否已插入SD卡");
 			progressDialog.dismiss();
 		}
 	}
