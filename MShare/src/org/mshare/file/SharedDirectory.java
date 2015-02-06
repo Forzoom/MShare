@@ -24,12 +24,17 @@ public class SharedDirectory extends SharedLink {
 		return false;
 	}
 
+	/**
+	 * 获得并返回所有子文件
+	 * 所有的文件内容都将通过system来获得
+	 * @return 如果没有对应的system，那么就会返回null
+	 */
 	@Override
 	public SharedLink[] listFiles() {
 		File realFile = getRealFile();
-		
 		File[] files = realFile.listFiles();
 		
+		// TODO 在创建Directory的时候，就需要将内容加入到文件树中
 		for (int i = 0, len = files.length; i < len; i++) {
 			File file = files[i];
 			if (file.isFile()) {
@@ -59,14 +64,13 @@ public class SharedDirectory extends SharedLink {
 
 	@Override
 	public boolean exists() {
-		// TODO Auto-generated method stub
-		return false;
+		return getRealFile().exists();
 	}
 
 	@Override
-	public void delete() {
-		// TODO Auto-generated method stub
-		
+	public boolean delete() {
+		// TODO 
+		return false;
 	}
 
 	/**

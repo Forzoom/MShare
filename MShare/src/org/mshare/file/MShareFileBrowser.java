@@ -35,8 +35,8 @@ import org.mshare.main.MShareUtil;
 public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
 
 	// TODO 暂时放置在这里，使用内容在MainActivity中
-	public static final int CM_ITEM_ID_SHARE = 4;
-	public static final int CM_ITEM_ID_UNSHARE = 5;
+	public static final int CONTEXT_MENU_ITEM_ID_SHARE = 4;
+	public static final int CONTEXT_MENU_ITEM_ID_UNSHARE = 5;
 	
 	private static final String TAG = MShareFileBrowser.class.getSimpleName();
 	
@@ -65,6 +65,11 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	
 	private boolean enable = false;
 	
+	/**
+	 * 被选定的文件对象 TODO 如何将一个文件对象设置为不选定
+	 */
+	private String selectedPath;
+	
 	public MShareFileBrowser(Context context, ViewGroup container, String rootPath) {
 		this.context = context;
 		this.container = container;
@@ -91,7 +96,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
 		
-		// TODO 可能并不是很好的注册ContextMenu的方法
+		// TODO 可能并不是很好的注册ContextMenu的方法，因为需要将context作为Activity来使用
 		((Activity)context).registerForContextMenu(gridView);
 		
 		// 检测扩展存储是否可用

@@ -142,9 +142,9 @@ public class MainActivity extends FragmentActivity
 		
 		// 判断当前文件是否是共享文件
 		if (!item.file.isShared()) {
-			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CM_ITEM_ID_SHARE, 4, "共享");
+			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE, 4, "共享");
 		} else {
-			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CM_ITEM_ID_UNSHARE, 4, "不共享");
+			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE, 4, "不共享");
 		}
 		
 		super.onCreateContextMenu(menu, v, menuInfo);
@@ -156,13 +156,13 @@ public class MainActivity extends FragmentActivity
 		int itemId = item.getItemId();
 		
 		switch (itemId) {
-			case MShareFileBrowser.CM_ITEM_ID_SHARE: // 当点击的是共享
+			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE: // 当点击的是共享
 				
 				// 获得当前被点击的对象
 				
 				
 				break;
-			case MShareFileBrowser.CM_ITEM_ID_UNSHARE: // 点击的是不共享
+			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE: // 点击的是不共享
 				break;
 		}
 		

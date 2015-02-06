@@ -10,6 +10,7 @@ import java.util.Set;
 import android.util.Log;
 
 /**
+ * 必须和system共同使用才能发挥正确的价值，但提高了耦合
  * TODO 如何才能确保传入的param中不存在..和.的内容
  * TODO 所有的SharedLink都没有..和.的内容
  * 决定不继承File类
@@ -43,6 +44,13 @@ public abstract class SharedLink {
 		this.mSystem = system;
 	}
 	
+	/**
+	 * 仅仅用于创建一个SharedLink对象，对象不一定存在与文件树中
+	 * @param system
+	 * @param fakePath
+	 * @param realPath
+	 * @return
+	 */
 	public static final SharedLink newFile(SharedLinkSystem system, String fakePath, String realPath) {
 		
 		File realFile = new File(realPath);

@@ -19,8 +19,13 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
- * 1.伪造的文件系统，所有的内容都应当从这里获得。
- * 2.本地文件系统中的内容也应当从一个本地的SharedSystem中获得额外的内容
+ * TODO 目前对于不合法的path，都将被SharedLinkSystem自动删除
+ * 保存文件系统并要求用户手动保存文件系统，或者提供按钮用来清除无效的Link对象
+ * 关键是持久化内容保持太多容易造成效率问题，但随意删除持久化内容又会造成文件丢失，能否对当前正在使用的SD卡作为唯一性判断
+ * 如果realPath中的内容消失了，那么也不应该立即就删除持久化path，而是需要记录说当前path无效，并且不显示，等待下次检测文件的时候，发现realPath真的不存在的情况下再去除持久化
+ * 不允许在父文件夹没有创建的时候，创建其子文件夹,所以path的添加顺序很重要
+ * 1.所有不正确的持久化path都会被删除，因此持久化内容的改变也需要注意
+ * 2.本地文件显示也应当从一个本地的SharedLinkSystem中获得内容
  * 3.LinkSystem包含所有被分享的内容
  * 4.FTP客户端所获得的内容应当是SharedFileSystem中的
  * 5.所有对于分享权限的设置应当在SharedFileSystem中
@@ -54,6 +59,7 @@ public class SharedLinkSystem {
 	// 写权限存在情况下所防止的位置
 	// TODO 即设置在扩展存储org.mshare文件夹下,并在该文件夹下设置账户对应的文件夹
 	private String writePath = null;
+	// 用来获得Account，但是其实只要设定了所需要存储的位置即可,主要是SharedPreferences需要通过Account对象获得
 	private SessionThread sessionThread;
 	
 	public SharedLinkSystem(SessionThread sessionThread) {
@@ -63,25 +69,18 @@ public class SharedLinkSystem {
 		root = SharedLink.newFakeDirectory(this, "");
 	}
 	
-	public void persistSharedPath(String fakePath) {
-		
-	}
-	
 	/**
 	 * 添加新的内容
 	 * 添加路径，为SharedFileSystem添加新的内容，可以是文件或者文件夹
 	 * 当realPath为null的时候，会将其作为一个SharedFakeDirectory添加
+	 * 如果添加的是一个共享文件夹，那么就要将共享文件夹下的所有内容递归加入文件树
+	 * 但是共享文件夹下的内容不会被持久化
+	 * 当遇到无法添加到文件树中的Path的时候，也会将其持久化内容删除
 	 * TODO 如何判断是否添加成功了
+	 * @param fakePath 对应的是SharedFileSystem中的文件路径，不能为""或者"/"
 	 * @param realPath 只有在添加最终的内容的时候才会被使用
-	 * @param fakePath 对应的是SharedFileSystem中的文件路径
 	 */
 	public boolean addSharedPath(String fakePath, String realPath) {
-		// 先添加到持久化中
-		// 创建一个路径
-//		SharedPath sp = SharedPath.new;
-		// 存储fakePath
-		
-		
 		// 分割成碎片
 		String[] crumbs = split(fakePath);
 		String fileName = null;
@@ -103,21 +102,21 @@ public class SharedLinkSystem {
 			if (file.isDirectory()) {
 				parentFile = file; // 记录父文件
 				file = file.list().get(fileName);
+				
+				if (file == null) {
+					// 路径不存在的情况下，将判定为路径不合法
+					Log.e(TAG, "无法添加path，路径不合法");
+					return false;
+				}
 			} else {
-				// TODO 决定文件是否应该被覆盖,临时return false
-				Log.e(TAG, "可能有文件要被覆盖");
+				// 所有持久化后添加的path都应该是正确的
+				Log.e(TAG, "无法添加path,路径不合法");
 				return false;
-			}
-			
-			if (file == null) { // 路径是否存在
-				// TODO 需要设置fakePath
-				SharedLink newFakeDirectory = SharedLink.newFakeDirectory(this, join(new String[] {parentFile.getFakePath(), fileName}));
-				parentFile.list().put(fileName, newFakeDirectory);
 			}
 		}
 		
 		fileName = crumbs[crumbs.length - 1];
-		if (file.isDirectory()) { // 父文件是一个文件夹
+		if (file.isDirectory() || file.isFakeDirectory()) { // 父文件是一个文件夹
 			// 添加新的文件
 			// TODO 被设置为共享的也有可能是一个文件夹
 			// TODO 被设置的内容可能是一个FakeDirectory
@@ -142,11 +141,9 @@ public class SharedLinkSystem {
 			} else {
 				return false;
 			}
-		} else if (file.isFile()) { 
-			// TODO 父文件是一个文件，需要覆盖？
-			return false;
-		} else {
-			// TODO 暂时return false
+		} else { 
+			// TODO 删除持久化
+			Log.e(TAG, "父文件不是一个文件夹");
 			return false;
 		}
 	}
@@ -160,9 +157,11 @@ public class SharedLinkSystem {
 		// 因为如果fakePath中是文件名的话，那么就会得到working directory文件夹下的内容
 		// TODO 所以需要保证fakePath是相对路径
 		SharedLink toDelete = getSharedLink(fakePath);
-		SharedLink parent = toDelete.getParent();
-		// TODO 直接从文件树中删除，不知道是否会造成内存溢出
-		parent.list().remove(toDelete.getName());
+		if (toDelete != null) {
+			SharedLink parent = toDelete.getParent();
+			// TODO 直接从文件树中删除，不知道是否会造成内存溢出，map中的内容不知是否会被回收
+			parent.list().remove(toDelete.getName());
+		}
 	}
 	
 	/**
@@ -172,6 +171,8 @@ public class SharedLinkSystem {
 	public void persist(String fakePath, String realPath) {
 		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
 		// TODO 为了保存fakePath和realPath的联系，可能需要更好的持久化方式
+		// 因为所需要的保存的内容可能会有很多，包括对于文件的其他信息的保存
+		// 可能需要更新信息的操作按钮
 		Editor editor = sp.edit();
 		if (realPath != null && !realPath.equals("")) {
 			editor.putString(fakePath, realPath);
