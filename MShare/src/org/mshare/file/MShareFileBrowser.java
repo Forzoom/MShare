@@ -66,9 +66,10 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	private boolean enable = false;
 	
 	/**
-	 * 被选定的文件对象 TODO 如何将一个文件对象设置为不选定
+	 * 被选定的文件对象
+	 * TODO 在何时删除selectedPath内容
 	 */
-	private String selectedPath;
+	private String longClickPath;
 	
 	public MShareFileBrowser(Context context, ViewGroup container, String rootPath) {
 		this.context = context;
@@ -110,6 +111,17 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			gridView.setAdapter(adapter);
 			return fileBrowserLayout;
 		}
+	}
+	
+	/**
+	 * 通过LongClick来设置当前正在被共享的文件是哪个
+	 */
+	public void setShared(String shared) {
+		
+	}
+	
+	public String getShared() {
+		return longClickPath;
 	}
 	
 	/**

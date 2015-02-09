@@ -42,6 +42,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
         String param = getParameter(input);
         String errString = null;
         // 这需要文件的写权限
+        // 这里的文件重命名操作确实有点麻烦，不知道为什么要这么做
         SharedLink toFile = null;
         mainblock: {
             Log.i(TAG, "param: " + param);

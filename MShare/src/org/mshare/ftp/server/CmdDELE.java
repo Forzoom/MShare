@@ -54,7 +54,7 @@ public class CmdDELE extends FtpCmd implements Runnable {
         } else {
             sessionThread.writeString("250 File successfully deleted\r\n");
             // TODO 这里必须了解MediaUpdater是干什么用的
-            MediaUpdater.notifyFileDeleted(storeFile.getPath());
+//            MediaUpdater.notifyFileDeleted(storeFile.getPath());
         }
         Log.d(TAG, "DELE finished");
     }

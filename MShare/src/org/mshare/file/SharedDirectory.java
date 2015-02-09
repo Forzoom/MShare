@@ -37,11 +37,9 @@ public class SharedDirectory extends SharedLink {
 		// TODO 在创建Directory的时候，就需要将内容加入到文件树中
 		for (int i = 0, len = files.length; i < len; i++) {
 			File file = files[i];
-			if (file.isFile()) {
-				SharedLink.newFile(getFakePath() + SharedLinkSystem.SEPARATOR + file.getName(), file.getAbsolutePath());
-			} else if (file.isDirectory()) {
-//				SharedLink.newDirectory()
-			}
+			// 将所有的文件都放在该文件夹下,并不希望递归来使用，可能会造成效率问题，所以共享文件夹真的是不好
+			// 
+			getSystem().addSharedPath(getFakePath() + SharedLinkSystem.SEPARATOR + file.getName(), file.getAbsolutePath());
 		}
 		
 		return null;

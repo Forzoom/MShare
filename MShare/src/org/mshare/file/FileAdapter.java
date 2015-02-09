@@ -208,7 +208,7 @@ public class FileAdapter extends BaseAdapter {
 			if (tag != null) {
 				// 可能会出现问题
 				ItemContainer item = (ItemContainer)tag;
-//				item.file
+				
 			}
 			
 			return false;

@@ -1,6 +1,13 @@
 package org.mshare.file;
+
+import java.io.File;
+
+import android.util.Log;
+
 // 所需要的内容 realPath和fakePath
 public class SharedFile extends SharedLink {
+	private static final String TAG = SharedFile.class.getSimpleName();
+	
 	private int type = TYPE_FILE;
 	public SharedFile(SharedLinkSystem system) {
 		super(system);
@@ -42,15 +49,41 @@ public class SharedFile extends SharedLink {
 	/**
 	 * 删除一个文件，需要对存储文件的内容进行处理
 	 * 并不是真正地删除一个文件
+	 * 是否有必要:实现异步的删除
+	 * 删除文件 删除持久化 删除文件树  
 	 */
 	@Override
 	public boolean delete() {
-		// SharedFile可能是持久化的，也可能不是持久化的
-		// 无论是否是持久化的，尝试将持久化内容删除，并删除文件树中的内容
-		getSystem().unpersist(fakePath);
-		getSystem().deleteSharedPath(fakePath);
-		// TODO 需要修改
-		return true;
+		
+		// 这里需要判断用户的权限吗
+		if (!getSystem().getAccount().canWrite()) {
+			return false;
+		}
+		
+		File file = getRealFile();
+		if (!file.exists()) {
+			Log.e(TAG, "需要删除的原文件不存在");
+			return false;
+		}
+		if (file.isDirectory()) {
+			Log.e(TAG, "不能删除一个文件夹");
+			// TODO 需要修正现在的显示内容，还是将该持久化路径删除？
+			return false;
+		}
+		// 目前所有用户都有权限在删除默认账户中所共享的内容
+		if (file.delete()) {
+			// 尝试将持久化内容删除，并删除文件树中的内容
+			if (getSystem().unpersist(fakePath)) {
+				// 去持久化可能会失败，但是在下次加载系统的时候，应该能够被删除
+				SharedLinkSystem.unpersistAll(realPath);
+			}
+			getSystem().deleteSharedPath(fakePath);
+			return true;
+		} else {
+			return false;
+		}
+		// 对于没有写权限的内容，或者对于defaultSp的内容该怎么处理呢？如果没有权限的情况下，需要使用哪个命令来回复呢？
+		// 使用等待的方式来触发,将persist的内容删除后就好
 	}
 
 	@Override

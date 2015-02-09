@@ -3,7 +3,11 @@ package org.mshare.file;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
+/**
+ * 在SharedPreferences中所保存的realPath的值为""
+ * @author HM
+ *
+ */
 public class SharedFakeDirectory extends SharedLink {
 	private int mType = TYPE_FAKE_DIRECTORY;
 	private long mLastModified = 0l;

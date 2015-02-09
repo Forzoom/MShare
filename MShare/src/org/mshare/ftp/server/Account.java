@@ -38,17 +38,15 @@ public class Account {
     private String mAttemptPassword = null;
     private boolean userAuthenticated = false;
     public int authFails = 0;
-    public static final int PERMISSION_READ = 0040;
-    public static final int PERMISSION_WRITE = 0020;
-    // execute永远不开放
-    public static final int PERMISSION_EXECUTE = 0010;
+    // 仅仅是作为帐号的权限，映射在用户文件上
+    public static final int PERMISSION_READ = 0x1;
+    public static final int PERMISSION_WRITE = 0x2;
+    public static final int PERMISSION_EXECUTE = 0x4;// execute永远不开放
     
     public static final String USER_DEFAULT = "default_username";
-    
-    // 对于写权限来说就是可以使用所有的命令s
-    // TODO 需要了解最后一位的0表示的权限含义
+
     // 默认值拥有读权限
-    private int permission = 0644;
+    private int permission = PERMISSION_READ; 
     // 对于匿名登录账户的权限
     private static final int PERMISSION_ANONYMOUS = 0644;
     
@@ -76,6 +74,16 @@ public class Account {
     public SharedPreferences getSharedPreferences() {
     	Context context = MShareApp.getAppContext();
     	return context.getSharedPreferences(mUserName, Context.MODE_PRIVATE);
+    }
+    
+    /**
+     * 在静态状态下，SharedPreferences的修改可能不会被反应在FTP会话中，需要类似监听器的回调
+     * @param account
+     * @return
+     */
+    public static SharedPreferences getDefaultSharedPreferences() {
+    	Context context = MShareApp.getAppContext();
+    	return context.getSharedPreferences(FsSettings.getUsername(), Context.MODE_PRIVATE);
     }
     
     // TODO 需要考虑修改用户名的事情

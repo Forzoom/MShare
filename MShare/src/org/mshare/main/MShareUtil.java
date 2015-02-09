@@ -1,5 +1,10 @@
 package org.mshare.main;
 
+import java.io.File;
+import java.text.BreakIterator;
+
+import org.mshare.file.SharedLinkSystem;
+
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -32,5 +37,29 @@ public class MShareUtil {
         NetworkInfo ni = cm.getActiveNetworkInfo();
         return ni != null && ni.isConnected() == true
                 && (ni.getType() & type) != 0;
+    }
+    
+    public static String guessName(String filePath) {
+    	// 暂时使用file来操作，减少..和.出现的可能行
+    	File file = new File(filePath);
+    	return file.getName();
+    }
+    
+    /**
+     * 当前不允许出现"."，允许出现".."，"."表示当前路径，对于"."有关的内容有哪些
+     * 当然最好还是不要出现.. 和.了
+     * @param path
+     * @return
+     */
+    public static String getCanonicalPath(String path) {
+    	// 切分成crumbs
+    	String[] crumbs = SharedLinkSystem.split(path);
+    	String[] newCrumbs = new String[crumbs.length];
+    	
+    	for (int i = 0; i < crumbs.length; i++) {
+//    		if ()
+    	}
+    	
+    	return null;
     }
 }

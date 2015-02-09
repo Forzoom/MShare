@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.mshare.ftp.server.Account;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.ftp.server.SessionThread;
 import org.mshare.main.MShareApp;
@@ -19,6 +20,11 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * 需要了解MediaScan相关的类
+ * TODO 可能需要一个刷新按钮,就像一个文件浏览器一样
+ * 默认账户中的内容也能够被删除，因为现在所共享的文件都是默认账户中的内容
+ * TODO 暂时不应该支持共享文件夹
+ * 如何在SharedLinkSystem启动的时候，创建文件树，应该只需要告诉SharedLinkSystem当前登录的对象是谁就可以创建
  * TODO 目前对于不合法的path，都将被SharedLinkSystem自动删除
  * 保存文件系统并要求用户手动保存文件系统，或者提供按钮用来清除无效的Link对象
  * 关键是持久化内容保持太多容易造成效率问题，但随意删除持久化内容又会造成文件丢失，能否对当前正在使用的SD卡作为唯一性判断
@@ -26,15 +32,11 @@ import android.util.Log;
  * 不允许在父文件夹没有创建的时候，创建其子文件夹,所以path的添加顺序很重要
  * 1.所有不正确的持久化path都会被删除，因此持久化内容的改变也需要注意
  * 2.本地文件显示也应当从一个本地的SharedLinkSystem中获得内容
- * 3.LinkSystem包含所有被分享的内容
- * 4.FTP客户端所获得的内容应当是SharedFileSystem中的
- * 5.所有对于分享权限的设置应当在SharedFileSystem中
- * 7.共享文件夹中所有的内容都是共享的
+ * SharedDirectory中所有的内容都是共享的
  * 可以将文件或者一个文件夹共享，将一个文件夹共享的时候，将不会将文件夹下的内容一一添加，而是在创建文件树的时候添加到其中
  * 只有真实的通过文件路径添加的分享文件，才能够被获得，其他的都应当是用于过渡的文件夹，不可能存在假的文件
  * TODO 文件夹可能并没有对应的真实文件夹,只有文件是真实的，所以不能将整个文件夹都共享，这样是不对的
  * TODO 共享文件的存在，如何才能在其他地方显示，现在要如何在文件浏览器中显示共享文件，再开启一个新的文件浏览器实在太麻烦
- * TODO 如何设置账户的权限呢?
  * 如果以后要实现多个账户的情况，那么要如何浏览其他账户的权限内容？
  * TODO 新创建的文件应该放在哪里？扩展存储?即拥有写权限的情况下，需要在扩展存储中设置位置保存内容
  * TODO 需要了解根路径所对应的fakePath是什么，如果是""的话，应该修改为'/'
@@ -42,6 +44,7 @@ import android.util.Log;
  * TODO 需要了解账户的权限设置:读权限，删除权限（写），重写/修改权限（写），执行权限全部为否,FTP在修改文件的时候，别的用户该怎么办？
  * TODO 只是共享文件被删除还是本地文件被删除？
  * 对于权限系统来说:对于管理员来说是权限全开，而对于账户来说拥有的权限需要限制
+ * 文件共享层的存在是为了支持多用户拥有不同的共享权限和内容
  * @author HM
  *
  */
@@ -56,17 +59,79 @@ public class SharedLinkSystem {
 	private SharedLink workingDir = root;
 	// 所有需要持久存储的文件
 	private ArrayList<String> arr = new ArrayList<String>();
-	// 写权限存在情况下所防止的位置
+	// 上传文件所存放的位置
 	// TODO 即设置在扩展存储org.mshare文件夹下,并在该文件夹下设置账户对应的文件夹
-	private String writePath = null;
-	// 用来获得Account，但是其实只要设定了所需要存储的位置即可,主要是SharedPreferences需要通过Account对象获得
+	private String uploadPath = null;
+	// 只是用来获得Account和SharedPreferences
 	private SessionThread sessionThread;
+	
+	public static final String REAL_PATH_NONE = "|";
 	
 	public SharedLinkSystem(SessionThread sessionThread) {
 		this.sessionThread = sessionThread;
 		// TODO 暂时设定为扩展存储的路径
 		String realPath = Environment.getExternalStorageDirectory().getAbsolutePath();
 		root = SharedLink.newFakeDirectory(this, "");
+		// TODO 创建整个文件树，需要处理account和defaultAccount中的内容
+		
+		SharedPreferences defaultSp = Account.getDefaultSharedPreferences();
+		Iterator<String> defaultI = defaultSp.getAll().keySet().iterator();
+		
+		// 在构造函数中使用循环不好把
+		
+		while (defaultI.hasNext()) {
+			String key = defaultI.next();
+			String value = defaultSp.getString(key, "");
+			// 不存在的内容，是不是应该删除
+			if (value.equals("")) {
+				Log.w(TAG, "存在无用的持久化内容，是否应该删除");
+			}
+			
+			addSharedPath(key, value);
+		}
+		
+		SharedPreferences privateSp = sessionThread.getAccount().getSharedPreferences();
+		Iterator<String> privateI = privateSp.getAll().keySet().iterator();
+		// 添加私有的文件储备
+		while (privateI.hasNext()) {
+			String key = privateI.next();
+			String value = privateSp.getString(key, "");
+			// 不存在的内容，是不是应该删除
+			if (value.equals("")) {
+				Log.w(TAG, "存在无用的持久化内容，是否应该删除");
+			}
+			
+			addSharedPath(key, value);
+		}
+		
+		// 默认存放在扩展存储中
+		String uploadRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
+		
+		// 确保org.mshare文件夹的存在
+		File orgMshare = new File(uploadRoot + File.separator + "org.mshare");
+		if (orgMshare.exists() && orgMshare.isDirectory()) { // 必须是一个文件夹
+			
+		} else {
+			Log.e(TAG, "当前上传路径无法使用");
+			// TODO 在构造函数中，没有办法报告错误，否则将出现无法构造的问题，需要将这些内容移出
+		}
+		
+		// 确保上传文件所在文件夹的位置
+		// 第一次创建的上传文件路径，是用户名
+		File uploadDir = new File(getUploadDirPath());
+		if (uploadDir.exists() && uploadDir.isDirectory()) {
+			
+		} else {
+			Log.e(TAG, "会出现错误，没有办法接收上传的文件");
+		}
+	}
+	
+	/**
+	 * TODO 临时用来为SharedLink对象获得Account所使用的
+	 * @return
+	 */
+	public Account getAccount() {
+		return sessionThread.getAccount();
 	}
 	
 	/**
@@ -165,6 +230,50 @@ public class SharedLinkSystem {
 	}
 	
 	/**
+	 * 所持久话的内容将是所有用户都可以看到的共享文件内容
+	 * realPath所指定的不存在的文件，将不会被持久化
+	 * TODO 暂时无法设置fakePath
+	 */
+	public static void persistAll(String realPath) {
+		// TODO 可能需要对getSharedPreferences进行修改，这样子好难看
+		SharedPreferences sp = Account.getDefaultSharedPreferences();
+		// TODO 需要判定文件是否合法可用
+		File toShare = new File(realPath);
+		if (!toShare.exists()) {
+			Log.e(TAG, "要持久化的文件不存在");
+			return;
+		}
+		Editor editor = sp.edit();
+		String fakePath = SharedLinkSystem.SEPARATOR + toShare.getName();
+		editor.putString(fakePath, realPath);
+		editor.commit();
+	}
+	
+	/**
+	 * 当前没有办法在sp中进行更快的查找
+	 * 好像也没有更好的办法，即便使用序列化的数据库还是不好
+	 * @param realPath
+	 */
+	public static void unpersistAll(String realPath) {
+		SharedPreferences sp = Account.getDefaultSharedPreferences();
+		// TODO 当前使用迭代的方式来删除持久化
+		Set<String> keySet = sp.getAll().keySet();
+		Iterator<String> iterator = keySet.iterator();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			String value = sp.getString(key, "");
+			
+			// 通过迭代的方式查找到realPath，并将其设置为空
+			if (value.equals(realPath)) {
+				Editor editor = sp.edit();
+				editor.putString(key, null);
+				editor.commit();
+				return;
+			}
+		}
+	}
+	
+	/**
 	 * 持久化操作
 	 * 将所有的内容添加到SharedPreferences中，关于FakeDirectory，该怎么办？
 	 */
@@ -174,31 +283,33 @@ public class SharedLinkSystem {
 		// 因为所需要的保存的内容可能会有很多，包括对于文件的其他信息的保存
 		// 可能需要更新信息的操作按钮
 		Editor editor = sp.edit();
-		if (realPath != null && !realPath.equals("")) {
+		if (realPath != null) {
 			editor.putString(fakePath, realPath);
-		} else {
-			// TODO 将空改为
-			editor.putString(fakePath, "");
 		}
+		
 		editor.commit();
 	}
 	
 	/**
 	 * 仅仅是为了删除被持久化的内容
+	 * 在defaultSp中的内容不会被删除
+	 * 在调用的时候，可能需要非持久话的文件是在默认账户中的
 	 * @param fakePath
 	 */
-	public void unpersist(String fakePath) {
+	public boolean unpersist(String fakePath) {
 		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
-		// 没法找到更好的defaultValue,使用文件名中不许可的
-		String realPath = sp.getString(fakePath, "|");
+		String realPath = sp.getString(fakePath, REAL_PATH_NONE);
 		// 文件并不存在
-		if (realPath == "|") {
+		if (realPath.equals(REAL_PATH_NONE)) { // 并不存在对应的持久化内容，为什么
 			// do nothing
-		} else if (realPath.equals("")) { // 所对应的是fakeDirectory
+			return false;
+		} else { 
+			// 所对应的是fakeDirectory
+			// 对于File和Directory也需要设为null
 			Editor editor = sp.edit();
 			editor.putString(fakePath, null); // 设置null将删除对应内容
-		} else {
-			// 剩下的情况就是要将文件树中的内容删除
+			// TODO 返回的内容仍可能是false
+			return editor.commit();
 		}
 	}
 	
@@ -241,11 +352,10 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * TODO 需要修改名字
-	 * 获得当前workingDirStr所对应的SharedFile
+	 * 在文件树中寻找当前workingDir对应的SharedLink
 	 * @return
 	 */
-	public SharedLink getFile() {
+	public SharedLink searchWorkingDir() {
 		
 		String[] crumbs = split(workingDirStr);
     	SharedLink sf = root;
@@ -265,10 +375,26 @@ public class SharedLinkSystem {
 		return null;
 	}
 	
+	/**
+	 * 当前用于接收上传文件的路径
+	 * @return
+	 */
+	public String getUploadDirPath() {
+		return uploadPath;
+	}
+	
+	/**
+	 * 当前的工作路径
+	 * @return
+	 */
 	public String getWorkingDirStr() {
 		return workingDirStr;
 	}
 	
+	/**
+	 * 当前工作路径所对应的SharedLink对象
+	 * @return
+	 */
 	public SharedLink getWorkingDir() {
 		return workingDir;
 	}
@@ -279,20 +405,19 @@ public class SharedLinkSystem {
 	 */
 	public void setWorkingDir(String workingDir) {
 		try {
-			// TODO 真实路径可能需要自己来实现
+			// TODO Canonical路径可能需要自己来实现
         	this.workingDirStr = new File(workingDir).getCanonicalPath();
-        	
-        	this.workingDir = getFile();
+        	this.workingDir = searchWorkingDir();
         } catch (IOException e) {
             Log.i(TAG, "SessionThread canonical error");
         }
 	}
 
-	public String join(String[] crumbs) {
+	public static String join(String[] crumbs) {
 		return join(crumbs, 0, crumbs.length);
 	}
 	
-	public String join(String[] crumbs, int start, int end) {
+	public static String join(String[] crumbs, int start, int end) {
 		// 修正start和end
 		start = (start <= 0) ? 0 : start;
 		end = (end >= crumbs.length) ? crumbs.length - 1 : end;
@@ -306,7 +431,7 @@ public class SharedLinkSystem {
 		return builder.toString();
 	}
 	
-	public String[] split(String path) {
+	public static String[] split(String path) {
 		
 		String[] ret = null;
 		int pathLength = path.length();
