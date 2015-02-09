@@ -46,7 +46,10 @@ public class CmdRNTO extends FtpCmd implements Runnable {
         SharedLink toFile = null;
         mainblock: {
             Log.i(TAG, "param: " + param);
-            toFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+            // TODO 需要修改至三种文件类型都接受
+            String fakePath = "";
+            String realPath = "";
+            toFile = SharedLink.newFile(sessionThread.sharedLinkSystem, fakePath, realPath);
             Log.i(TAG, "RNTO to file: " + toFile.getFakePath());
             SharedLink fromFile = sessionThread.getRenameFrom();
             if (fromFile == null) {
@@ -57,6 +60,20 @@ public class CmdRNTO extends FtpCmd implements Runnable {
             // TODO: this code is working around a bug that java6 and before cannot
             // reliable move a file, once java7 is supported by Dalvik, this code can
             // be replaced with Files.move()
+            
+            // 写权限检测
+            if (!sessionThread.getAccount().canWrite()) {
+            	errString = "550 permission denied\r\n";
+            	break mainblock;
+            }
+            
+            if (fromFile.renameTo(toFile)) {
+            	errString = "550 Error during rename operation\r\n";
+            	break mainblock;
+            }
+            
+            /*
+            
             File tmpFile = null;
             try {
                 tmpFile = File.createTempFile("temp_" + fromFile.getName(), null,
@@ -80,6 +97,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
                 errString = "550 Error during rename operation\r\n";
                 break mainblock;
             }
+            */
         }
         if (errString != null) {
             sessionThread.writeString(errString);

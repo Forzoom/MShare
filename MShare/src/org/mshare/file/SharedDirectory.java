@@ -84,4 +84,10 @@ public class SharedDirectory extends SharedLink {
 	public boolean setLastModified(long time) {
 		return getRealFile().setLastModified(time);
 	}
+
+	@Override
+	public boolean renameTo(SharedLink newPath) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

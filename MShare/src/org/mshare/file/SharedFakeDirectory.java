@@ -92,4 +92,10 @@ public class SharedFakeDirectory extends SharedLink {
 	public boolean exists() {
 		return true;
 	}
+
+	@Override
+	public boolean renameTo(SharedLink newPath) {
+		
+		return false;
+	}
 }

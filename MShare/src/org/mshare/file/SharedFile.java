@@ -103,5 +103,34 @@ public class SharedFile extends SharedLink {
 	public boolean setLastModified(long time) {
 		return getRealFile().setLastModified(time);
 	}
+
+	@Override
+	public boolean renameTo(SharedLink newPath) {
+		// 尝试修改真实文件的文件名
+		// 检测写权限
+		if (!getSystem().getAccount().canWrite()) {
+			Log.e(TAG, "write permission denied");
+			return false;
+		}
+		// 尝试修改
+		File realFile = getRealFile();
+		if (realFile == null) {
+			// TODO 处理文件不存在的情况
+			Log.e(TAG, "file not exist");
+			return false;
+		}
+		// TODO 减少检查
+		if (!realFile.isFile()) {
+			Log.e(TAG, "is not file");
+			return false;
+		}
+		File toFile = newPath.getRealFile();
+		// 尝试重命名
+		if (realFile.renameTo(toFile)) {
+			return true;
+		}
+		
+		return false;
+	}
 	
 }

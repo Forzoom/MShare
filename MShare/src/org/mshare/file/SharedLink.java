@@ -46,6 +46,8 @@ public abstract class SharedLink {
 	
 	/**
 	 * 仅仅用于创建一个SharedLink对象，对象不一定存在与文件树中
+	 * 不检测真实文件是否存在并且是一个文件
+	 * TODO 以后可能需要使用flag来判断是否检测上面内容
 	 * @param system
 	 * @param fakePath
 	 * @param realPath
@@ -54,13 +56,13 @@ public abstract class SharedLink {
 	public static final SharedLink newFile(SharedLinkSystem system, String fakePath, String realPath) {
 		
 		File realFile = new File(realPath);
-		if (!realFile.exists()) {
-			Log.w(TAG, "文件不存在，无法创建SharedFile");
-			return null;
-		} else if (!realFile.isFile()) {
-			Log.w(TAG, "the required file is not a 'File'，无法创建SharedFile");
-			return null;
-		}
+//		if (!realFile.exists()) {
+//			Log.w(TAG, "文件不存在，无法创建SharedFile");
+//			return null;
+//		} else if (!realFile.isFile()) {
+//			Log.w(TAG, "the required file is not a 'File'，无法创建SharedFile");
+//			return null;
+//		}
 	
 		SharedLink sf = new SharedFile(system);
 		sf.fakePath = fakePath; 
@@ -108,6 +110,7 @@ public abstract class SharedLink {
 	public abstract boolean setLastModified(long time);
 	public abstract boolean delete();
 	public abstract boolean mkdir();
+	public abstract boolean renameTo(SharedLink newPath);
 	
 	public SharedLinkSystem getSystem() {
 		return mSystem;
