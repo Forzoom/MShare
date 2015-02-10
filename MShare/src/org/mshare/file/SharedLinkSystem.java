@@ -20,6 +20,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * TODO 当扩展存储不存在的时候，不允许的许多操作，服务器端只能在cmd里面对失败做出响应吗，客户端没有办法知道服务器是出现了什么样的问题导致了不可用
  * 需要了解MediaScan相关的类
  * TODO 可能需要一个刷新按钮,就像一个文件浏览器一样
  * 默认账户中的内容也能够被删除，因为现在所共享的文件都是默认账户中的内容
@@ -103,6 +104,10 @@ public class SharedLinkSystem {
 			
 			addSharedPath(key, value);
 		}
+		// 设置当前的working directory为"/"
+		persist(SEPARATOR, null); // 创建一个fakeDirectory作为root
+		addSharedPath(SEPARATOR, null);
+		setWorkingDir(SEPARATOR); // root作为working directory
 		
 		// 默认存放在扩展存储中
 		String uploadRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -114,6 +119,12 @@ public class SharedLinkSystem {
 		} else {
 			Log.e(TAG, "当前上传路径无法使用");
 			// TODO 在构造函数中，没有办法报告错误，否则将出现无法构造的问题，需要将这些内容移出
+		}
+		
+		// 当前没有指定上传路径
+		if (uploadPath == null) {
+			uploadPath = uploadRoot + File.separator + getAccount().getUsername();
+			Log.d(TAG, "当前没有指定上传路径，新的上传路径为 :" + uploadPath);
 		}
 		
 		// 确保上传文件所在文件夹的位置

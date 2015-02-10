@@ -36,6 +36,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.TextView;
 
+import org.mshare.main.ExternalStorageStateReceiver.OnExternalStorageStateChangeListener;
 import org.mshare.main.NetworkStateRecevier.OnWifiApStateChangeListener;
 import org.mshare.main.NetworkStateRecevier.OnNetworkStateChangeListener;
 import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
@@ -55,6 +56,8 @@ public class NewConn extends Activity {
 	private TextView serverStateView;
 	// 网络状态:WIFI/MOBILE
 	private TextView networkStateView;
+	// 扩展存储状态，当前仅仅用于显示扩展存储的状态，并不能指导服务器是否可用
+	private TextView externalStorageStateView;
 	private TextView ftpApState;
 	private ToggleButton ftpApTest;
 	private TextView ftpApIp;
@@ -70,6 +73,7 @@ public class NewConn extends Activity {
 	// 监听状态对UI界面进行控制
 	private NetworkStateRecevier networkStateReceiver;
 	private ServerStateRecevier serverStateReceiver;
+	private ExternalStorageStateReceiver externalStorageStateReceiver;
 	
 	// 总共是6种状态
 	private static final int SERVER_STATE_STARTING = 0x1;
@@ -103,9 +107,10 @@ public class NewConn extends Activity {
 		ftpAddrView = (TextView) findViewById(R.id.ftp_addr);
 		ftpApState = (TextView)findViewById(R.id.ftp_wifi_ap_state);
 		
+		// 状态显示
 		serverStateView = (TextView)findViewById(R.id.server_state);
-		// 显示当前的网络连接情况
 		networkStateView = (TextView)findViewById(R.id.network_state);
+		externalStorageStateView = (TextView)findViewById(R.id.external_storage_state);
 		
 		// 尝试启动AP
 		ftpApTest = (ToggleButton)findViewById(R.id.ftp_ap_test);
@@ -152,29 +157,40 @@ public class NewConn extends Activity {
 		
 		// 显示当前的AP启动状态
 		// TODO 需要处理的内容太多了，可能考虑不加入开启AP的功能
+		// 并没有AP cannot enable
 		try {
 			boolean wifiApEnabled = isWifiApEnabled();
 			ftpApTest.setChecked(wifiApEnabled);
 		} catch (IllegalAccessException e) {
 			ftpApTest.setEnabled(false);
 			ftpApState.setText("AP无法启动");
+			Log.e(TAG, "AP cannot enable");
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			ftpApTest.setEnabled(false);
 			ftpApState.setText("AP无法启动");
+			Log.e(TAG, "AP cannot enable");
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
 			ftpApTest.setEnabled(false);
 			ftpApState.setText("AP无法启动");
+			Log.e(TAG, "AP cannot enable");
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			ftpApTest.setEnabled(false);
 			ftpApState.setText("AP无法启动");
+			Log.e(TAG, "AP cannot enable");
 			e.printStackTrace();
 		}
 		
-		// 先设置当前的状态
-		changeState(SERVER_STATE_STOPPED);
+		// 先设置当前的服务器状态
+		// TODO 如果当前服务器已经启动了，发送启动命令给服务器，服务器也应该做出相应，所以NewConn和服务器之间的状态应该统一
+		if (FsService.isRunning()) {
+			changeState(SERVER_STATE_STARTED);
+		} else {
+			changeState(SERVER_STATE_STOPPED);
+		}
+		
 		if (MShareUtil.isConnectedUsing(MShareUtil.WIFI)) {
 			changeState(WIFI_STATE_CONNECTED);
 			ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
@@ -185,6 +201,14 @@ public class NewConn extends Activity {
 			}
 		}
 
+		if (MShareUtil.isExternalStorageUsable()) {
+			externalStorageStateView.setText("扩展存储可用");
+		} else {
+			externalStorageStateView.setText("扩展存储不可用");
+		}
+		
+		/* 注册监听器 */
+		
 		// 注册简单的BroadcastReceiver用来监听设备的网络状况变化，可能存在安全风险
 		networkStateReceiver = new NetworkStateRecevier();
 		NetworkStateChangeListener wccListener = new NetworkStateChangeListener();
@@ -216,6 +240,12 @@ public class NewConn extends Activity {
 		serverStateFilter.addAction(FsService.ACTION_STOPPED);
 		
 		registerReceiver(serverStateReceiver, serverStateFilter);
+		
+		/*
+		 * 扩展存储监听器
+		 */
+		externalStorageStateReceiver = new ExternalStorageStateReceiver();
+		
 	}
 	
 	@Override
@@ -347,6 +377,7 @@ public class NewConn extends Activity {
 					break;
 			}
 		} else if (networkState == WIFI_STATE_DISCONNECTED) {
+			// 当没有连接网络的状态下，能否修改服务器状态
 			switch(serverState) {
 			case (SERVER_STATE_STARTING):
 				setSwitchChecked(FsService.isRunning());
@@ -539,7 +570,6 @@ public class NewConn extends Activity {
 
 		@Override
 		public void onServerStateChange(boolean start) {
-			// TODO Auto-generated method stub
 			// 当服务器启动时
 			// 接受到了反馈，所以将Progress设置为不可见
 			if (start) {
@@ -550,6 +580,19 @@ public class NewConn extends Activity {
 		}
 	}
 
+	private class ExternalStorageStateChangeListener implements OnExternalStorageStateChangeListener {
+
+		@Override
+		public void onExternalStorageStateChange(boolean usable) {
+			if (usable) {
+				externalStorageStateView.setText("扩展存储可用");
+			} else {
+				externalStorageStateView.setText("扩展存储不可用");
+			}
+		}
+		
+	}
+	
 	/**
 	 * 监听WifiAp状态
 	 * @author HM

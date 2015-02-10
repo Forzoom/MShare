@@ -34,7 +34,7 @@ public class CmdPASS extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "Executing PASS");
-        String attemptPassword = getParameter(input, true); // silent
+        String attemptPassword = getParameter(input); // silent
         
         Account account = sessionThread.getAccount();
         if (account == null) {
@@ -48,9 +48,13 @@ public class CmdPASS extends FtpCmd implements Runnable {
         	sessionThread.writeString("500 Internal error during authentication");
         	return;
         }
+        
         // 输入的内容可能会有错误
-        if (attemptPassword == null || attemptPassword.equals("")) {
+        if (attemptPassword != null && !attemptPassword.equals("")) {
+        	Log.d(TAG, "使用密码:" + attemptPassword + " 尝试登录");
         	account.setAttemptPassword(attemptPassword);
+        } else {
+        	Log.e(TAG, "未指定尝试使用的密码");
         }
         
         if (account.authAttempt()) { // 尝试登陆

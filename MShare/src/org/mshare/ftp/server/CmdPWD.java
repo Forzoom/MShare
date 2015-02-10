@@ -40,7 +40,7 @@ public class CmdPWD extends FtpCmd implements Runnable {
         String currentDir = sessionThread.sharedLinkSystem.getWorkingDir().getFakePath();
         // The root directory requires special handling to restore its
         // leading slash
-        // TODO 可能需要修改，看将来LinkSystem的发展
+        // TODO 可能需要修改，看将来LinkSystem的发展,所有的内容应该由System来处理
         if (currentDir.length() == 0) {
             currentDir = "/";
         }

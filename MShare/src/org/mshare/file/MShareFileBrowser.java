@@ -113,19 +113,13 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		}
 	}
 	
-	/**
-	 * 通过LongClick来设置当前正在被共享的文件是哪个
-	 */
-	public void setShared(String shared) {
-		
-	}
-	
 	public String getShared() {
 		return longClickPath;
 	}
 	
 	/**
-	 * 检测扩展存储是否可用
+	 * 设置当前的文件浏览器是否可用
+	 * 一般在扩展存储不可用的时候，将文件浏览器设置为不可用
 	 * @return
 	 */
 	public boolean isEnabled() {
@@ -306,7 +300,8 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	}
 
 	/**
-	 * 监听扩展存储的状态
+	 * <p>监听扩展存储的状态</p>
+	 * TODO 将来将使用{@link ExternalStorageStateReceiver}来代替
 	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {

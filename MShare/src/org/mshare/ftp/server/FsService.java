@@ -35,6 +35,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
@@ -110,6 +112,18 @@ public class FsService extends Service implements Runnable {
                 return START_STICKY;
             }
         }
+        
+        // 让每次的account info 消失
+        Context context = MShareApp.getAppContext();
+        SharedPreferences sp = context.getSharedPreferences(Account.KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
+        Editor editor = sp.edit();
+        editor.putBoolean(Account.AnonymousUsername, false);
+        editor.putBoolean(FsSettings.getUsername(), false);
+        editor.commit();
+        
+        // 用于检测账户是否存在
+        Account.checkDefaultAndAnonymousAccount();
+        
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
         serverThread.start();
@@ -476,20 +490,21 @@ public class FsService extends Service implements Runnable {
     }
 
     /**
+     * 并不支持低版本
      * 应该和Service的生命周期有关吧
      */
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        super.onTaskRemoved(rootIntent);
-        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
-        Intent restartService = new Intent(getApplicationContext(), this.getClass());
-        restartService.setPackage(getPackageName());
-        PendingIntent restartServicePI = PendingIntent.getService(
-                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
-        AlarmManager alarmService = (AlarmManager) getApplicationContext()
-                .getSystemService(Context.ALARM_SERVICE);
-        alarmService.set(AlarmManager.ELAPSED_REALTIME,
-                SystemClock.elapsedRealtime() + 2000, restartServicePI);
-    }
+//    @Override
+//    public void onTaskRemoved(Intent rootIntent) {
+//        super.onTaskRemoved(rootIntent);
+//        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
+//        Intent restartService = new Intent(getApplicationContext(), this.getClass());
+//        restartService.setPackage(getPackageName());
+//        PendingIntent restartServicePI = PendingIntent.getService(
+//                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
+//        AlarmManager alarmService = (AlarmManager) getApplicationContext()
+//                .getSystemService(Context.ALARM_SERVICE);
+//        alarmService.set(AlarmManager.ELAPSED_REALTIME,
+//                SystemClock.elapsedRealtime() + 2000, restartServicePI);
+//    }
 
 }
