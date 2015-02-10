@@ -44,11 +44,8 @@ public class CmdRETR extends FtpCmd implements Runnable {
         String errString = null;
 
         mainblock: {
-        	fileToRetr = sessionThread.sharedLinkSystem.getRealFile(param);
-            if (violatesChroot(fileToRetr)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break mainblock;
-            } else if (fileToRetr.isDirectory()) {
+        	fileToRetr = sessionThread.sharedLinkSystem.getSharedLink(param).getRealFile();
+            if (fileToRetr.isDirectory()) {
                 Log.d(TAG, "Ignoring RETR for directory");
                 errString = "550 Can't RETR a directory\r\n";
                 break mainblock;

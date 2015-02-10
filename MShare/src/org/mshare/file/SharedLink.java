@@ -140,7 +140,14 @@ public abstract class SharedLink {
         return (separatorIndex < 0) ? fakePath : fakePath.substring(separatorIndex + 1, fakePath.length());
 	}
 	
+	/**
+	 * realFile可能会是null
+	 * @return
+	 */
 	public File getRealFile() {
+		if (realFile == null) {
+			realFile = new File(realPath);
+		}
 		return realFile;
 	}
 	
