@@ -108,6 +108,7 @@ public class SharedLinkSystem {
 	 * 尝试添加存在的持久化内容
 	 */
 	private void load(SharedPreferences sp, String tag) {
+		Log.d(TAG, "start load");
 		Iterator<String> iterator = sp.getAll().keySet().iterator();
 		
 		// TODO 在构造函数中使用循环不好把
@@ -124,6 +125,8 @@ public class SharedLinkSystem {
 				addSharedPath(key, value);
 			}
 		}
+		// TODO 需要添加log，表明添加了多少个内容
+		Log.d(TAG, "end load");
 	}
 	
 	/**
@@ -332,6 +335,30 @@ public class SharedLinkSystem {
 	}
 	
 	/**
+	 * TODO 需要修正的内容部分在两个部分，不好解决
+	 * 将尝试在private的部分修正持久化内容
+	 */
+	public void changePersist(String oldFakePath, String newFakePath, String newRealPath) {
+		Log.d(TAG, "修正持久化内容");
+		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
+		if (!sp.getString(oldFakePath, "").equals("")) {
+			Editor editor = sp.edit();
+			// 删除原本内容
+			editor.putString(oldFakePath, null);
+			editor.putString(newFakePath, newRealPath);
+			boolean changeResult = editor.commit();
+			if (changeResult) {
+				Log.d(TAG, "修正持久化内容成功");
+			} else {
+				Log.e(TAG, "修正持久化内容失败");
+			}
+		} else {
+			Log.e(TAG, "没有找到对应持久化内容");
+		}
+		Log.d(TAG, "修正持久化内容结束");
+	}
+	
+	/**
 	 * 仅仅是为了删除被持久化的内容
 	 * 在defaultSp中的内容不会被删除
 	 * 在调用的时候，可能需要非持久话的文件是在默认账户中的
@@ -374,7 +401,7 @@ public class SharedLinkSystem {
         if (param.charAt(0) == SEPARATOR_CHAR) {
             // The STOR contained an absolute path
             SharedLink sl = this.root;
-            
+            Log.d(TAG, "root size:" + root.list().size());
             String[] crumbs = split(param);
             for (int i = 0; i < crumbs.length; i++) {
             	sl = sl.list().get(crumbs[i]);
@@ -499,6 +526,9 @@ public class SharedLinkSystem {
 			if (path.charAt(0) == SEPARATOR_CHAR) {
 				path = path.substring(1);
 			}
+			if (path.charAt(path.length() - 1) == SEPARATOR_CHAR) {
+				path = path.substring(0, path.length() - 1);
+			}
 			ret = path.split(SEPARATOR);
 		} else if (pathLength == 1) {
 			if (path.charAt(0) == SEPARATOR_CHAR) {
@@ -512,6 +542,7 @@ public class SharedLinkSystem {
 			Log.e(TAG, "length of String cannot be lesser than 0");
 		}
 		
+		Log.d(TAG, "split result size :" + ret.length);
 		return ret;
 	}
 	

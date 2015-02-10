@@ -176,8 +176,14 @@ public abstract class SharedLink {
 	public SharedLink getParent() {
 		
 		int lastIndex = fakePath.lastIndexOf(SharedLinkSystem.SEPARATOR);
-		String parentFakePath = fakePath.substring(0, lastIndex);
+		String parentFakePath = null;
+		if (lastIndex == 0) {
+			parentFakePath = SharedLinkSystem.SEPARATOR;
+		} else {
+			parentFakePath = fakePath.substring(0, lastIndex);
+		}
 		
 		return mSystem.getSharedLink(parentFakePath);
 	}
+	
 }

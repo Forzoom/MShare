@@ -23,7 +23,10 @@ import java.io.File;
 import java.io.IOException;
 
 import org.mshare.file.SharedLink;
+import org.mshare.file.SharedLinkSystem;
+import org.mshare.main.MShareUtil;
 
+import android.test.RenamingDelegatingContext;
 import android.util.Log;
 
 public class CmdRNTO extends FtpCmd implements Runnable {
@@ -47,25 +50,53 @@ public class CmdRNTO extends FtpCmd implements Runnable {
         mainblock: {
             Log.i(TAG, "param: " + param);
             // TODO 需要修改至三种文件类型都接受
-            String fakePath = "";
-            String realPath = "";
-            toFile = SharedLink.newFile(sessionThread.sharedLinkSystem, fakePath, realPath);
-            Log.i(TAG, "RNTO to file: " + toFile.getFakePath());
-            SharedLink fromFile = sessionThread.getRenameFrom();
-            if (fromFile == null) {
-                errString = "550 Rename error, maybe RNFR not sent\r\n";
-                break mainblock;
-            }
-            Log.i(TAG, "RNTO from file: " + fromFile.getFakePath());
-            // TODO: this code is working around a bug that java6 and before cannot
-            // reliable move a file, once java7 is supported by Dalvik, this code can
-            // be replaced with Files.move()
+            // 需要能够响应相对路径和文件名两种情况
             
             // 写权限检测
             if (!sessionThread.getAccount().canWrite()) {
             	errString = "550 permission denied\r\n";
             	break mainblock;
             }
+            
+            toFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+            if (toFile.exists()) {
+            	errString = "550 already exist\r\n";
+            	break mainblock;
+            }
+            
+            String fakePath = null, realPath = null;
+            SharedLink fromFile = sessionThread.getRenameFrom();
+            if (fromFile == null) {
+                errString = "550 Rename error, maybe RNFR not sent\r\n";
+                break mainblock;
+            }
+            Log.i(TAG, "RNTO from file: " + fromFile.getFakePath());
+            String fromFileParentPath = fromFile.getParent().getFakePath();
+            
+            if (fromFile.isFile()) {
+            	if (fromFileParentPath.equals(SharedLinkSystem.SEPARATOR)) {
+            		fakePath = fromFileParentPath + param;
+            	} else {
+            		fakePath = fromFileParentPath + SharedLinkSystem.SEPARATOR + param;
+            	}
+            	realPath = fromFile.getRealFile().getParent() + File.separator + MShareUtil.guessName(param);
+            	toFile = SharedLink.newFile(sessionThread.sharedLinkSystem, fakePath, realPath);
+            } else if (fromFile.isFakeDirectory()) {
+            	if (fromFileParentPath.equals(SharedLinkSystem.SEPARATOR)) {
+            		fakePath = fromFileParentPath + param;
+            	} else {
+            		fakePath = fromFileParentPath + SharedLinkSystem.SEPARATOR + param;
+            	}
+            	toFile = SharedLink.newFakeDirectory(sessionThread.sharedLinkSystem, fakePath);
+            } else if (fromFile.isDirectory()) {
+            	// 暂时没有
+            	toFile = null;
+            }
+            Log.i(TAG, "RNTO to file: " + toFile.getFakePath());
+            
+            // TODO: this code is working around a bug that java6 and before cannot
+            // reliable move a file, once java7 is supported by Dalvik, this code can
+            // be replaced with Files.move()
             
             if (fromFile.renameTo(toFile)) {
             	errString = "550 Error during rename operation\r\n";

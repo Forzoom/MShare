@@ -141,7 +141,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
             // staticLog.l(Log.DEBUG, "Filename: " + lastNamePart);
         }
 
-        if (file.isDirectory()) {
+        if (file.isDirectory() || file.isFakeDirectory()) {
             response.append("drwxr-xr-x 1 owner group");
         } else {
             // TODO: think about special files, symlinks, devices
@@ -172,6 +172,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         response.append(format.format(new Date(file.lastModified())));
         response.append(lastNamePart);
         response.append("\r\n");
+        Log.d(TAG, "list result :" + response.toString());
         return response.toString();
     }
 

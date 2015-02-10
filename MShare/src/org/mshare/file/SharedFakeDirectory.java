@@ -4,6 +4,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.mshare.ftp.server.SessionThread;
+
 import android.util.Log;
 /**
  * 在SharedPreferences中所保存的realPath的值为""
@@ -99,6 +101,17 @@ public class SharedFakeDirectory extends SharedLink {
 
 	@Override
 	public boolean renameTo(SharedLink newPath) {
+		if (newPath == null) {
+			Log.e(TAG, "没有告知新的名字");
+			return false;
+		}
+		
+		String oldFakePath = fakePath;
+		// 修正文件树中的内容
+		fakePath = newPath.getFakePath();
+		// 修正持久化内容
+		// 将newRealPath设置null表示fakeDirectory
+		getSystem().changePersist(oldFakePath, fakePath, "");
 		
 		return false;
 	}

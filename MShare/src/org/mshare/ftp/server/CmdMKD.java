@@ -23,6 +23,8 @@ import java.io.File;
 
 import org.mshare.file.SharedLink;
 import org.mshare.file.SharedLinkSystem;
+import org.mshare.main.MShareUtil;
+import org.mshare.main.UploadFileChooserAdapter;
 
 import android.util.Log;
 
@@ -60,31 +62,20 @@ public class CmdMKD extends FtpCmd implements Runnable {
             // 如果让SharedFakeDirectory在这里出现，会不会太过麻烦
             SharedLinkSystem sharedLinkSystem = sessionThread.sharedLinkSystem;
             
+            // 所能创建的仅仅是一个fakeDirectory
+            // 尝试在文件树中寻找对应内容
             toCreate = sharedLinkSystem.getSharedLink(param);
-            if (toCreate.exists()) {
+            if (toCreate != null && toCreate.exists()) {
                 errString = "550 Already exists\r\n";
                 break mainblock;
             }
             
-            boolean createSuccess = false;
-            if (param.charAt(0) == SharedLinkSystem.SEPARATOR_CHAR) { // 是一个相对路径
-            	createSuccess = sharedLinkSystem.addSharedPath(param, null);
-            } else { // 当前working directory下
-            	SharedLink workingDir = sessionThread.sharedLinkSystem.getWorkingDir();
-            	// TODO 改换成join
-            	createSuccess = sharedLinkSystem.addSharedPath(workingDir + SharedLinkSystem.SEPARATOR + param, null);
-            }
+            // 可以是相对路径也可以是文件名
+            String fakePath = sessionThread.sharedLinkSystem.getFakePath(param);
+            SharedLink link = SharedLink.newFakeDirectory(sessionThread.sharedLinkSystem, fakePath);
+            sessionThread.sharedLinkSystem.addSharedPath(fakePath, null);
+            sessionThread.sharedLinkSystem.persist(fakePath, null);
             
-            if (!createSuccess) {
-            	// TODO 随便设置的返回
-            	errString = "500 making fail\r\n";
-            	break mainblock;
-            }
-            
-            if (!toCreate.mkdir()) {
-                errString = "550 Error making directory (permissions?)\r\n";
-                break mainblock;
-            }
         }
         if (errString != null) {
             sessionThread.writeString(errString);
