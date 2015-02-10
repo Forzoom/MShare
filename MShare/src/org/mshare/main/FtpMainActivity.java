@@ -794,6 +794,8 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 			path = params[0];
 			try {
 				File file = new File(path);
+				mFTPClient.setType(FTPClient.TYPE_BINARY);
+				mFTPClient.setCharset("GBK");
 				mFTPClient.upload(file, new DownloadFTPDataTransferListener(
 						file.length()));
 			} catch (Exception ex) {
