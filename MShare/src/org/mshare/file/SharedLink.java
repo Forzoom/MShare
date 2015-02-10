@@ -117,7 +117,7 @@ public abstract class SharedLink {
 	}
 	
 	public HashMap<String, SharedLink> list() {
-		if (isDirectory()) {
+		if (isDirectory() || isFakeDirectory()) {
 			return map;
 		} else {
 			return null;

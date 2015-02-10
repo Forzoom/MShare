@@ -40,9 +40,8 @@ public class MShareUtil {
     }
     
     public static String guessName(String filePath) {
-    	// 暂时使用file来操作，减少..和.出现的可能行
-    	File file = new File(filePath);
-    	return file.getName();
+    	int separatorIndex = filePath.lastIndexOf(SharedLinkSystem.SEPARATOR);
+        return (separatorIndex < 0) ? filePath : filePath.substring(separatorIndex + 1, filePath.length());
     }
     
     /**

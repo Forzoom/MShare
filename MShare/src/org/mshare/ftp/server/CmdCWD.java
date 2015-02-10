@@ -46,7 +46,8 @@ public class CmdCWD extends FtpCmd implements Runnable {
 
     	// TODO 确保传入的param中不存在..和.的内容
         Log.i(TAG, "New directory: " + newDir);
-        if (!newDir.isDirectory()) {
+        // CWD允许切换到directory和fakeDirectory
+        if (!(newDir.isDirectory() || newDir.isFakeDirectory())) {
             sessionThread.writeString("550 Can't CWD to invalid directory\r\n");
         } else if (newDir.canRead()) {
             sessionThread.sharedLinkSystem.setWorkingDir(newDir.getFakePath());

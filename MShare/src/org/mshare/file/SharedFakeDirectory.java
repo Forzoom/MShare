@@ -3,12 +3,15 @@ package org.mshare.file;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import android.util.Log;
 /**
  * 在SharedPreferences中所保存的realPath的值为""
  * @author HM
  *
  */
 public class SharedFakeDirectory extends SharedLink {
+	private static final String TAG = SharedFakeDirectory.class.getSimpleName();
 	private int mType = TYPE_FAKE_DIRECTORY;
 	private long mLastModified = 0l;
 	
@@ -41,13 +44,14 @@ public class SharedFakeDirectory extends SharedLink {
 		Map<String, SharedLink> map = this.map;
 		int index = 0;
 		int size = map.size();
+		Log.d(TAG, "map size :" + size);
 		SharedLink[] files = new SharedLink[size];
 		
     	Set<String> keySet = map.keySet();
     	Iterator<String> iterator = keySet.iterator();
     	while (iterator.hasNext()) {
     		String key = iterator.next();
-    		files[index] = map.get(key);
+    		files[index++] = map.get(key);
     	}
     	
 		return files;

@@ -52,10 +52,12 @@ public class Account {
     
     public static final String USER_DEFAULT = "default_username";
     
-    // 默认值拥有读权限
-    private int permission = PERMISSION_READ; 
+    private static final String KEY_PASSWORD = "password";
+    
+    // 默认值拥有读权限,为测试添加写权限
+    private int permission = PERMISSION_READ | PERMISSION_WRITE;
     // 对于匿名登录账户的权限
-    private static final int PERMISSION_ANONYMOUS = 0644;
+    private static final int PERMISSION_ANONYMOUS = PERMISSION_READ;
     
     public static final String KEY_ACCOUNT_INFO = "accounts";
     
@@ -116,12 +118,12 @@ public class Account {
 		// TODO 需要对账户名做更多的限制
 		if (username != null && username.matches("[0-9a-zA-Z]+")) {
 			SharedPreferences sp = context.getSharedPreferences(username, Context.MODE_PRIVATE);
-			String password = sp.getString("password", "");
+			String password = sp.getString(KEY_PASSWORD, "");
 			if (!password.equals("")) {
 				Log.d(TAG, "获得正确的账户");
 				return new Account(username, password);
 			} else {
-				Log.e(TAG, "需要的账户密码不存在");
+				Log.e(TAG, "需要的账户密码不存在" + password);
 				return null;// 账户不存在
 			}
 		} else {
@@ -134,47 +136,47 @@ public class Account {
 	/**
 	 * 需要在check中使用register来创建文件
 	 * 注册用户，用户名不能和默认用户名冲突，而且也不能和匿名用户名冲突
+	 * 允许通过该函数注册和生成默认账户和匿名账户
 	 * @param username
 	 * @param password
 	 * @return
 	 */
 	private static boolean register(String username, String password) {
+		Log.d(TAG, "开始注册账户,用户名:" + username + " 密码:" + password);
+		boolean createUserSuccess = false;
 		Context context = MShareApp.getAppContext();
-		if (!username.equals(FsSettings.getUsername()) && !username.equals(AnonymousUsername)) {
-			// 创建用户文件
-			SharedPreferences userSp = context.getSharedPreferences(username, Context.MODE_PRIVATE);
-			if (userSp.getString("password", "").equals("")) {
-				Editor editor = userSp.edit();
-				editor.putString(username, password);
-				if (editor.commit()) {
-					Log.d(TAG, "Register Success:success");
-					// 向总账户文件中添加内容
-					SharedPreferences accountsSp = context.getSharedPreferences(KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
-					Editor accountEditor = accountsSp.edit();
-					accountEditor.putBoolean(username, true);
-					if (accountEditor.commit()) {
-						// TODO 需要更加详细的内容，和简洁的操作步骤
-						Log.d(TAG, "Register Success:success");
-						return true;
-					} else {
-						Log.d(TAG, "Register Fail:Fail");
-						return false;
-					}
-				} else {
-					Log.d(TAG, "Register Fail:create sharedPreferences fail");
-					return false;
-				}
-			} else {
-				Log.e(TAG, "Register Fail:username has already existed");
-				return false;
-			}
+		// 创建用户文件
+		SharedPreferences userSp = context.getSharedPreferences(username, Context.MODE_PRIVATE);
+		if (userSp.getString(KEY_PASSWORD, "").equals("")) {
+			Editor editor = userSp.edit();
+			editor.putString(KEY_PASSWORD, password);
+			createUserSuccess = editor.commit();
 		} else {
-			// TODO 
-			Log.e(TAG, "try default account and anonymous account");
+			Log.e(TAG, "Register Fail:username has already existed");
 			return false;
 		}
+		// 当创建用户文件失败
+		if (!createUserSuccess) {
+			Log.e(TAG, "Register Fail:create sharedPreferences fail");
+			return false;
+		}
+		
+		// 向accountInfo中添加内容
+		SharedPreferences accountsSp = context.getSharedPreferences(KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
+		Editor accountEditor = accountsSp.edit();
+		accountEditor.putBoolean(username, true);
+		if (accountEditor.commit()) {
+			Log.d(TAG, "Register Success:success");
+			return true;
+		} else {
+			Log.e(TAG, "Register Fail:Fail");
+			return false;
+		}			
 	}
 	
+	/**
+	 * 当默认账户和匿名账户不存在的时候，使用register函数注册
+	 */
 	public static void checkDefaultAndAnonymousAccount() {
 		Context context = MShareApp.getAppContext();
 		SharedPreferences accountsSp = context.getSharedPreferences(KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
@@ -182,23 +184,7 @@ public class Account {
 			
 			Log.d(TAG, "当前匿名账户信息不存在");
 			Log.d(TAG, "开始注册匿名账户");
-			SharedPreferences anonymousSp = context.getSharedPreferences(AnonymousUsername, Context.MODE_PRIVATE);
-			// 匿名账户信息没有设置好
-			if (anonymousSp.getString("password", "").equals("")) {
-				Editor editor = anonymousSp.edit();
-				editor.putString("password", AnonymousPassword);
-				if (editor.commit()) {
-					Log.d(TAG, "生成账户文件成功");
-				} else {
-					Log.d(TAG, "生成账户文件失败");
-				}
-			} else {
-				Log.d(TAG, "当前账户存在密码 :" + anonymousSp.getString("password", ""));
-			}
-			// TODO 当生成账户文件失败的时候，下面的操作不应该执行
-			Editor accountEditor = accountsSp.edit();
-			accountEditor.putBoolean(AnonymousUsername, true);
-			boolean registerResult = accountEditor.commit();
+			boolean registerResult = register(AnonymousUsername, AnonymousPassword);
 			Log.d(TAG, "结束注册匿名账户, 结果:" + registerResult);
 		} else {
 			Log.d(TAG, "当前匿名账户信息存在");
@@ -208,23 +194,7 @@ public class Account {
 			
 			Log.d(TAG, "当前默认账户信息不存在");
 			Log.d(TAG, "开始注册默认账户");
-			SharedPreferences defaultSp = context.getSharedPreferences(FsSettings.getUsername(), Context.MODE_PRIVATE);
-			// 匿名账户信息没有设置好
-			if (defaultSp.getString("password", "").equals("")) {
-				Editor editor = defaultSp.edit();
-				editor.putString("password", FsSettings.getPassword());
-				if (editor.commit()) {
-					Log.d(TAG, "生成账户文件成功");
-				} else {
-					Log.d(TAG, "生成账户文件失败");
-				}
-			} else {
-				Log.d(TAG, "当前账户存在密码 :" + defaultSp.getString("password", ""));
-			}
-			// TODO 当生成账户文件失败的时候，下面的操作不应该执行
-			Editor accountEditor = accountsSp.edit();
-			accountEditor.putBoolean(FsSettings.getUsername(), true);
-			boolean registerResult = accountEditor.commit();
+			boolean registerResult = register(FsSettings.getUsername(), FsSettings.getPassword());
 			Log.d(TAG, "结束注册默认账户, 结果:" + registerResult);
 		} else {
 			Log.d(TAG, "当前默认账户信息存在");
@@ -258,6 +228,10 @@ public class Account {
 
     public String getPassword() {
     	return mPassword;
+    }
+    
+    public boolean isDefaultAccount() {
+    	return mUserName.equals(FsSettings.getUsername());
     }
     
     public void setUsername(String username) {

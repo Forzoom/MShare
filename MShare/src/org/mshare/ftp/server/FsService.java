@@ -113,14 +113,6 @@ public class FsService extends Service implements Runnable {
             }
         }
         
-        // 让每次的account info 消失
-        Context context = MShareApp.getAppContext();
-        SharedPreferences sp = context.getSharedPreferences(Account.KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
-        Editor editor = sp.edit();
-        editor.putBoolean(Account.AnonymousUsername, false);
-        editor.putBoolean(FsSettings.getUsername(), false);
-        editor.commit();
-        
         // 用于检测账户是否存在
         Account.checkDefaultAndAnonymousAccount();
         

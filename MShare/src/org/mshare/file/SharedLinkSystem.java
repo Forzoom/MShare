@@ -78,40 +78,20 @@ public class SharedLinkSystem {
 		root = SharedLink.newFakeDirectory(this, "");
 		// TODO 创建整个文件树，需要处理account和defaultAccount中的内容
 		
-		SharedPreferences defaultSp = Account.getDefaultSharedPreferences();
-		Iterator<String> defaultI = defaultSp.getAll().keySet().iterator();
-		
-		// 在构造函数中使用循环不好把
-		
-		while (defaultI.hasNext()) {
-			String key = defaultI.next();
-			String value = defaultSp.getString(key, "");
-			// 不存在的内容，是不是应该删除
-			if (value.equals("")) {
-				Log.w(TAG, "存在无用的持久化内容，是否应该删除");
-			}
-			
-			addSharedPath(key, value);
-		}
-		
-		SharedPreferences privateSp = sessionThread.getAccount().getSharedPreferences();
-		Iterator<String> privateI = privateSp.getAll().keySet().iterator();
-		// 添加私有的文件储备
-		while (privateI.hasNext()) {
-			String key = privateI.next();
-			String value = privateSp.getString(key, "");
-			// 不存在的内容，是不是应该删除
-			if (value.equals("")) {
-				Log.w(TAG, "存在无用的持久化内容，是否应该删除");
-			}
-			
-			addSharedPath(key, value);
-		}
-		// TODO 将fakeDirecotry持久化，对于已经持久化的内容，暂时不进行修改
+		// TODO 将fakeDirecotry持久化，对于已经持久化的内容，暂时不进行修改,在register的时候添加'/'，但提高了耦合
 		// 设置当前的working directory为"/"
-		persist(SEPARATOR, null); // 创建一个fakeDirectory作为root
-		addSharedPath(SEPARATOR, null);
+//		persist(SEPARATOR, null); // 创建一个fakeDirectory作为root
+		root = SharedLink.newFakeDirectory(this, SEPARATOR);
+		Log.d(TAG, "root fakePath :" + root.getFakePath());
 		setWorkingDir(SEPARATOR); // root作为working directory
+		
+		// 当不是默认账户时，将默认账户中的内容一并加入
+		if (!getAccount().isDefaultAccount()) {
+			SharedPreferences defaultSp = Account.getDefaultSharedPreferences();
+			load(defaultSp, "default");
+		}
+		SharedPreferences privateSp = sessionThread.getAccount().getSharedPreferences();
+		load(privateSp, "private");
 		
 		prepareUpload();
 	}
@@ -122,6 +102,28 @@ public class SharedLinkSystem {
 	 */
 	public Account getAccount() {
 		return sessionThread.getAccount();
+	}
+	
+	/**
+	 * 尝试添加存在的持久化内容
+	 */
+	private void load(SharedPreferences sp, String tag) {
+		Iterator<String> iterator = sp.getAll().keySet().iterator();
+		
+		// TODO 在构造函数中使用循环不好把
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			if (key.charAt(0) == SEPARATOR_CHAR) {
+				String value = sp.getString(key, "");
+				Log.d(TAG, "持久化内容:" + tag + " fakePath:" + key + " realPath:" + value);
+				// 不存在的内容，是不是应该删除
+				if (value.equals("")) {
+					Log.w(TAG, "存在无用的持久化内容，是否应该删除");
+				}
+				
+				addSharedPath(key, value);
+			}
+		}
 	}
 	
 	/**
@@ -175,6 +177,7 @@ public class SharedLinkSystem {
 	 * @param realPath 只有在添加最终的内容的时候才会被使用
 	 */
 	public boolean addSharedPath(String fakePath, String realPath) {
+		Log.d(TAG, "尝试添加到文件树: fakePath:" + fakePath + " realPath:" + realPath);
 		// 分割成碎片
 		String[] crumbs = split(fakePath);
 		String fileName = null;
@@ -219,14 +222,17 @@ public class SharedLinkSystem {
 				// realPath为空，需要设置的是FakeDirectory
 				newSharedLink = SharedLink.newFakeDirectory(this, fakePath);
 				file.list().put(fileName, newSharedLink);
+				Log.d(TAG, "成功添加一个SharedFakeDirectory到文件树中");
 			} else {
 				File realFile = new File(realPath);
 				if (realFile.isFile()) {
 					newSharedLink = SharedLink.newFile(this, file.getFakePath() + SEPARATOR + fileName, realPath);
 					file.list().put(fileName, newSharedLink);
+					Log.d(TAG, "成功添加一个SharedFile到文件树 " + file.getFakePath() + " 中");
 				} else if (realFile.isDirectory()) {
 					newSharedLink = SharedLink.newDirectory(this, file.getFakePath() + SEPARATOR + fileName, realPath);
 					file.list().put(fileName, newSharedLink);
+					Log.d(TAG, "成功添加一个SharedDirectory到文件树中");
 				}
 			}
 			
@@ -307,6 +313,7 @@ public class SharedLinkSystem {
 	 * 将所有的内容添加到SharedPreferences中，关于FakeDirectory，该怎么办？
 	 */
 	public void persist(String fakePath, String realPath) {
+		Log.d(TAG, "尝试持久化: fakePath:" + fakePath + " realPath:" + realPath);
 		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
 		// TODO 为了保存fakePath和realPath的联系，可能需要更好的持久化方式
 		// 因为所需要的保存的内容可能会有很多，包括对于文件的其他信息的保存
@@ -316,7 +323,12 @@ public class SharedLinkSystem {
 			editor.putString(fakePath, realPath);
 		}
 		
-		editor.commit();
+		boolean persistResult = editor.commit();
+		if (persistResult) {
+			Log.d(TAG, "成功持久化文件");
+		} else {
+			Log.e(TAG, "持久化文件失败");
+		}
 	}
 	
 	/**
@@ -378,6 +390,23 @@ public class SharedLinkSystem {
         // 是一个文件，所以就使用当前的内容
         // The STOR contained a relative path
         return workingDir.list().get(param);
+	}
+	
+	/**
+	 * 因为getSharedLink并不能获得不存在的SharedLinnk，所以需要使用该方法来获得一个path
+	 * @return
+	 */
+	public String getFakePath(String param) {
+		if (param.charAt(0) != SEPARATOR_CHAR) {
+			String workingDirPath = getWorkingDirStr();
+			if (workingDirPath.equals(SEPARATOR)) {
+				return workingDirPath + param;
+			} else {
+				return workingDirPath + SEPARATOR + param;
+			}
+		} else {
+			return param;
+		}
 	}
 	
 	/**

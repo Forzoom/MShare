@@ -8,25 +8,5 @@ public class SharedPath {
 	String realPath = null;
 	long lastModified = 0l;
 	
-	private SharedPath() {}
-	public static SharedPath newFilePath(String fakePath, String realPath) {
-		SharedPath sp = new SharedPath();
-		sp.fakePath = fakePath;
-		sp.realPath = realPath;
-		return sp;
-	}
-	
-	public static SharedPath newDirectoryPath(String fakePath, String realPath) {
-		SharedPath sp = new SharedPath();
-		sp.fakePath = fakePath;
-		sp.realPath = realPath;
-		return sp;
-	}
-	
-	public static SharedPath newFakeDirectoryPath(String fakePath, long lastModified) {
-		SharedPath sp = new SharedPath();
-		sp.fakePath = fakePath;
-		sp.lastModified = lastModified;
-		return sp;
-	}
+	public SharedPath() {}
 }

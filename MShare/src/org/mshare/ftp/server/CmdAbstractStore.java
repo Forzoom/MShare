@@ -49,24 +49,12 @@ abstract public class CmdAbstractStore extends FtpCmd {
 
     public void doStorOrAppe(String param, boolean append) {
         Log.d(TAG, "STOR/APPE executing with append=" + append);
-        // 获得的可能是文件名也可能是相对路径
-        // 因为是新的文件所以是没有办法获得对应的SharedLink对象
-        
-        String fileName = null;
-        String fakePath = null;
         
         // TODO 保证param的正确性
-        
-        // 创建fakePath
-        if (param.charAt(0) == SharedLinkSystem.SEPARATOR_CHAR) {
-        	fakePath = param;
-        	fileName = MShareUtil.guessName(param);
-        } else { // 期望是文件名
-        	fakePath = sessionThread.sharedLinkSystem.getWorkingDirStr() + SharedLinkSystem.SEPARATOR + param;
-        	fileName = param;
-        }
-        
-        String realPath = sessionThread.sharedLinkSystem.getUploadDirPath() + fileName;
+        // 获得的可能是文件名也可能是相对路径
+        String fileName = MShareUtil.guessName(param);
+        String fakePath = sessionThread.sharedLinkSystem.getFakePath(param);
+        String realPath = sessionThread.sharedLinkSystem.getUploadDirPath() + File.separator + fileName;
         
         // 先创建真实文件
         File storeFile = new File(realPath);
@@ -225,8 +213,14 @@ abstract public class CmdAbstractStore extends FtpCmd {
                     }
                     break;
                 }
-            }
-        }
+            } // 完成循环
+        } // 完成storing块
+        
+        // TODO 尝试将文件持久化存储，希望以后不需要在这么偏僻的角落加上这样的代码
+        sessionThread.sharedLinkSystem.addSharedPath(fakePath, realPath);
+        sessionThread.sharedLinkSystem.persist(fakePath, realPath);
+        
+        
         // // Clean up the dedicated writer thread
         // if(dedicatedWriter != null) {
         // dedicatedWriter.exit(); // set its exit flag
