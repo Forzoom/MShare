@@ -20,8 +20,11 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * 当前不希望有多个人同时使用同一个账户，因为会导致其他人的文件树无法随之修改
+ * 当前服务器不希望在传递的路径中有..或者.的内容
  * TODO 当扩展存储不存在的时候，不允许的许多操作，服务器端只能在cmd里面对失败做出响应吗，客户端没有办法知道服务器是出现了什么样的问题导致了不可用
- * 需要了解MediaScan相关的类
+ * 当前扩展存储必须可用
+ * TODO 需要了解MediaScan相关的类
  * TODO 可能需要一个刷新按钮,就像一个文件浏览器一样
  * 默认账户中的内容也能够被删除，因为现在所共享的文件都是默认账户中的内容
  * TODO 暂时不应该支持共享文件夹
@@ -39,7 +42,7 @@ import android.util.Log;
  * TODO 文件夹可能并没有对应的真实文件夹,只有文件是真实的，所以不能将整个文件夹都共享，这样是不对的
  * TODO 共享文件的存在，如何才能在其他地方显示，现在要如何在文件浏览器中显示共享文件，再开启一个新的文件浏览器实在太麻烦
  * 如果以后要实现多个账户的情况，那么要如何浏览其他账户的权限内容？
- * TODO 新创建的文件应该放在哪里？扩展存储?即拥有写权限的情况下，需要在扩展存储中设置位置保存内容
+ * TODO 新创建的文件应该放在哪里？扩展存储?即拥有写权限的情况下，需要在扩展存储中设置位置保存内容，可能需要能够设置
  * TODO 需要了解根路径所对应的fakePath是什么，如果是""的话，应该修改为'/'
  * TODO 对于不存在的文件，每次启动的时候都需要清除
  * TODO 需要了解账户的权限设置:读权限，删除权限（写），重写/修改权限（写），执行权限全部为否,FTP在修改文件的时候，别的用户该怎么办？
@@ -104,37 +107,13 @@ public class SharedLinkSystem {
 			
 			addSharedPath(key, value);
 		}
+		// TODO 将fakeDirecotry持久化，对于已经持久化的内容，暂时不进行修改
 		// 设置当前的working directory为"/"
 		persist(SEPARATOR, null); // 创建一个fakeDirectory作为root
 		addSharedPath(SEPARATOR, null);
 		setWorkingDir(SEPARATOR); // root作为working directory
 		
-		// 默认存放在扩展存储中
-		String uploadRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
-		
-		// 确保org.mshare文件夹的存在
-		File orgMshare = new File(uploadRoot + File.separator + "org.mshare");
-		if (orgMshare.exists() && orgMshare.isDirectory()) { // 必须是一个文件夹
-			
-		} else {
-			Log.e(TAG, "当前上传路径无法使用");
-			// TODO 在构造函数中，没有办法报告错误，否则将出现无法构造的问题，需要将这些内容移出
-		}
-		
-		// 当前没有指定上传路径
-		if (uploadPath == null) {
-			uploadPath = uploadRoot + File.separator + getAccount().getUsername();
-			Log.d(TAG, "当前没有指定上传路径，新的上传路径为 :" + uploadPath);
-		}
-		
-		// 确保上传文件所在文件夹的位置
-		// 第一次创建的上传文件路径，是用户名
-		File uploadDir = new File(getUploadDirPath());
-		if (uploadDir.exists() && uploadDir.isDirectory()) {
-			
-		} else {
-			Log.e(TAG, "会出现错误，没有办法接收上传的文件");
-		}
+		prepareUpload();
 	}
 	
 	/**
@@ -143,6 +122,45 @@ public class SharedLinkSystem {
 	 */
 	public Account getAccount() {
 		return sessionThread.getAccount();
+	}
+	
+	/**
+	 * 准备存放上传文件的位置
+	 * TODO 所有在该位置的内容都将称为上传文件?
+	 */
+	private void prepareUpload() {
+		// 默认存放在扩展存储中
+		File externalStorageDir = Environment.getExternalStorageDirectory();
+		String externalStoragePath = externalStorageDir.getAbsolutePath();
+		
+		// org.mshare文件夹
+		File orgMshare = new File(externalStoragePath + File.separator + "org.mshare");
+		if (!orgMshare.exists()) {
+			Log.w(TAG, "org.mshare文件夹不存在");
+			// TODO 必须是一个文件夹,如果不是文件夹的时候怎么办
+			// 创建文件夹
+			if (orgMshare.mkdir()) {
+				Log.d(TAG, "创建org.mshare文件夹成功");
+			} else {
+				Log.d(TAG, "创建org.mshare文件夹失败");
+			}
+		}
+		
+		// uploadPath肯定为null，所以必将指定上传路径为org.mshare/username
+		if (uploadPath == null) {
+			uploadPath = orgMshare + File.separator + getAccount().getUsername();
+			Log.d(TAG, "当前没有指定上传路径，新的上传路径为 :" + uploadPath);
+		}
+		
+		// 创建的上传文件夹
+		File uploadDir = new File(uploadPath);
+		if (!uploadDir.exists()) {
+			Log.e(TAG, "接收上传文件的文件夹不存在");
+			// TODO 同样需要保证uploadDir是我们自己创建的"文件夹"
+			if (uploadDir.mkdir()) {
+				Log.d(TAG, "创建上传文件夹成功");
+			}
+		}
 	}
 	
 	/**

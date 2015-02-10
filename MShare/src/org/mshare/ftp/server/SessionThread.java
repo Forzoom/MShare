@@ -52,8 +52,6 @@ public class SessionThread extends Thread {
     private Account account = null;
     // TODO 从数据存储中将原本的文件数据取出
     protected SharedLinkSystem sharedLinkSystem = null;
-    // 当前工作路径
-//    protected File workingDir = FsSettings.getChrootDir();
     // 
     protected Socket dataSocket = null;
     protected SharedLink renameFrom = null;

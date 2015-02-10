@@ -484,6 +484,9 @@ public class FsService extends Service implements Runnable {
         Log.d(TAG, "Registered session thread");
     }
 
+    // TODO 可能需要监听器来监听当前的sessionThread的数量变化
+//    public static int getCurrentLink
+    
     @Override
     public IBinder onBind(Intent intent) {
         return null;
