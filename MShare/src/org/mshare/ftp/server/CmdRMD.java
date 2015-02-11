@@ -50,7 +50,7 @@ public class CmdRMD extends FtpCmd implements Runnable {
                 break mainblock;
             }
             toRemove = sessionThread.sharedLinkSystem.getSharedLink(param);
-            if (!toRemove.isDirectory()) {
+            if (!(toRemove.isDirectory() || toRemove.isFakeDirectory())) {
                 errString = "550 Can't RMD a non-directory\r\n";
                 break mainblock;
             }

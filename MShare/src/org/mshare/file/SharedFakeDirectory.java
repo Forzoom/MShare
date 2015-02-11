@@ -113,6 +113,6 @@ public class SharedFakeDirectory extends SharedLink {
 		// 将newRealPath设置null表示fakeDirectory
 		getSystem().changePersist(oldFakePath, fakePath, "");
 		
-		return false;
+		return true;
 	}
 }

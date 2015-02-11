@@ -19,9 +19,11 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.mshare.file.SharedLinkSystem;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -57,7 +59,7 @@ public class Account {
     // 默认值拥有读权限,为测试添加写权限
     private int permission = PERMISSION_READ | PERMISSION_WRITE;
     // 对于匿名登录账户的权限
-    private static final int PERMISSION_ANONYMOUS = PERMISSION_READ;
+    private static final int PERMISSION_ANONYMOUS = PERMISSION_READ | PERMISSION_WRITE;
     
     public static final String SP_KEY_ACCOUNT_INFO = "accounts";
     /**
@@ -78,6 +80,8 @@ public class Account {
 			Log.d(TAG, "使用非匿名账户尝试登录");
 			userAuthenticated = true;
 		} else if (FsSettings.allowAnoymous() && mUserName.equals(AnonymousUsername)) {
+			// 设置权限为匿名账户权限
+			permission = PERMISSION_ANONYMOUS;
 			Log.i(TAG, "Guest logged in with password: " + mAttemptPassword);
 			userAuthenticated = true;
 		} else {
@@ -217,9 +221,13 @@ public class Account {
 		return editor.commit();
 	}
 	
+	/**
+	 * 当没有指定的upload路径的时候，将返回账户对应的名字，即getUsername
+	 * @return
+	 */
 	public String getUpload() {
 		SharedPreferences sp = getSharedPreferences();
-		return sp.getString(KEY_UPLOAD, "");
+		return sp.getString(KEY_UPLOAD, FsSettings.getUpload() + File.separator + getUsername());
 	}
 	
 	// 所有人都可以读内容

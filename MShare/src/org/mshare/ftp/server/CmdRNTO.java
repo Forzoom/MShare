@@ -72,7 +72,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
                 break mainblock;
             }
             Log.i(TAG, "RNTO from file: " + fromFile.getFakePath());
-            String fromFileParentPath = fromFile.getParent().getFakePath();
+            String fromFileParentPath = fromFile.getParent();
             
             if (fromFile.isFile()) {
             	if (fromFileParentPath.equals(SharedLinkSystem.SEPARATOR)) {
@@ -99,7 +99,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
             // reliable move a file, once java7 is supported by Dalvik, this code can
             // be replaced with Files.move()
             
-            if (fromFile.renameTo(toFile)) {
+            if (!fromFile.renameTo(toFile)) {
             	errString = "550 Error during rename operation\r\n";
             	break mainblock;
             }

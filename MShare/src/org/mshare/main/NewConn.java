@@ -568,6 +568,7 @@ public class NewConn extends Activity {
 					// 尝试关闭服务器
 					stopServer();
 				}
+				ftpAddrView.setText("未知");
 			}
 		}
 	}

@@ -128,7 +128,7 @@ public abstract class FtpCmd implements Runnable {
         
         // 对于已经登录的用户，将无条件地执行所发送的命令
         // TODO 低耦合
-        if (session.isUserLoggedIn() && account != null) {
+        if (account != null && (session.isUserLoggedIn() || session.isAnonymouslyLoggedIn())) {
         	if (account.canWrite()) { // 检测写权限
         		cmdInstance.run();
         	} else if (account.canRead()) { // 检测读权限
@@ -146,6 +146,8 @@ public abstract class FtpCmd implements Runnable {
                 }
         	} else {
         		// TODO 将返回无法执行
+        		Log.e(TAG, "没有任何权限");
+        		session.writeString("530 user is not allowed to use that command\r\n");
         	}
         } else {
         	boolean validCmd = false;

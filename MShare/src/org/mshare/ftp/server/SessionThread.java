@@ -366,7 +366,7 @@ public class SessionThread extends Thread {
     }
 
     /**
-     * 通过身份认证或者是匿名登录的
+     * 通过身份认证并且不是通过匿名登录的
      * @return true if a valid user has logged in
      */
     public boolean isUserLoggedIn() {
@@ -386,6 +386,11 @@ public class SessionThread extends Thread {
     	
         if (account.isLoggedIn()) {
             Log.i(TAG, "Authentication complete");
+            // 当USER和PASS命令重新使用的时候，system也将被重新设置
+            // TODO 不知道将SharedLinkSystem放在这里生成是否好
+            sharedLinkSystem = new SharedLinkSystem(this);
+            // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
+            // LinkSystem是否需要形成一个自己的圈子呢
         } else {
             Log.i(TAG, "Auth failed: " + account.authFails + "/" + MAX_AUTH_FAILS);
             if (account.authFails > MAX_AUTH_FAILS) {
@@ -393,13 +398,6 @@ public class SessionThread extends Thread {
                 quit();
             }
         }
-        
-        // TODO 不知道将SharedLinkSystem放在这里生成是否好
-        sharedLinkSystem = new SharedLinkSystem(this);
-        // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
-        // LinkSystem是否需要形成一个自己的圈子呢
-        
-        
     }
 
     public Socket getDataSocket() {

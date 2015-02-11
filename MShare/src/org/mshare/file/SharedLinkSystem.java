@@ -20,6 +20,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * 单独创建默认账户的文件树，所有对该文件树的修改会同时反应到其他账户上，但是两个文件树并不能合并，还是将所有sessionThread中的文件树进行一一修改？
  * 当前不希望有多个人同时使用同一个账户，因为会导致其他人的文件树无法随之修改
  * 当前服务器不希望在传递的路径中有..或者.的内容
  * TODO 当扩展存储不存在的时候，不允许的许多操作，服务器端只能在cmd里面对失败做出响应吗，客户端没有办法知道服务器是出现了什么样的问题导致了不可用
@@ -29,7 +30,7 @@ import android.util.Log;
  * 默认账户中的内容也能够被删除，因为现在所共享的文件都是默认账户中的内容
  * TODO 暂时不应该支持共享文件夹
  * 如何在SharedLinkSystem启动的时候，创建文件树，应该只需要告诉SharedLinkSystem当前登录的对象是谁就可以创建
- * TODO 目前对于不合法的path，都将被SharedLinkSystem自动删除
+ * TODO 对于不合法的path，都将被SharedLinkSystem自动删除
  * 保存文件系统并要求用户手动保存文件系统，或者提供按钮用来清除无效的Link对象
  * 关键是持久化内容保持太多容易造成效率问题，但随意删除持久化内容又会造成文件丢失，能否对当前正在使用的SD卡作为唯一性判断
  * 如果realPath中的内容消失了，那么也不应该立即就删除持久化path，而是需要记录说当前path无效，并且不显示，等待下次检测文件的时候，发现realPath真的不存在的情况下再去除持久化
@@ -88,7 +89,6 @@ public class SharedLinkSystem {
 		String realPath = Environment.getExternalStorageDirectory().getAbsolutePath();
 		root = SharedLink.newFakeDirectory(this, REAL_PATH_FAKE_DIRECTORY);
 		// TODO 创建整个文件树，需要处理account和defaultAccount中的内容
-		
 		// TODO 将fakeDirecotry持久化，对于已经持久化的内容，暂时不进行修改,在register的时候添加'/'，但提高了耦合
 		// 设置当前的working directory为"/"
 //		persist(SEPARATOR, null); // 创建一个fakeDirectory作为root
@@ -140,44 +140,12 @@ public class SharedLinkSystem {
 		Log.d(TAG, "end load");
 	}
 	
-	private static void prepareUploadRoot() {
-		
-	}
-	
 	/**
 	 * 准备存放上传文件的位置
 	 * TODO 所有在该位置的内容都将称为上传文件?
 	 */
 	private void prepareUpload() {
-		// 默认存放在扩展存储中
-		String externalStoragePath = Environment.getExternalStorageDirectory().getAbsolutePath();
-		
-		// org.mshare文件夹
-		File orgMshare = new File(externalStoragePath + File.separator + "org.mshare");
-		if (!orgMshare.exists()) {
-			Log.w(TAG, "org.mshare文件夹不存在");
-			// TODO 必须是一个文件夹,如果不是文件夹的时候怎么办
-			// 创建文件夹
-			if (orgMshare.mkdir()) {
-				Log.d(TAG, "创建org.mshare文件夹成功");
-			} else {
-				Log.d(TAG, "创建org.mshare文件夹失败");
-			}
-		} else {
-			if (!orgMshare.isDirectory()) {
-				// TODO 这该怎么办？
-				Log.e(TAG, "org.mshare不是一个文件夹");
-				return;
-			}
-		}
-		
 		uploadPath = getAccount().getUpload();
-		// uploadPath肯定为null，所以必将指定上传路径为org.mshare/username
-		if (uploadPath == null || uploadPath.equals("")) {
-			uploadPath = orgMshare + File.separator + getAccount().getUsername();
-			getAccount().setUpload(uploadPath);
-			Log.d(TAG, "当前没有指定上传路径，新的上传路径为 :" + uploadPath);
-		}
 		
 		// 创建的上传文件夹
 		File uploadDir = new File(uploadPath);
@@ -186,6 +154,8 @@ public class SharedLinkSystem {
 			// TODO 同样需要保证uploadDir是我们自己创建的"文件夹"
 			if (uploadDir.mkdir()) {
 				Log.d(TAG, "创建上传文件夹成功");
+			} else {
+				Log.e(TAG, "创建上传文件夹失败");
 			}
 		}
 	}
@@ -283,7 +253,7 @@ public class SharedLinkSystem {
 		// TODO 所以需要保证fakePath是相对路径
 		SharedLink toDelete = getSharedLink(fakePath);
 		if (toDelete != null) {
-			SharedLink parent = toDelete.getParent();
+			SharedLink parent = getSharedLink(toDelete.getParent());
 			// TODO 直接从文件树中删除，不知道是否会造成内存溢出，map中的内容不知是否会被回收
 			parent.list().remove(toDelete.getName());
 		}
@@ -327,7 +297,7 @@ public class SharedLinkSystem {
 			// 通过迭代的方式查找到realPath，并将其设置为空
 			if (value.equals(realPath)) {
 				Editor editor = sp.edit();
-				editor.putString(key, null);
+				editor.remove(key);
 				editor.commit();
 				return;
 			}
@@ -360,27 +330,27 @@ public class SharedLinkSystem {
 	}
 	
 	/**
+	 * 
 	 * TODO 需要修正的内容部分在两个部分，不好解决
 	 * 将尝试在private的部分修正持久化内容
 	 */
-	public void changePersist(String oldFakePath, String newFakePath, String newRealPath) {
+	public boolean changePersist(String oldFakePath, String newFakePath, String newRealPath) {
 		Log.d(TAG, "修正持久化内容");
 		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
 		if (!sp.getString(oldFakePath, REAL_PATH_NONE).equals(REAL_PATH_NONE)) {
 			Editor editor = sp.edit();
 			// 删除原本内容
-			editor.putString(oldFakePath, null);
+			editor.remove(oldFakePath);
+			Log.d(TAG, "删除oldFakePath :" + oldFakePath);
 			editor.putString(newFakePath, newRealPath);
+			Log.d(TAG, "添加newFakePath :" + newFakePath + " newRealPath :" + newRealPath);
 			boolean changeResult = editor.commit();
-			if (changeResult) {
-				Log.d(TAG, "修正持久化内容成功");
-			} else {
-				Log.e(TAG, "修正持久化内容失败");
-			}
+			Log.d(TAG, "修正持久化内容 " + changeResult);
+			return changeResult;
 		} else {
 			Log.e(TAG, "没有找到对应持久化内容");
+			return false;
 		}
-		Log.d(TAG, "修正持久化内容结束");
 	}
 	
 	/**
@@ -400,7 +370,7 @@ public class SharedLinkSystem {
 			// 所对应的是fakeDirectory
 			// 对于File和Directory也需要设为null
 			Editor editor = sp.edit();
-			editor.putString(fakePath, null); // 设置null将删除对应内容
+			editor.remove(fakePath);
 			// TODO 返回的内容仍可能是false
 			return editor.commit();
 		}
@@ -458,6 +428,29 @@ public class SharedLinkSystem {
 			}
 		} else {
 			return param;
+		}
+	}
+	
+	/**
+	 * 该函数的存在，是为了让所有的fakePath有统一的方式来获得父对象的内容
+	 * 通过fakePath，获得该fakePath所对应的父文件内容
+	 * @param fakePath
+	 * @return
+	 */
+	public static String getParent(String fakePath) {
+		if (!fakePath.equals(SEPARATOR)) {
+			
+			int lastIndex = fakePath.lastIndexOf(SharedLinkSystem.SEPARATOR);
+			String parentFakePath = null;
+			if (lastIndex == 0) {
+				parentFakePath = SharedLinkSystem.SEPARATOR;
+			} else {
+				parentFakePath = fakePath.substring(0, lastIndex);
+			}
+			return parentFakePath;
+		} else {
+			Log.e(TAG, "root没有父文件");
+			return null;
 		}
 	}
 	

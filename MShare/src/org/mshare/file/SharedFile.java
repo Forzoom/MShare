@@ -126,11 +126,17 @@ public class SharedFile extends SharedLink {
 		}
 		File toFile = newPath.getRealFile();
 		// 尝试重命名
-		if (realFile.renameTo(toFile)) {
-			return true;
+		if (!realFile.renameTo(toFile)) {
+			Log.e(TAG, "尝试重命名文件失败");
+			return false;
 		}
 		
-		return false;
+		// 尝试修改文件树和持久化内容
+		String oldFakePath = fakePath;
+		fakePath = newPath.getFakePath();
+		realPath = realFile.getAbsolutePath();
+		getSystem().changePersist(oldFakePath, fakePath, realPath);
+		return true;
 	}
 	
 }

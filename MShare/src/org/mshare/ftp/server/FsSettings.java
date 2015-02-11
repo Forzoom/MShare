@@ -103,12 +103,18 @@ public class FsSettings {
 
     /**
      * TODO 目前SharedLinkSystem中的上传路径和该上传路径独立
+     * 如果路径不存在，将使用mkdirs来创建
      * @return
      */
     public static String getUpload() {
     	final SharedPreferences sp = getSharedPreferences();
-        // TODO: port is always an number, so store this accordenly
         String uploadPath = sp.getString(KEY_UPLOAD, VALUE_UPLOAD_DEFAULT);
+        
+        File uploadRoot = new File(uploadPath);
+        // TODO 如何保证文件夹存在呢，如果不存在，就不能再使用共享文件层吧
+        if (!uploadRoot.exists()) {
+        	uploadRoot.mkdirs();
+        }
         
         Log.v(TAG, "upload path : " + uploadPath);
         return uploadPath; 
