@@ -73,6 +73,7 @@ public class SharedFile extends SharedLink {
 		// 目前所有用户都有权限在删除默认账户中所共享的内容
 		if (file.delete()) {
 			// 尝试将持久化内容删除，并删除文件树中的内容
+			String fakePath = getFakePath(), realPath = getRealPath();
 			if (getSystem().unpersist(fakePath)) {
 				// 去持久化可能会失败，但是在下次加载系统的时候，应该能够被删除
 				SharedLinkSystem.unpersistAll(fakePath, realPath);
@@ -130,12 +131,21 @@ public class SharedFile extends SharedLink {
 			Log.e(TAG, "尝试重命名文件失败");
 			return false;
 		}
+		Log.d(TAG, "真实文件重命名成功:" + realFile.getAbsolutePath());
 		
-		// 尝试修改文件树和持久化内容
-		String oldFakePath = fakePath;
-		fakePath = newPath.getFakePath();
-		realPath = realFile.getAbsolutePath();
-		getSystem().changePersist(oldFakePath, fakePath, realPath);
+		// 准备内容
+		String oldFakePath = getFakePath(), newFakePath = newPath.getFakePath();
+		String newRealPath = realFile.getParent() + File.separator + toFile.getName();
+		// 需要调整父文件中的内容
+		SharedLink parent = getSystem().getSharedLink(getParent());
+		parent.list().remove(getName());
+		// 更新当前文件对象
+		setFakePath(newFakePath);
+		setRealPath(newRealPath);
+		// 向父文件添加新的内容
+		parent.list().put(getName(), this);
+		// 尝试修正持久化内容
+		getSystem().changePersist(oldFakePath, newFakePath, newRealPath);
 		return true;
 	}
 	

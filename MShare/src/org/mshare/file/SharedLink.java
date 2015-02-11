@@ -34,8 +34,8 @@ public abstract class SharedLink {
 	// 完整的路径
 	private SharedLinkSystem mSystem = null;
 	private SharedLink parent = null;
-	protected String fakePath = null;
-	protected String realPath = null;
+	private String fakePath = null;
+	private String realPath = null;
 	private File realFile = null;
 	
 	int type = TYPE_UNKNOWN;
@@ -73,8 +73,8 @@ public abstract class SharedLink {
 	
 	public static final SharedLink newDirectory(SharedLinkSystem system, String fakePath, String realPath) {
 		SharedDirectory sd = new SharedDirectory(system);
-		sd.fakePath = fakePath;
-		sd.realPath = realPath;
+		sd.setFakePath(fakePath);
+		sd.setRealPath(realPath);
 		return null;
 	}
 	
@@ -82,7 +82,7 @@ public abstract class SharedLink {
 	public static final SharedLink newFakeDirectory(SharedLinkSystem system, String fakePath) {
 		SharedFakeDirectory sfd = new SharedFakeDirectory(system);
 		
-		sfd.fakePath = fakePath;
+		sfd.setFakePath(fakePath);
 		sfd.setLastModified(System.currentTimeMillis());
 		
 		return sfd;
@@ -145,7 +145,7 @@ public abstract class SharedLink {
 	 * @return
 	 */
 	public File getRealFile() {
-		if (realFile == null) {
+		if (realFile == null || !realFile.getAbsoluteFile().equals(realPath)) {
 			realFile = new File(realPath);
 		}
 		return realFile;
@@ -175,15 +175,15 @@ public abstract class SharedLink {
 	
 	public String getParent() {
 		
-		int lastIndex = fakePath.lastIndexOf(SharedLinkSystem.SEPARATOR);
-		String parentFakePath = null;
-		if (lastIndex == 0) {
-			parentFakePath = SharedLinkSystem.SEPARATOR;
-		} else {
-			parentFakePath = fakePath.substring(0, lastIndex);
-		}
-		
-		return parentFakePath;
+		return SharedLinkSystem.getParent(getFakePath());
 	}
 	
+	public void setFakePath(String fakePath) {
+		this.fakePath = fakePath;
+	}
+	
+	public void setRealPath(String realPath) {
+		realFile = new File(realPath);
+		this.realPath = realPath;
+	}
 }

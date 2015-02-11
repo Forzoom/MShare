@@ -20,6 +20,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * 在第一次创建账户时无法登录
  * 单独创建默认账户的文件树，所有对该文件树的修改会同时反应到其他账户上，但是两个文件树并不能合并，还是将所有sessionThread中的文件树进行一一修改？
  * 当前不希望有多个人同时使用同一个账户，因为会导致其他人的文件树无法随之修改
  * 当前服务器不希望在传递的路径中有..或者.的内容
@@ -216,22 +217,25 @@ public class SharedLinkSystem {
 			if (realPath == REAL_PATH_FAKE_DIRECTORY) {
 				// realPath为空，需要设置的是FakeDirectory
 				newSharedLink = SharedLink.newFakeDirectory(this, fakePath);
-				file.list().put(fileName, newSharedLink);
 				Log.d(TAG, "成功添加一个SharedFakeDirectory到文件树中");
 			} else {
 				File realFile = new File(realPath);
-				if (realFile.isFile()) {
-					newSharedLink = SharedLink.newFile(this, file.getFakePath() + SEPARATOR + fileName, realPath);
-					file.list().put(fileName, newSharedLink);
-					Log.d(TAG, "成功添加一个SharedFile到文件树 " + file.getFakePath() + " 中");
-				} else if (realFile.isDirectory()) {
-					newSharedLink = SharedLink.newDirectory(this, file.getFakePath() + SEPARATOR + fileName, realPath);
-					file.list().put(fileName, newSharedLink);
-					Log.d(TAG, "成功添加一个SharedDirectory到文件树中");
+				if (realFile.exists()) {
+					if (realFile.isFile()) {
+						newSharedLink = SharedLink.newFile(this, fakePath, realPath);
+						Log.d(TAG, "成功添加一个SharedFile到文件树 " + file.getFakePath() + " 中");
+					} else if (realFile.isDirectory()) {
+						newSharedLink = SharedLink.newDirectory(this, fakePath, realPath);
+						Log.d(TAG, "成功添加一个SharedDirectory到文件树中");
+					}
+				} else {
+					Log.e(TAG, "真实文件并不存在");
+					// 是否需要删除该持久化内容
 				}
 			}
 			
 			if (newSharedLink != null) {
+				file.list().put(fileName, newSharedLink);
 				return true;
 			} else {
 				return false;

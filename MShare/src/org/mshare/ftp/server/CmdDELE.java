@@ -42,7 +42,9 @@ public class CmdDELE extends FtpCmd implements Runnable {
         SharedLink storeFile = sessionThread.sharedLinkSystem.getSharedLink(param);
         
         String errString = null;
-        if (storeFile.isDirectory()) {
+        if (storeFile == null) {
+        	errString = "550 file is not exist\r\n";
+        } else if (storeFile.isDirectory()) {
             errString = "550 Can't DELE a directory\r\n";
         } else if (!storeFile.delete()) {
             errString = "450 Error deleting file\r\n";

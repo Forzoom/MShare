@@ -82,8 +82,8 @@ public class SharedFakeDirectory extends SharedLink {
 	@Override
 	public boolean delete() {
 		// 因为fakeDirectory也是需要持久化的
-		getSystem().unpersist(fakePath);
-		getSystem().deleteSharedPath(fakePath);
+		getSystem().unpersist(getFakePath());
+		getSystem().deleteSharedPath(getFakePath());
 		// TODO 需要修改
 		return true;
 	}
@@ -106,12 +106,17 @@ public class SharedFakeDirectory extends SharedLink {
 			return false;
 		}
 		
-		String oldFakePath = fakePath;
+		String oldFakePath = getFakePath(), newFakePath = newPath.getFakePath();
+		// 删除父文件中的旧内容
+		SharedLink parent = getSystem().getSharedLink(getParent());
+		parent.list().remove(getName());
 		// 修正文件树中的内容
-		fakePath = newPath.getFakePath();
+		setFakePath(newFakePath);
+		// 向父文件中添加新内容
+		parent.list().put(getName(), this);
 		// 修正持久化内容
 		// 将newRealPath设置null表示fakeDirectory
-		getSystem().changePersist(oldFakePath, fakePath, "");
+		getSystem().changePersist(oldFakePath, newFakePath, SharedLinkSystem.REAL_PATH_FAKE_DIRECTORY);
 		
 		return true;
 	}

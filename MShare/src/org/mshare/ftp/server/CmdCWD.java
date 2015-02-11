@@ -43,7 +43,9 @@ public class CmdCWD extends FtpCmd implements Runnable {
         SharedLink newDir;
         String errString = null;
     	newDir = sessionThread.sharedLinkSystem.getSharedLink(param);
-
+    	// TODO 确保newDir不是null且exist，不知道当不存在的时候该返回什么内容
+    	
+    	
     	// TODO 确保传入的param中不存在..和.的内容
         Log.i(TAG, "New directory: " + newDir);
         // CWD允许切换到directory和fakeDirectory

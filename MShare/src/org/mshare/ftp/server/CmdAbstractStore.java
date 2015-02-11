@@ -216,11 +216,6 @@ abstract public class CmdAbstractStore extends FtpCmd {
             } // 完成循环
         } // 完成storing块
         
-        // TODO 尝试将文件持久化存储，希望以后不需要在这么偏僻的角落加上这样的代码
-        sessionThread.sharedLinkSystem.addSharedPath(fakePath, realPath);
-        sessionThread.sharedLinkSystem.persist(fakePath, realPath);
-        
-        
         // // Clean up the dedicated writer thread
         // if(dedicatedWriter != null) {
         // dedicatedWriter.exit(); // set its exit flag
@@ -249,12 +244,10 @@ abstract public class CmdAbstractStore extends FtpCmd {
         sessionThread.closeDataSocket();
         
         // 文件传送已经完成
-        
-        // 持久化内容
-        sessionThread.sharedLinkSystem.persist(fakePath, realPath);
-        
         // 添加到文件树中
         sessionThread.sharedLinkSystem.addSharedPath(fakePath, realPath);
+        // 持久化内容
+        sessionThread.sharedLinkSystem.persist(fakePath, realPath);
         
         Log.d(TAG, "STOR finished");
     }
