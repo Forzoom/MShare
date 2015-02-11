@@ -75,7 +75,7 @@ public class SharedFile extends SharedLink {
 			// 尝试将持久化内容删除，并删除文件树中的内容
 			if (getSystem().unpersist(fakePath)) {
 				// 去持久化可能会失败，但是在下次加载系统的时候，应该能够被删除
-				SharedLinkSystem.unpersistAll(realPath);
+				SharedLinkSystem.unpersistAll(fakePath, realPath);
 			}
 			getSystem().deleteSharedPath(fakePath);
 			return true;

@@ -69,13 +69,21 @@ public class SharedLinkSystem {
 	// 只是用来获得Account和SharedPreferences
 	private SessionThread sessionThread;
 	
+	/**
+	 * 因为对于SharedPreferences中返回的realPath可能会是正常的，也可能为""，即fakeDirectory的情况
+	 * 为了表示在SharedPreferences中没有该realPath，所以使用|来表示，因为|不可能出现在文件名
+	 */
 	public static final String REAL_PATH_NONE = "|";
+	/**
+	 * 所有FAKE_DIRECTORY的realPath都是""
+	 */
+	public static final String REAL_PATH_FAKE_DIRECTORY = "";
 	
 	public SharedLinkSystem(SessionThread sessionThread) {
 		this.sessionThread = sessionThread;
 		// TODO 暂时设定为扩展存储的路径
 		String realPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-		root = SharedLink.newFakeDirectory(this, "");
+		root = SharedLink.newFakeDirectory(this, REAL_PATH_FAKE_DIRECTORY);
 		// TODO 创建整个文件树，需要处理account和defaultAccount中的内容
 		
 		// TODO 将fakeDirecotry持久化，对于已经持久化的内容，暂时不进行修改,在register的时候添加'/'，但提高了耦合
@@ -88,9 +96,11 @@ public class SharedLinkSystem {
 		// 当不是默认账户时，将默认账户中的内容一并加入
 		if (!getAccount().isDefaultAccount()) {
 			SharedPreferences defaultSp = Account.getDefaultSharedPreferences();
+			Log.d(TAG, "sp size : " + defaultSp.getAll().size());
 			load(defaultSp, "default");
 		}
 		SharedPreferences privateSp = sessionThread.getAccount().getSharedPreferences();
+		Log.d(TAG, "sp size : " + privateSp.getAll().size());
 		load(privateSp, "private");
 		
 		prepareUpload();
@@ -114,14 +124,12 @@ public class SharedLinkSystem {
 		// TODO 在构造函数中使用循环不好把
 		while (iterator.hasNext()) {
 			String key = iterator.next();
+			// 判断fakePath的第一位是否是'/'
+			Log.d(TAG, "fakePath:" + key);
 			if (key.charAt(0) == SEPARATOR_CHAR) {
-				String value = sp.getString(key, "");
+				// 不可能在keySet中有，但是在sp中没有的情况
+				String value = sp.getString(key, REAL_PATH_NONE);
 				Log.d(TAG, "持久化内容:" + tag + " fakePath:" + key + " realPath:" + value);
-				// 不存在的内容，是不是应该删除
-				if (value.equals("")) {
-					Log.w(TAG, "存在无用的持久化内容，是否应该删除");
-				}
-				
 				addSharedPath(key, value);
 			}
 		}
@@ -178,6 +186,7 @@ public class SharedLinkSystem {
 	 * TODO 如何判断是否添加成功了
 	 * @param fakePath 对应的是SharedFileSystem中的文件路径，不能为""或者"/"
 	 * @param realPath 只有在添加最终的内容的时候才会被使用
+	 * @return 成功是返回true
 	 */
 	public boolean addSharedPath(String fakePath, String realPath) {
 		Log.d(TAG, "尝试添加到文件树: fakePath:" + fakePath + " realPath:" + realPath);
@@ -218,10 +227,9 @@ public class SharedLinkSystem {
 		fileName = crumbs[crumbs.length - 1];
 		if (file.isDirectory() || file.isFakeDirectory()) { // 父文件是一个文件夹
 			// 添加新的文件
-			// TODO 被设置为共享的也有可能是一个文件夹
-			// TODO 被设置的内容可能是一个FakeDirectory
+			// TODO 被设置为共享的可能是一个Directoyr或者FakeDirectory
 			SharedLink newSharedLink = null;
-			if (realPath == null) {
+			if (realPath == REAL_PATH_FAKE_DIRECTORY) {
 				// realPath为空，需要设置的是FakeDirectory
 				newSharedLink = SharedLink.newFakeDirectory(this, fakePath);
 				file.list().put(fileName, newSharedLink);
@@ -288,18 +296,20 @@ public class SharedLinkSystem {
 	}
 	
 	/**
+	 * @deprecated
+	 * TODO 需要重新审视该函数
 	 * 当前没有办法在sp中进行更快的查找
 	 * 好像也没有更好的办法，即便使用序列化的数据库还是不好
 	 * @param realPath
 	 */
-	public static void unpersistAll(String realPath) {
+	public static void unpersistAll(String fakePath, String realPath) {
 		SharedPreferences sp = Account.getDefaultSharedPreferences();
 		// TODO 当前使用迭代的方式来删除持久化
 		Set<String> keySet = sp.getAll().keySet();
 		Iterator<String> iterator = keySet.iterator();
 		while (iterator.hasNext()) {
 			String key = iterator.next();
-			String value = sp.getString(key, "");
+			String value = sp.getString(key, REAL_PATH_NONE);
 			
 			// 通过迭代的方式查找到realPath，并将其设置为空
 			if (value.equals(realPath)) {
@@ -315,7 +325,7 @@ public class SharedLinkSystem {
 	 * 持久化操作
 	 * 将所有的内容添加到SharedPreferences中，关于FakeDirectory，该怎么办？
 	 */
-	public void persist(String fakePath, String realPath) {
+	public boolean persist(String fakePath, String realPath) {
 		Log.d(TAG, "尝试持久化: fakePath:" + fakePath + " realPath:" + realPath);
 		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
 		// TODO 为了保存fakePath和realPath的联系，可能需要更好的持久化方式
@@ -329,8 +339,10 @@ public class SharedLinkSystem {
 		boolean persistResult = editor.commit();
 		if (persistResult) {
 			Log.d(TAG, "成功持久化文件");
+			return true;
 		} else {
 			Log.e(TAG, "持久化文件失败");
+			return false;
 		}
 	}
 	
@@ -341,7 +353,7 @@ public class SharedLinkSystem {
 	public void changePersist(String oldFakePath, String newFakePath, String newRealPath) {
 		Log.d(TAG, "修正持久化内容");
 		SharedPreferences sp = sessionThread.getAccount().getSharedPreferences();
-		if (!sp.getString(oldFakePath, "").equals("")) {
+		if (!sp.getString(oldFakePath, REAL_PATH_NONE).equals(REAL_PATH_NONE)) {
 			Editor editor = sp.edit();
 			// 删除原本内容
 			editor.putString(oldFakePath, null);
