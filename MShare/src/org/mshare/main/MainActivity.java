@@ -193,7 +193,7 @@ public class MainActivity extends FragmentActivity
 				
 				// TODO 
 				String toUnshare = shareActionFile.getAbsolutePath();
-				SharedLinkSystem.unpersistAll(toUnshare);
+				SharedLinkSystem.unpersistAll(null, toUnshare);
 				
 				break;
 		}

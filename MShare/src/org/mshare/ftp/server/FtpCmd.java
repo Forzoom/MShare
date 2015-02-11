@@ -212,29 +212,4 @@ public abstract class FtpCmd implements Runnable {
 //        return new File(existingPrefix, param);
 //    }
 
-    /**
-     * 检测file是否是在所设置的根路径之内
-     * @param file
-     * @return
-     */
-    public boolean violatesChroot(File file) {
-        try {
-            // taking the canonical path as new devices have sdcard symlinked
-            // for multiuser support
-            File chroot = FsSettings.getRootDir();
-            String canonicalChroot = chroot.getCanonicalPath();
-            String canonicalPath = file.getCanonicalPath();
-            if (!canonicalPath.startsWith(canonicalChroot)) {
-                Log.i(TAG, "Path violated folder restriction, denying");
-                Log.d(TAG, "path: " + canonicalPath);
-                Log.d(TAG, "chroot: " + chroot.toString());
-                return true; // the path must begin with the chroot path
-            }
-            return false;
-        } catch (Exception e) {
-            Log.i(TAG, "Path canonicalization problem: " + e.toString());
-            Log.i(TAG, "When checking file: " + file.getAbsolutePath());
-            return true; // for security, assume violation
-        }
-    }
 }

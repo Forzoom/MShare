@@ -72,7 +72,7 @@
 	        android:hint="@string/ftp_port" />
 	    </RelativeLayout>
 	    
-	    <!-- 要如何制造出label的感觉呢 -->
+	    <!-- 要制造出label的感觉 -->
 	    <!-- SessionState -->
 	    <RelativeLayout
 	        android:layout_width="match_parent"
@@ -164,11 +164,11 @@
 		        android:layout_alignParentLeft="true"
 		        android:text="上传文件存储" />
 	        <TextView 
-		        android:id="@+id/storage_place"
+		        android:id="@+id/upload_path"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
 		        android:layout_alignParentRight="true"
-		        android:text="扩展存储" />
+		        android:text="未知" />
 	    </RelativeLayout>
 	    
 	    <RelativeLayout

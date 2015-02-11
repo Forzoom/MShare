@@ -56,6 +56,11 @@ public class FsSettings {
     public static final String KEY_ROOT_DIR = "root";
     public static final String VALUE_ROOT_DIR_DEFAULT = Environment.getExternalStorageDirectory().getAbsolutePath();
     
+    // 上传文件存放路径
+    public static final String KEY_UPLOAD = "upload";
+    // TODO 这个路径可能会出错
+    public static final String VALUE_UPLOAD_DEFAULT = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "org.mshare";
+    
     /**
      * 获得用户名称
      * @return
@@ -97,26 +102,18 @@ public class FsSettings {
     }
 
     /**
-     * 即便扩展存储不可使用，仍旧需要将chroot作为一个文件返回， 因为File并不是一个真正的文件
+     * TODO 目前SharedLinkSystem中的上传路径和该上传路径独立
      * @return
      */
-    public static File getRootDir() {
-        final SharedPreferences sp = getSharedPreferences();
-        String dirName = sp.getString(KEY_ROOT_DIR, "");
-        File rootDir = new File(dirName);
+    public static String getUpload() {
+    	final SharedPreferences sp = getSharedPreferences();
+        // TODO: port is always an number, so store this accordenly
+        String uploadPath = sp.getString(KEY_UPLOAD, VALUE_UPLOAD_DEFAULT);
         
-        if (!dirName.equals("")) {
-            rootDir = Environment.getExternalStorageDirectory();
-        } else {
-            rootDir = new File(VALUE_ROOT_DIR_DEFAULT); // 当没有指定root的时候，默认将整个卷都视为可以操作的对象
-        }
-        if (!rootDir.isDirectory()) {
-            Log.e(TAG, "getChrootDir: not a directory");
-            return null;
-        }
-        return rootDir;
+        Log.v(TAG, "upload path : " + uploadPath);
+        return uploadPath; 
     }
-
+    
     /**
      * 设置用户名
      * @param username
@@ -149,27 +146,12 @@ public class FsSettings {
     	editor.putString(KEY_PORT, port);
     	editor.commit();
     }
-    /**
-     * 修改根路径，根路径的默认值是{@link #VALUE_ROOT_DIR_DEFAULT}，也就是扩展存储的路径，如果新的路径不是扩展存储路径的子路径，那么就不做任何动作
-     * 必须在上面情况下，文件存在并且是一个文件夹的情况下才会执行修改
-     * @param root
-     */
-    public static void setRootDir(String root) {
-    	
-    	if (root.length() >= VALUE_ROOT_DIR_DEFAULT.length() && root.startsWith(VALUE_ROOT_DIR_DEFAULT)) {
-    		
-    		File rootDir = new File(root);
-    		if (rootDir.exists() && rootDir.isDirectory()) {
-    			final SharedPreferences sp = getSharedPreferences();
-            	SharedPreferences.Editor editor = sp.edit();
-            	editor.putString(KEY_ROOT_DIR, root);
-            	editor.commit();
-    		} else {
-    			Log.w(TAG, "所指定的路径不是一个文件夹，不修改原路径");
-    		}
-    	} else {
-    		Log.w(TAG, "无效的路径，不修改原路径");
-    	}
+
+    public static void setUpload(String uploadPath) {
+    	final SharedPreferences sp = getSharedPreferences();
+    	SharedPreferences.Editor editor = sp.edit();
+    	editor.putString(KEY_UPLOAD, uploadPath);
+    	editor.commit();
     }
     
     /**

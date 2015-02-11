@@ -59,7 +59,11 @@ public class Account {
     // 对于匿名登录账户的权限
     private static final int PERMISSION_ANONYMOUS = PERMISSION_READ;
     
-    public static final String KEY_ACCOUNT_INFO = "accounts";
+    public static final String SP_KEY_ACCOUNT_INFO = "accounts";
+    /**
+     * 在sp中保存上传路径的位置
+     */
+    public static final String KEY_UPLOAD = "upload";
     
     private Account(String username, String password) {
     	// TODO username,mPassword仍有可能是null
@@ -102,7 +106,7 @@ public class Account {
     // TODO 需要考虑修改用户名的事情
 	public static Account getInstance(String username) {
 		Context context = MShareApp.getAppContext();
-		SharedPreferences accountsSp = context.getSharedPreferences(KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
+		SharedPreferences accountsSp = context.getSharedPreferences(SP_KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
 		// 检测account中的内容
 		if (accountsSp.getBoolean(username, false) == false) {
 			Log.e(TAG, "account info 中没有该帐号的内容");
@@ -162,7 +166,7 @@ public class Account {
 		}
 		
 		// 向accountInfo中添加内容
-		SharedPreferences accountsSp = context.getSharedPreferences(KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
+		SharedPreferences accountsSp = context.getSharedPreferences(SP_KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
 		Editor accountEditor = accountsSp.edit();
 		accountEditor.putBoolean(username, true);
 		if (accountEditor.commit()) {
@@ -179,7 +183,7 @@ public class Account {
 	 */
 	public static void checkDefaultAndAnonymousAccount() {
 		Context context = MShareApp.getAppContext();
-		SharedPreferences accountsSp = context.getSharedPreferences(KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
+		SharedPreferences accountsSp = context.getSharedPreferences(SP_KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
 		if (accountsSp.getBoolean(AnonymousUsername, false) == false) {
 			
 			Log.d(TAG, "当前匿名账户信息不存在");
@@ -199,6 +203,23 @@ public class Account {
 		} else {
 			Log.d(TAG, "当前默认账户信息存在");
 		}
+	}
+	
+	public boolean setUpload(String path) {
+		if (path == null || path.equals("")) {
+			Log.e(TAG, "无效的上传路径");
+			return false;
+		}
+		
+		SharedPreferences sp = getSharedPreferences();
+		Editor editor = sp.edit();
+		editor.putString(KEY_UPLOAD, path);
+		return editor.commit();
+	}
+	
+	public String getUpload() {
+		SharedPreferences sp = getSharedPreferences();
+		return sp.getString(KEY_UPLOAD, "");
 	}
 	
 	// 所有人都可以读内容

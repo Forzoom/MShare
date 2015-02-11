@@ -59,7 +59,8 @@ public class CmdRNTO extends FtpCmd implements Runnable {
             }
             
             toFile = sessionThread.sharedLinkSystem.getSharedLink(param);
-            if (toFile.exists()) {
+            // TODO 可能存在真实文件被删除的情况
+            if (toFile != null && toFile.exists()) {
             	errString = "550 already exist\r\n";
             	break mainblock;
             }

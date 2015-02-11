@@ -58,6 +58,8 @@ public class NewConn extends Activity {
 	private TextView networkStateView;
 	// 扩展存储状态，当前仅仅用于显示扩展存储的状态，并不能指导服务器是否可用
 	private TextView externalStorageStateView;
+	private TextView uploadPathView;
+	
 	private TextView ftpApState;
 	private ToggleButton ftpApTest;
 	private TextView ftpApIp;
@@ -111,6 +113,7 @@ public class NewConn extends Activity {
 		serverStateView = (TextView)findViewById(R.id.server_state);
 		networkStateView = (TextView)findViewById(R.id.network_state);
 		externalStorageStateView = (TextView)findViewById(R.id.external_storage_state);
+		uploadPathView = (TextView)findViewById(R.id.upload_path);
 		
 		// 尝试启动AP
 		ftpApTest = (ToggleButton)findViewById(R.id.ftp_ap_test);
@@ -206,6 +209,9 @@ public class NewConn extends Activity {
 		} else {
 			externalStorageStateView.setText("扩展存储不可用");
 		}
+		
+		// 当前上传路径
+		uploadPathView.setText(FsSettings.getUpload());
 		
 		/* 注册监听器 */
 		

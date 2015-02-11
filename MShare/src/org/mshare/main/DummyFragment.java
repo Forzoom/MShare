@@ -57,7 +57,7 @@ public class DummyFragment extends Fragment
 		int num = args.getInt(ARG_SECTION_NUMBER);
 		
 		String rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-		FsSettings.setRootDir(rootPath);
+		// 让文件浏览器显示扩展存储中的内容
 		mFileBrowser = new MShareFileBrowser(this.getActivity(), container, rootPath);
 		View fileBrowser = mFileBrowser.getView();
 		

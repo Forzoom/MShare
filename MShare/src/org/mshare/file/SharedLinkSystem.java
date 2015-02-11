@@ -42,7 +42,6 @@ import android.util.Log;
  * TODO 文件夹可能并没有对应的真实文件夹,只有文件是真实的，所以不能将整个文件夹都共享，这样是不对的
  * TODO 共享文件的存在，如何才能在其他地方显示，现在要如何在文件浏览器中显示共享文件，再开启一个新的文件浏览器实在太麻烦
  * 如果以后要实现多个账户的情况，那么要如何浏览其他账户的权限内容？
- * TODO 新创建的文件应该放在哪里？扩展存储?即拥有写权限的情况下，需要在扩展存储中设置位置保存内容，可能需要能够设置
  * TODO 需要了解根路径所对应的fakePath是什么，如果是""的话，应该修改为'/'
  * TODO 对于不存在的文件，每次启动的时候都需要清除
  * TODO 需要了解账户的权限设置:读权限，删除权限（写），重写/修改权限（写），执行权限全部为否,FTP在修改文件的时候，别的用户该怎么办？
@@ -68,6 +67,10 @@ public class SharedLinkSystem {
 	private String uploadPath = null;
 	// 只是用来获得Account和SharedPreferences
 	private SessionThread sessionThread;
+	/**
+	 * 所有上传文件存放的位置，默认为sd卡下的org.mshare文件夹
+	 */
+	public static String uploadRoot = null;
 	
 	/**
 	 * 因为对于SharedPreferences中返回的realPath可能会是正常的，也可能为""，即fakeDirectory的情况
@@ -137,14 +140,17 @@ public class SharedLinkSystem {
 		Log.d(TAG, "end load");
 	}
 	
+	private static void prepareUploadRoot() {
+		
+	}
+	
 	/**
 	 * 准备存放上传文件的位置
 	 * TODO 所有在该位置的内容都将称为上传文件?
 	 */
 	private void prepareUpload() {
 		// 默认存放在扩展存储中
-		File externalStorageDir = Environment.getExternalStorageDirectory();
-		String externalStoragePath = externalStorageDir.getAbsolutePath();
+		String externalStoragePath = Environment.getExternalStorageDirectory().getAbsolutePath();
 		
 		// org.mshare文件夹
 		File orgMshare = new File(externalStoragePath + File.separator + "org.mshare");
@@ -157,11 +163,19 @@ public class SharedLinkSystem {
 			} else {
 				Log.d(TAG, "创建org.mshare文件夹失败");
 			}
+		} else {
+			if (!orgMshare.isDirectory()) {
+				// TODO 这该怎么办？
+				Log.e(TAG, "org.mshare不是一个文件夹");
+				return;
+			}
 		}
 		
+		uploadPath = getAccount().getUpload();
 		// uploadPath肯定为null，所以必将指定上传路径为org.mshare/username
-		if (uploadPath == null) {
+		if (uploadPath == null || uploadPath.equals("")) {
 			uploadPath = orgMshare + File.separator + getAccount().getUsername();
+			getAccount().setUpload(uploadPath);
 			Log.d(TAG, "当前没有指定上传路径，新的上传路径为 :" + uploadPath);
 		}
 		
@@ -296,7 +310,6 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * @deprecated
 	 * TODO 需要重新审视该函数
 	 * 当前没有办法在sp中进行更快的查找
 	 * 好像也没有更好的办法，即便使用序列化的数据库还是不好
