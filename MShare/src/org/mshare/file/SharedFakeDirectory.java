@@ -64,16 +64,6 @@ public class SharedFakeDirectory extends SharedLink {
 		return 0;
 	}
 
-	/**
-	 * Fake_Directory必须是可读的
-	 */
-	@Override
-	public boolean canRead() {
-		return true;
-	}
-
-
-
 	@Override
 	public long lastModified() {
 		return mLastModified;
@@ -86,12 +76,6 @@ public class SharedFakeDirectory extends SharedLink {
 		getSystem().deleteSharedPath(getFakePath());
 		// TODO 需要修改
 		return true;
-	}
-
-	@Override
-	public boolean mkdir() {
-		// 创建一个新的
-		return false;
 	}
 
 	@Override
@@ -120,4 +104,5 @@ public class SharedFakeDirectory extends SharedLink {
 		
 		return true;
 	}
+
 }

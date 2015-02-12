@@ -72,9 +72,8 @@ public class CmdMKD extends FtpCmd implements Runnable {
             
             // 可以是相对路径也可以是文件名
             String fakePath = sessionThread.sharedLinkSystem.getFakePath(param);
-            SharedLink link = SharedLink.newFakeDirectory(sessionThread.sharedLinkSystem, fakePath);
             
-            sessionThread.sharedLinkSystem.addSharedPath(fakePath, "");
+            sessionThread.sharedLinkSystem.addSharedPath(fakePath, "", SharedLinkSystem.FILE_PERMISSION_USER);
             sessionThread.sharedLinkSystem.persist(fakePath, "");
             
         }

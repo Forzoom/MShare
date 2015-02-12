@@ -245,7 +245,7 @@ abstract public class CmdAbstractStore extends FtpCmd {
         
         // 文件传送已经完成
         // 添加到文件树中
-        sessionThread.sharedLinkSystem.addSharedPath(fakePath, realPath);
+        sessionThread.sharedLinkSystem.addSharedPath(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_USER);
         // 持久化内容
         sessionThread.sharedLinkSystem.persist(fakePath, realPath);
         

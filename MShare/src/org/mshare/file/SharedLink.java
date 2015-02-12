@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.mshare.ftp.server.Account;
+
 import android.util.Log;
 
 /**
@@ -38,6 +40,9 @@ public abstract class SharedLink {
 	private String realPath = null;
 	private File realFile = null;
 	
+	// 需要设置的权限内容
+	// mPermission = 0777
+	private int mPermission = 0; // 默认没有任何权限
 	int type = TYPE_UNKNOWN;
 	
 	public SharedLink(SharedLinkSystem system) {
@@ -53,39 +58,31 @@ public abstract class SharedLink {
 	 * @param realPath
 	 * @return
 	 */
-	public static final SharedLink newFile(SharedLinkSystem system, String fakePath, String realPath) {
-		
-		File realFile = new File(realPath);
-//		if (!realFile.exists()) {
-//			Log.w(TAG, "文件不存在，无法创建SharedFile");
-//			return null;
-//		} else if (!realFile.isFile()) {
-//			Log.w(TAG, "the required file is not a 'File'，无法创建SharedFile");
-//			return null;
-//		}
+	public static final SharedLink newFile(SharedLinkSystem system, String fakePath, String realPath, int filePermission) {
 	
-		SharedLink sf = new SharedFile(system);
-		sf.fakePath = fakePath; 
-		sf.realPath = realPath;
-		sf.realFile = realFile;
-		return sf;
+		SharedLink file = new SharedFile(system);
+		file.setFakePath(fakePath); 
+		file.setRealPath(realPath);
+		file.setPermission(filePermission);
+		return file;
 	}
 	
-	public static final SharedLink newDirectory(SharedLinkSystem system, String fakePath, String realPath) {
-		SharedDirectory sd = new SharedDirectory(system);
-		sd.setFakePath(fakePath);
-		sd.setRealPath(realPath);
+	public static final SharedLink newDirectory(SharedLinkSystem system, String fakePath, String realPath, int filePermission) {
+		SharedLink file = new SharedDirectory(system);
+		file.setFakePath(fakePath);
+		file.setRealPath(realPath);
+		file.setPermission(filePermission);
 		return null;
 	}
 	
 	// 需要设置lastModified来模拟文件夹创建
-	public static final SharedLink newFakeDirectory(SharedLinkSystem system, String fakePath) {
-		SharedFakeDirectory sfd = new SharedFakeDirectory(system);
+	public static final SharedLink newFakeDirectory(SharedLinkSystem system, String fakePath, int filePermission) {
+		SharedLink file = new SharedFakeDirectory(system);
 		
-		sfd.setFakePath(fakePath);
-		sfd.setLastModified(System.currentTimeMillis());
-		
-		return sfd;
+		file.setFakePath(fakePath);
+		file.setLastModified(System.currentTimeMillis());
+		file.setPermission(filePermission);
+		return file;
 	}
 	
 	public SharedLink newInstance(int type) {
@@ -102,14 +99,21 @@ public abstract class SharedLink {
 	public abstract boolean isFakeDirectory();
 	
 	/**
+	 * 所以覆写该函数的，都应该调用super该函数
 	 * TODO 所有的文件树中的文件都应该能够被读取，不能够被读取的内容，不应该出现在应用中
 	 * @return
 	 */
-	public abstract boolean canRead();
+	public boolean canRead() {
+		return Account.canRead(getSystem().getAccount(), getPermission());
+	}
+	
+	public boolean canWrite() {
+		return Account.canWrite(getSystem().getAccount(), getPermission());
+	}
+	
 	public abstract long lastModified();
 	public abstract boolean setLastModified(long time);
 	public abstract boolean delete();
-	public abstract boolean mkdir();
 	public abstract boolean renameTo(SharedLink newPath);
 	
 	public SharedLinkSystem getSystem() {
@@ -185,5 +189,17 @@ public abstract class SharedLink {
 	public void setRealPath(String realPath) {
 		realFile = new File(realPath);
 		this.realPath = realPath;
+	}
+	
+	/**
+	 * 对于权限的设置只能在三个new方法中执行?
+	 * @param permission
+	 */
+	private void setPermission(int permission) {
+		mPermission = permission;
+	}
+	
+	public int getPermission() {
+		return mPermission;
 	}
 }

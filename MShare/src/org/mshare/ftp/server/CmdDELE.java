@@ -25,6 +25,11 @@ import org.mshare.file.SharedLink;
 
 import android.util.Log;
 
+/**
+ * TODO 对于客户端，应该可以发送是否删除磁盘上的文件,应该提示用户是取消共享还是删除文件
+ * @author HM
+ *
+ */
 public class CmdDELE extends FtpCmd implements Runnable {
     private static final String TAG = CmdDELE.class.getSimpleName();
 

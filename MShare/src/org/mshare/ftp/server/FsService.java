@@ -114,7 +114,7 @@ public class FsService extends Service implements Runnable {
         }
         
         // 用于检测账户是否存在
-        Account.checkDefaultAndAnonymousAccount();
+        Account.checkReservedAccount();
         
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
@@ -287,6 +287,15 @@ public class FsService extends Service implements Runnable {
         }
     }
 
+    /**
+     * 提醒所有的普通用户，有新的共享内容
+     */
+    public static void notifyAllSession() {
+//    	for (SessionThread sessionThread : sessionThreads) {
+//    		
+//    	}
+    }
+    
     /**
      * Takes the wake lock
      * 

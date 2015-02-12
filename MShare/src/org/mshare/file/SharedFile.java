@@ -2,6 +2,8 @@ package org.mshare.file;
 
 import java.io.File;
 
+import org.mshare.ftp.server.Account;
+
 import android.util.Log;
 
 // 所需要的内容 realPath和fakePath
@@ -38,9 +40,14 @@ public class SharedFile extends SharedLink {
 
 	@Override
 	public boolean canRead() {
-		return getRealFile().canRead();
+		return super.canRead() && getRealFile().canRead();
 	}
 
+	@Override
+	public boolean canWrite() {
+		return super.canWrite() && getRealFile().canWrite();
+	}
+	
 	@Override
 	public long lastModified() {
 		return getRealFile().lastModified();
@@ -56,7 +63,8 @@ public class SharedFile extends SharedLink {
 	public boolean delete() {
 		
 		// 这里需要判断用户的权限吗
-		if (!getSystem().getAccount().canWrite()) {
+		if (!canWrite()) {
+			Log.e(TAG, "用户没有权限执行删除操作");
 			return false;
 		}
 		
@@ -74,10 +82,8 @@ public class SharedFile extends SharedLink {
 		if (file.delete()) {
 			// 尝试将持久化内容删除，并删除文件树中的内容
 			String fakePath = getFakePath(), realPath = getRealPath();
-			if (getSystem().unpersist(fakePath)) {
-				// 去持久化可能会失败，但是在下次加载系统的时候，应该能够被删除
-				SharedLinkSystem.unpersistAll(fakePath, realPath);
-			}
+			getSystem().unpersist(fakePath);
+			// 去持久化可能会失败，但是在下次加载系统的时候，应该能够被删除
 			getSystem().deleteSharedPath(fakePath);
 			return true;
 		} else {
@@ -92,14 +98,6 @@ public class SharedFile extends SharedLink {
 		return getRealFile().exists();
 	}
 
-	/**
-	 * do nothing
-	 */
-	@Override
-	public boolean mkdir() {
-		return false;
-	}
-
 	@Override
 	public boolean setLastModified(long time) {
 		return getRealFile().setLastModified(time);
@@ -109,7 +107,7 @@ public class SharedFile extends SharedLink {
 	public boolean renameTo(SharedLink newPath) {
 		// 尝试修改真实文件的文件名
 		// 检测写权限
-		if (!getSystem().getAccount().canWrite()) {
+		if (!canWrite()) {
 			Log.e(TAG, "write permission denied");
 			return false;
 		}

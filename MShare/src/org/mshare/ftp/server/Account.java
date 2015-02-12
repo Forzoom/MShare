@@ -42,22 +42,39 @@ public class Account {
 	private static final String TAG = Account.class.getSimpleName();
 	public static final String AnonymousUsername = "anonymous";
 	public static final String AnonymousPassword = "guest";
+	public static final String AdminUsername = "admin";
+	public static final String AdminPassword = "admin";
     private String mUserName = null;
     private String mPassword = null;
     private String mAttemptPassword = null;
     private boolean userAuthenticated = false;
     public int authFails = 0;
     // 仅仅是作为帐号的权限，映射在用户文件上
-    public static final int PERMISSION_READ = 0x1;
-    public static final int PERMISSION_WRITE = 0x2;
-    public static final int PERMISSION_EXECUTE = 0x4;// execute永远不开放
+    public static final int PERMISSION_READ_ADMIN = 0400;
+    public static final int PERMISSION_WRITE_ADMIN = 0200;
+    public static final int PERMISSION_EXECUTE_ADMIN = 0100;// execute永远不开放
+    
+    public static final int PERMISSION_READ = 040;
+    public static final int PERMISSION_WRITE = 020;
+    public static final int PERMISSION_EXECUTE = 010;// execute永远不开放
+    
+    public static final int PERMISSION_READ_GUEST = 04;
+    public static final int PERMISSION_WRITE_GUEST = 02;
+    public static final int PERMISSION_EXECUTE_GUEST = 01;// execute永远不开放
+    
+    public static final int PERMISSION_READ_ALL = 0444;
+    public static final int PERMISSION_WRITE_ALL = 0222;
+    public static final int PERMISSION_EXECUTE_ALL = 0111;// execute永远不开放    
+    
+    public static final int PERMISSION_NONE = 0;
     
     public static final String USER_DEFAULT = "default_username";
     
     private static final String KEY_PASSWORD = "password";
+    private static final String KEY_PERMISSION = "mPermission";
     
     // 默认值拥有读权限,为测试添加写权限
-    private int permission = PERMISSION_READ | PERMISSION_WRITE;
+    private int mPermission = PERMISSION_READ | PERMISSION_WRITE;
     // 对于匿名登录账户的权限
     private static final int PERMISSION_ANONYMOUS = PERMISSION_READ | PERMISSION_WRITE;
     
@@ -67,21 +84,26 @@ public class Account {
      */
     public static final String KEY_UPLOAD = "upload";
     
+    public static Account adminAccount = new Account(Account.AdminUsername, Account.AdminPassword);
+    
     private Account(String username, String password) {
     	// TODO username,mPassword仍有可能是null
     	setUsername(username);
     	this.mPassword = password;
     }
     
-    // 检测当前是否是登录成功了
-    // TODO 关键是内容可能无法返回
+    /**
+     * 检测当前是否是登录成功
+     * TODO 考虑将账户权限在哪里设置
+     * @return
+     */
     public boolean authAttempt() {
 		if (!mUserName.equals(AnonymousUsername) && mAttemptPassword != null && mAttemptPassword.equals(mPassword)) {
 			Log.d(TAG, "使用非匿名账户尝试登录");
 			userAuthenticated = true;
 		} else if (FsSettings.allowAnoymous() && mUserName.equals(AnonymousUsername)) {
 			// 设置权限为匿名账户权限
-			permission = PERMISSION_ANONYMOUS;
+			mPermission = PERMISSION_ANONYMOUS;
 			Log.i(TAG, "Guest logged in with password: " + mAttemptPassword);
 			userAuthenticated = true;
 		} else {
@@ -95,16 +117,6 @@ public class Account {
     public SharedPreferences getSharedPreferences() {
     	Context context = MShareApp.getAppContext();
     	return context.getSharedPreferences(mUserName, Context.MODE_PRIVATE);
-    }
-    
-    /**
-     * 在静态状态下，SharedPreferences的修改可能不会被反应在FTP会话中，需要类似监听器的回调
-     * @param account
-     * @return
-     */
-    public static SharedPreferences getDefaultSharedPreferences() {
-    	Context context = MShareApp.getAppContext();
-    	return context.getSharedPreferences(FsSettings.getUsername(), Context.MODE_PRIVATE);
     }
     
     // TODO 需要考虑修改用户名的事情
@@ -143,13 +155,15 @@ public class Account {
 
 	/**
 	 * 需要在check中使用register来创建文件
-	 * 注册用户，用户名不能和默认用户名冲突，而且也不能和匿名用户名冲突
+	 * 使用之前，应当检测，所注册用户的用户名不能和默认用户、匿名用户以及管理员账户冲突
 	 * 允许通过该函数注册和生成默认账户和匿名账户
+	 * 
 	 * @param username
 	 * @param password
+	 * @param mPermission 
 	 * @return
 	 */
-	private static boolean register(String username, String password) {
+	private static boolean register(String username, String password, int permission) {
 		Log.d(TAG, "开始注册账户,用户名:" + username + " 密码:" + password);
 		boolean createUserSuccess = false;
 		Context context = MShareApp.getAppContext();
@@ -158,6 +172,8 @@ public class Account {
 		if (userSp.getString(KEY_PASSWORD, "").equals("")) {
 			Editor editor = userSp.edit();
 			editor.putString(KEY_PASSWORD, password);
+			// 当没有指定权限时，将使用普通账户的读写权限
+			editor.putInt(KEY_PERMISSION, permission == PERMISSION_NONE ? PERMISSION_READ | PERMISSION_WRITE: permission);
 			createUserSuccess = editor.commit();
 		} else {
 			Log.e(TAG, "Register Fail:username has already existed");
@@ -183,29 +199,45 @@ public class Account {
 	}
 	
 	/**
-	 * 当默认账户和匿名账户不存在的时候，使用register函数注册
+	 * 当默认账户和匿名账户不存在的时候，使用register函数注册,检测管理员账户
+	 * 并添加了适当的权限
 	 */
-	public static void checkDefaultAndAnonymousAccount() {
+	public static void checkReservedAccount() {
 		Context context = MShareApp.getAppContext();
 		SharedPreferences accountsSp = context.getSharedPreferences(SP_KEY_ACCOUNT_INFO, Context.MODE_PRIVATE);
+		// 检测匿名账户
 		if (accountsSp.getBoolean(AnonymousUsername, false) == false) {
 			
 			Log.d(TAG, "当前匿名账户信息不存在");
 			Log.d(TAG, "开始注册匿名账户");
-			boolean registerResult = register(AnonymousUsername, AnonymousPassword);
+			int permission = PERMISSION_READ_GUEST;
+			boolean registerResult = register(AnonymousUsername, AnonymousPassword, permission);
 			Log.d(TAG, "结束注册匿名账户, 结果:" + registerResult);
 		} else {
 			Log.d(TAG, "当前匿名账户信息存在");
 		}
+		
 		// 检测默账户
 		if (accountsSp.getBoolean(FsSettings.getUsername(), false) == false) {
 			
 			Log.d(TAG, "当前默认账户信息不存在");
 			Log.d(TAG, "开始注册默认账户");
-			boolean registerResult = register(FsSettings.getUsername(), FsSettings.getPassword());
+			int permission = PERMISSION_READ | PERMISSION_WRITE;
+			boolean registerResult = register(FsSettings.getUsername(), FsSettings.getPassword(), permission);
 			Log.d(TAG, "结束注册默认账户, 结果:" + registerResult);
 		} else {
 			Log.d(TAG, "当前默认账户信息存在");
+		}
+		
+		// 检测管理员账户
+		if (accountsSp.getBoolean(AdminUsername, false)) {
+			Log.d(TAG, "当前管理员账户信息不存在");
+			Log.d(TAG, "开始注册管理员账户");
+			int permission = PERMISSION_READ_ADMIN | PERMISSION_WRITE_ADMIN;
+			boolean registerResult = register(AdminUsername, AdminPassword, permission);
+			Log.d(TAG, "结束注册管理员账户, 结果:" + registerResult);
+		} else {
+			Log.d(TAG, "当前管理员账户信息存在");
 		}
 	}
 	
@@ -230,14 +262,15 @@ public class Account {
 		return sp.getString(KEY_UPLOAD, FsSettings.getUpload() + File.separator + getUsername());
 	}
 	
-	// 所有人都可以读内容
-	public boolean canRead() {
-		return (permission & PERMISSION_READ) == PERMISSION_READ;
+	// 用于判断当前用户能否对对应文件进行操作
+	public static boolean canRead(Account account, int filePermission) {
+		return (account.getPermission() & filePermission & PERMISSION_READ_ALL) != PERMISSION_NONE;
 	}
 	
-	public boolean canWrite() {
-		return (permission & PERMISSION_WRITE) == PERMISSION_WRITE; 
+	public static boolean canWrite(Account account, int filePermission) {
+		return (account.getPermission() & filePermission & PERMISSION_WRITE_ALL) != PERMISSION_NONE; 
 	}
+	
 	// 都不可以执行
 	public boolean canExecute() {
 		return false;
@@ -249,6 +282,10 @@ public class Account {
 	
 	public boolean isAnonymous() {
 		return mUserName.equals(AnonymousUsername);
+	}
+	
+	public boolean isAdministrator() {
+		return mUserName.equals(AdminUsername);
 	}
 	
     public String getUsername() {
@@ -273,5 +310,13 @@ public class Account {
     
     public void setAttemptPassword(String attemptPassword) {
     	mAttemptPassword = attemptPassword;
+    }
+    
+    private void setPermission(int permission) {
+    	mPermission = permission;
+    }
+    
+    public int getPermission() {
+    	return mPermission;
     }
 }

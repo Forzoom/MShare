@@ -170,30 +170,25 @@ public class MainActivity extends FragmentActivity
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE: // 当点击的是共享
 				
 				// 获得当前被点击的对象
-				// 如何操作SharedLinkSystem，选择文件作为共享文件是否不妥,中间增加一个SharedLinkSystem是不是不好
 				// 所有被共享的文件都将保存在SharedLink的根目录下,这需要对所有的SharedLink都动作？当前仅仅是对于默认账户进行操作
 				// TODO 当前仅仅对默认账户的SharedPreferences进行操作,但是这样的操作需要和FTP服务器进行交互
 				// 所以对于Account中的内容可能需要修改部分内容为静态
-				// TODO 需要考虑重名问题
-				String toShare = shareActionFile.getAbsolutePath();
-				File file = new File(toShare);
 				
-				if (!file.exists()) {
-					Toast.makeText(this, "文件名存在", Toast.LENGTH_SHORT).show();
-				} else {
-					if (file.isDirectory()) {
-						Toast.makeText(this, "不能将文件夹设置为共享", Toast.LENGTH_SHORT).show();
-					} else {
-						SharedLinkSystem.persistAll(toShare);
-					}
+				if (!shareActionFile.exists()) {
+					// TODO 文件不存在的时候，需要能够刷新内容
+					Toast.makeText(this, "文件名不存在", Toast.LENGTH_SHORT).show();
 				}
+				// 共享文件将放置在根目录下
+				String fakePath = SharedLinkSystem.SEPARATOR + shareActionFile.getName();
+				String realPath = shareActionFile.getAbsolutePath();
+				SharedLinkSystem.commonPersist(Account.adminAccount.getSharedPreferences(), fakePath, realPath);
+				// 需要操作所有sessionThread文件树
 				
 				break;
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE: // 点击的是不共享
-				
-				// TODO 
-				String toUnshare = shareActionFile.getAbsolutePath();
-				SharedLinkSystem.unpersistAll(null, toUnshare);
+
+				// TODO 所有的文件都假设在根目录下，但这样可能会出错
+				SharedLinkSystem.commonUnpersist(Account.adminAccount.getSharedPreferences(), SharedLinkSystem.SEPARATOR + shareActionFile.getName());
 				
 				break;
 		}
