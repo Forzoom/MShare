@@ -14,10 +14,21 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  -->
+
+     
+       
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
+	<SurfaceView android:id="@+id/preview_view"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"/>
 
-  <SurfaceView android:id="@+id/preview_view"
-               android:layout_width="fill_parent"
-               android:layout_height="fill_parent"/>
-
+	<org.mshare.scan.ViewfinderView
+		android:id="@+id/viewfinder_view"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"/>
+	<Button 
+		android:id="@+id/capture_button"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="capture"/>
 </merge>

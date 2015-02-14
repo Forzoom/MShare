@@ -16,8 +16,10 @@
 
 package org.mshare.scan;
 
-import com.google.zxing.ResultPoint;
-import com.google.zxing.client.android.camera.CameraManager;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.mshare.main.R;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -28,8 +30,7 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.zxing.ResultPoint;
 
 /**
  * This view is overlaid on top of the camera preview. It adds the viewfinder rectangle and partial
@@ -39,7 +40,6 @@ import java.util.List;
  */
 public final class ViewfinderView extends View {
 
-  private static final int[] SCANNER_ALPHA = {0, 64, 128, 192, 255, 192, 128, 64};
   private static final long ANIMATION_DELAY = 80L;
   private static final int CURRENT_POINT_OPACITY = 0xA0;
   private static final int MAX_RESULT_POINTS = 20;
@@ -56,6 +56,9 @@ public final class ViewfinderView extends View {
   private List<ResultPoint> possibleResultPoints;
   private List<ResultPoint> lastPossibleResultPoints;
 
+  private double laserRatio;
+  private boolean laserDirection;
+  
   // This constructor is used when the class is built from an XML resource.
   public ViewfinderView(Context context, AttributeSet attrs) {
     super(context, attrs);
@@ -81,6 +84,7 @@ public final class ViewfinderView extends View {
     if (cameraManager == null) {
       return; // not ready yet, early draw before done configuring
     }
+    // frame所对应的是中间区域的内容
     Rect frame = cameraManager.getFramingRect();
     Rect previewFrame = cameraManager.getFramingRectInPreview();    
     if (frame == null || previewFrame == null) {
@@ -89,6 +93,7 @@ public final class ViewfinderView extends View {
     int width = canvas.getWidth();
     int height = canvas.getHeight();
 
+    // 所绘制的是周围的灰色
     // Draw the exterior (i.e. outside the framing rect) darkened
     paint.setColor(resultBitmap != null ? resultColor : maskColor);
     canvas.drawRect(0, 0, width, frame.top, paint);
@@ -96,33 +101,51 @@ public final class ViewfinderView extends View {
     canvas.drawRect(frame.right + 1, frame.top, width, frame.bottom + 1, paint);
     canvas.drawRect(0, frame.bottom + 1, width, height, paint);
 
+    // 应该是Activity所发送的Thumbnail，如果存在Thumbnail的话，就将thumbnail绘制
     if (resultBitmap != null) {
       // Draw the opaque result bitmap over the scanning rectangle
       paint.setAlpha(CURRENT_POINT_OPACITY);
       canvas.drawBitmap(resultBitmap, null, frame, paint);
     } else {
 
-      // Draw a red "laser scanner" line through the middle to show decoding is active
-      paint.setColor(laserColor);
-      paint.setAlpha(SCANNER_ALPHA[scannerAlpha]);
-      scannerAlpha = (scannerAlpha + 1) % SCANNER_ALPHA.length;
-      int middle = frame.height() / 2 + frame.top;
-      canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, paint);
-      
-      float scaleX = frame.width() / (float) previewFrame.width();
-      float scaleY = frame.height() / (float) previewFrame.height();
+    // 目前应该是没有resultBitmap
+    	// Draw a red "laser scanner" line through the middle to show decoding is active
+    	// 绘制红色的线条，仅仅是改变了红色线条的透明度
+    	// TODO 不再使用一个长方形作为线条,而是使用更加逼格的东西
+    	// 关键是刷新的频率问题
+    	paint.setColor(laserColor);
+    	int middle = frame.height() / 2 + frame.top;
+    	// 使用一个正方形来代表线条
+    	double nextLaserRatio = laserRatio + 0.01;
+    	if ((nextLaserRatio - 1) > 0) {
+    		laserRatio = nextLaserRatio - 1;
+    		// 修正移动的方向
+    		laserDirection = !laserDirection;
+    	} else {
+    		laserRatio = nextLaserRatio;
+    	}
+    	// 对于不同的方向进行不同的处理
+    	if (laserDirection) {
+    		canvas.drawRect(frame.left - 5, (int)(frame.top + 300 * laserRatio - 1), frame.right + 4, (int)(frame.top + 300 * laserRatio + 2), paint);
+    	} else {
+    		canvas.drawRect(frame.left - 5, (int)(frame.bottom - 300 * laserRatio - 1), frame.right + 4, (int)(frame.bottom - 300 * laserRatio + 2), paint);
+    	}
+    	
+    	// 计算实际缩放的内容
+    	float scaleX = frame.width() / (float) previewFrame.width();
+    	float scaleY = frame.height() / (float) previewFrame.height();
 
-      List<ResultPoint> currentPossible = possibleResultPoints;
-      List<ResultPoint> currentLast = lastPossibleResultPoints;
-      int frameLeft = frame.left;
-      int frameTop = frame.top;
-      if (currentPossible.isEmpty()) {
-        lastPossibleResultPoints = null;
-      } else {
-        possibleResultPoints = new ArrayList<ResultPoint>(5);
-        lastPossibleResultPoints = currentPossible;
-        paint.setAlpha(CURRENT_POINT_OPACITY);
-        paint.setColor(resultPointColor);
+    	List<ResultPoint> currentPossible = possibleResultPoints;
+    	List<ResultPoint> currentLast = lastPossibleResultPoints;
+    	int frameLeft = frame.left;
+    	int frameTop = frame.top;
+    	if (currentPossible.isEmpty()) {
+    		lastPossibleResultPoints = null;
+    	} else {
+    	possibleResultPoints = new ArrayList<ResultPoint>(5);
+    	lastPossibleResultPoints = currentPossible;
+    	paint.setAlpha(CURRENT_POINT_OPACITY);
+    	paint.setColor(resultPointColor);
         synchronized (currentPossible) {
           for (ResultPoint point : currentPossible) {
             canvas.drawCircle(frameLeft + (int) (point.getX() * scaleX),
@@ -185,4 +208,13 @@ public final class ViewfinderView extends View {
     }
   }
 
+  	public void setRotation(int rotation) {
+  		// 先调整到360之内
+  		rotation %= 360;
+  		// 需要将宽和高进行对调
+  		if (rotation == 90 || rotation == 270) {
+  			
+  		}
+  	}
+  
 }

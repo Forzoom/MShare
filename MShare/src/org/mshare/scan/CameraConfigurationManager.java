@@ -21,6 +21,7 @@ import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.hardware.Camera;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
@@ -46,7 +47,8 @@ final class CameraConfigurationManager {
   private static final int MIN_PREVIEW_PIXELS = 480 * 320; // normal screen
   //private static final float MAX_EXPOSURE_COMPENSATION = 1.5f;
   //private static final float MIN_EXPOSURE_COMPENSATION = 0.0f;
-  private static final double MAX_ASPECT_DISTORTION = 0.15;
+  // 原本是0.15
+  private static final double MAX_ASPECT_DISTORTION = 0.2;
 
   private final Context context;
   private Point screenResolution;
@@ -58,13 +60,16 @@ final class CameraConfigurationManager {
 
   /**
    * Reads, one time, values from the camera that are needed by the app.
+   * 检测屏幕的尺寸和相机预览的尺寸
    */
   void initFromCameraParameters(Camera camera) {
     Camera.Parameters parameters = camera.getParameters();
     WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     Display display = manager.getDefaultDisplay();
-    Point theScreenResolution = new Point();
-    display.getSize(theScreenResolution);
+    DisplayMetrics metrics = new DisplayMetrics();
+    display.getMetrics(metrics);
+    // 不知道相机的Size是什么样的，是宽大于高还是高大于宽
+    Point theScreenResolution = new Point(metrics.widthPixels, metrics.heightPixels);
     screenResolution = theScreenResolution;
     Log.i(TAG, "Screen resolution: " + screenResolution);
     cameraResolution = findBestPreviewSizeValue(parameters, screenResolution);
@@ -90,17 +95,17 @@ final class CameraConfigurationManager {
     initializeTorch(parameters, prefs, safeMode);
 
     String focusMode = null;
-    if (prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true)) {
-      if (safeMode || prefs.getBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, false)) {
-        focusMode = findSettableValue(parameters.getSupportedFocusModes(),
-                                      Camera.Parameters.FOCUS_MODE_AUTO);
-      } else {
-        focusMode = findSettableValue(parameters.getSupportedFocusModes(),
-                                      Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,
-                                      Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO,
-                                      Camera.Parameters.FOCUS_MODE_AUTO);
-      }
-    }
+//    if (prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true)) {
+//      if (safeMode || prefs.getBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, false)) {
+//        focusMode = findSettableValue(parameters.getSupportedFocusModes(),
+//                                      Camera.Parameters.FOCUS_MODE_AUTO);
+//      } else {
+//        focusMode = findSettableValue(parameters.getSupportedFocusModes(),
+//                                      Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,
+//                                      Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO,
+//                                      Camera.Parameters.FOCUS_MODE_AUTO);
+//      }
+//    }
     // Maybe selected auto-focus but not available, so fall through here:
     if (!safeMode && focusMode == null) {
       focusMode = findSettableValue(parameters.getSupportedFocusModes(),
@@ -111,13 +116,13 @@ final class CameraConfigurationManager {
       parameters.setFocusMode(focusMode);
     }
 
-    if (prefs.getBoolean(PreferencesActivity.KEY_INVERT_SCAN, false)) {
-      String colorMode = findSettableValue(parameters.getSupportedColorEffects(),
-                                           Camera.Parameters.EFFECT_NEGATIVE);
-      if (colorMode != null) {
-        parameters.setColorEffect(colorMode);
-      }
-    }
+//    if (prefs.getBoolean(PreferencesActivity.KEY_INVERT_SCAN, false)) {
+//      String colorMode = findSettableValue(parameters.getSupportedColorEffects(),
+//                                           Camera.Parameters.EFFECT_NEGATIVE);
+//      if (colorMode != null) {
+//        parameters.setColorEffect(colorMode);
+//      }
+//    }
 
     parameters.setPreviewSize(cameraResolution.x, cameraResolution.y);
     camera.setParameters(parameters);
@@ -160,8 +165,8 @@ final class CameraConfigurationManager {
   }
 
   private void initializeTorch(Camera.Parameters parameters, SharedPreferences prefs, boolean safeMode) {
-    boolean currentSetting = FrontLightMode.readPref(prefs) == FrontLightMode.ON;
-    doSetTorch(parameters, currentSetting, safeMode);
+//    boolean currentSetting = FrontLightMode.readPref(prefs) == FrontLightMode.ON;
+    doSetTorch(parameters, false, safeMode);
   }
 
   private void doSetTorch(Camera.Parameters parameters, boolean newSetting, boolean safeMode) {
@@ -204,9 +209,16 @@ final class CameraConfigurationManager {
      */
   }
 
+  /**
+   * 寻找最合适的PreviewSize，用于显示相机的预览内容
+   * @param parameters
+   * @param screenResolution
+   * @return
+   */
   private Point findBestPreviewSizeValue(Camera.Parameters parameters, Point screenResolution) {
 
     List<Camera.Size> rawSupportedSizes = parameters.getSupportedPreviewSizes();
+    // 没有支持的PreviewSize，所以使用默认的Size
     if (rawSupportedSizes == null) {
       Log.w(TAG, "Device returned no supported preview sizes; using default");
       Camera.Size defaultSize = parameters.getPreviewSize();
@@ -214,6 +226,7 @@ final class CameraConfigurationManager {
     }
 
     // Sort by size, descending
+    // 对所有的Size进行排序，按照显示面积的大小
     List<Camera.Size> supportedPreviewSizes = new ArrayList<Camera.Size>(rawSupportedSizes);
     Collections.sort(supportedPreviewSizes, new Comparator<Camera.Size>() {
       @Override
@@ -230,6 +243,8 @@ final class CameraConfigurationManager {
       }
     });
 
+    // TODO 需要了解为什么要这么做
+    // 仅仅是为了打Log
     if (Log.isLoggable(TAG, Log.INFO)) {
       StringBuilder previewSizesString = new StringBuilder();
       for (Camera.Size supportedPreviewSize : supportedPreviewSizes) {
@@ -239,29 +254,50 @@ final class CameraConfigurationManager {
       Log.i(TAG, "Supported preview sizes: " + previewSizesString);
     }
 
-    double screenAspectRatio = (double) screenResolution.x / (double) screenResolution.y;
+    // TODO 标记一下，在这里重新调整了宽高比
+    // 屏幕的宽高比，且获得的ratio一定会大于1
+    double screenAspectRatio = 0.0;
+    double screenWidth = (double)screenResolution.x, screenHeight = (double)screenResolution.y;
+    if (screenWidth > screenHeight) {
+    	screenAspectRatio = screenWidth / screenHeight;
+    } else {
+    	screenAspectRatio = screenHeight / screenWidth;
+    }
 
+    // 筛选以及除去不合适的相机Size
     // Remove sizes that are unsuitable
     Iterator<Camera.Size> it = supportedPreviewSizes.iterator();
     while (it.hasNext()) {
+    	
       Camera.Size supportedPreviewSize = it.next();
       int realWidth = supportedPreviewSize.width;
       int realHeight = supportedPreviewSize.height;
+      Log.d(TAG, "当前处理的Siz:width:" + realWidth + " height:" +realHeight);
+      // 需要排除过小的size
       if (realWidth * realHeight < MIN_PREVIEW_PIXELS) {
         it.remove();
+        Log.d(TAG, "remove Size too small: width:" + realWidth + " height:" +realHeight);
         continue;
       }
 
+      // TODO
       boolean isCandidatePortrait = realWidth < realHeight;
+      Log.d(TAG, "isCandidatePortrait:" + isCandidatePortrait);
+      // 可能轻率的宽度和高度，意思是仅仅使用Heigth和Width来判断横竖屏？
+      // 所选择的宽度一定是大于高度的，所以宽高比一定是大于1的
       int maybeFlippedWidth = isCandidatePortrait ? realHeight : realWidth;
       int maybeFlippedHeight = isCandidatePortrait ? realWidth : realHeight;
+      // 宽高比
       double aspectRatio = (double) maybeFlippedWidth / (double) maybeFlippedHeight;
+      // 排除和屏幕比例相差过多的Size
       double distortion = Math.abs(aspectRatio - screenAspectRatio);
       if (distortion > MAX_ASPECT_DISTORTION) {
         it.remove(); 
+        Log.d(TAG, "remove Size aspect fail: width:" + realWidth + " height:" +realHeight);
         continue;
       }
 
+      // 检测到和屏幕宽高相同的PreviewSize
       if (maybeFlippedWidth == screenResolution.x && maybeFlippedHeight == screenResolution.y) {
         Point exactPoint = new Point(realWidth, realHeight);
         Log.i(TAG, "Found preview size exactly matching screen size: " + exactPoint);
@@ -272,6 +308,8 @@ final class CameraConfigurationManager {
     // If no exact match, use largest preview size. This was not a great idea on older devices because
     // of the additional computation needed. We're likely to get here on newer Android 4+ devices, where
     // the CPU is much more powerful.
+    // 没有完全匹配的Size的情况下，将选取最大的Size
+    // 意思就是说Size不可能大于屏幕是吗?
     if (!supportedPreviewSizes.isEmpty()) {
       Camera.Size largestPreview = supportedPreviewSizes.get(0);
       Point largestSize = new Point(largestPreview.width, largestPreview.height);
@@ -280,6 +318,7 @@ final class CameraConfigurationManager {
     }
 
     // If there is nothing at all suitable, return current preview size
+    // 没有合适的情况下，将返回默认的Size
     Camera.Size defaultPreview = parameters.getPreviewSize();
     Point defaultSize = new Point(defaultPreview.width, defaultPreview.height);
     Log.i(TAG, "No suitable preview sizes, using default: " + defaultSize);
