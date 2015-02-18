@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <!-- 目前图片只有xxhdpi的  -->
+    <ImageView 
+        android:id="@+id/phone"
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:src="@drawable/phone" />
+    
+    <TextView 
+        android:id="@+id/nfc_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/phone"
+        android:layout_centerHorizontal="true"
+        android:text="轻触手机  开始共享"/>
+
+</RelativeLayout>
