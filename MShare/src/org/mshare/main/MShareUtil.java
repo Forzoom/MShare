@@ -16,16 +16,6 @@ public class MShareUtil {
 	public static final int ETHERNET = ConnectivityManager.TYPE_ETHERNET;
 	
 	/**
-	 * 检查扩展存储是否可用
-	 * @return
-	 */
-	public static boolean isExternalStorageUsable() {
-		String state = Environment.getExternalStorageState();
-		// 仅仅当扩展存储锚点连接，可读写的时候才算有效
-		return state.equals(Environment.MEDIA_MOUNTED);
-	}
-	
-	/**
      * Checks to see if we are connected using wifi
      * 检测是否是WIFI环境
      * @return true if connected using wifi

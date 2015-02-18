@@ -64,15 +64,6 @@ public class FsService extends Service implements Runnable {
 	public static final String ACTION_START_FTPSERVER = "org.mshare.ftp.server.ACTION_START_FTPSERVER";
     public static final String ACTION_STOP_FTPSERVER = "org.mshare.ftp.server.ACTION_STOP_FTPSERVER";
     
-    // TODO 使用反射来获得WifiAp状态改变的广播
-    public static final String WIFI_AP_STATE_CHANGED_ACTION = "android.net.wifi.WIFI_AP_STATE_CHANGED";
-    public static final int WIFI_AP_STATE_DISABLING = 10;
-    public static final int WIFI_AP_STATE_DISABLED = 11;
-    public static final int WIFI_AP_STATE_ENABLING = 12;
-    public static final int WIFI_AP_STATE_ENABLED = 13;
-    public static final int WIFI_AP_STATE_FAILED = 14;
-    public static final String EXTRA_WIFI_AP_STATE = "wifi_state";
-    
     // server thread
     protected static Thread serverThread = null;
     protected boolean shouldExit = false;

@@ -197,6 +197,10 @@
     <!-- 二维码 -->
     <string name="please_scan">请扫描下面的二维码，接受文件共享</string>
     
+    <!-- status bar -->
+    <string name="wifi">WIFI</string>
+    <string name="wifi_p2p">WIFI_P2P</string>
+    
     <!-- 二维码(引入) -->
 	<string name="app_picker_name">Applications</string>
 	<string name="bookmark_picker_name">Bookmarks</string>

@@ -12,29 +12,22 @@ import android.content.Intent;
  */
 public class ExternalStorageStateReceiver extends BroadcastReceiver {
 
-	private OnExternalStorageStateChangeListener listener = null;
+	private StateController mState;
+	
+	public ExternalStorageStateReceiver(StateController state) {
+		this.mState = state;
+	}
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (listener != null) {
+		if (mState != null) {
 			String action = intent.getAction();
+			// 无法对using进行处理
 			if (action.equals(Intent.ACTION_MEDIA_REMOVED)) { // 扩展卡被拔出
-				listener.onExternalStorageStateChange(false);
+				mState.setExternalStorageState(StateController.STATE_EXTERNAL_STORAGE_DISABLE);
 			} else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) { // 扩展卡可以使用
-				listener.onExternalStorageStateChange(true);
+				mState.setExternalStorageState(StateController.STATE_EXTERNAL_STORAGE_ENABLE);
 			}
 		}
-	}
-
-	public void setOnExternalStorageStorageStateChangeListener(OnExternalStorageStateChangeListener listener) {
-		this.listener = listener;
-	}
-	
-	public interface OnExternalStorageStateChangeListener {
-		/**
-		 * 只有当值MOUNTED的时候usable为true
-		 * @param usable
-		 */
-		public void onExternalStorageStateChange(boolean usable);
 	}
 }
