@@ -43,6 +43,7 @@ import android.widget.TextView;
 
 import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
 import org.mshare.main.StateController.StateCallback;
+import org.mshare.nfc.NfcServerActivity;
 
 /**
  * TODO 当在选择要分享的内容的时候，能不能将我们的应用也加入到其中
@@ -179,33 +180,30 @@ public class NewConn extends Activity implements StateCallback {
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// TODO 启动一个新的Activity ServerSettingActivity
+		// TODO 需要使用图标来代替文字吗
 		
 		switch (item.getItemId()) {
+			case R.id.menu_nfc_connect:
+				Log.v(TAG, "option menu nfc");
+				Intent startNfc = new Intent(this, NfcServerActivity.class);
+				startActivity(startNfc);
+				break;
 			case R.id.menu_set_ftp_server_qrcode:
-				Log.v(TAG, "qrcode");
-				Intent startQRCode = new Intent();
-				startQRCode.setClass(this, QRCodeLogin.class);
-				// 写入二维码需要显示的内容
-				// 需要和扫描相对应
-				// 需要内容:1.ip 2.port 3.username 4.password
-				// 需要如何传送这些内容呢?使用字符隔开,在username和password中不允许有空格
+				Log.v(TAG, "option menu qrcode");
+				Intent startQRCode = new Intent(this, QRCodeConnectActivity.class);
 				
-				String address = "192.168.137.1";
+				String host = "192.168.137.1";
 				String port = "2121";
 				String username = "username";
 				String password = "password";
+				ConnectInfo connectInfo = new ConnectInfo(host, port, username, password);
 				
-				// 使用空格分隔
-				String content = address + " " + port + " " + username + " " + password;
-				
-				startQRCode.putExtra(QRCodeLogin.EXTRA_CONTENT, content);
+				startQRCode.putExtra(QRCodeConnectActivity.EXTRA_CONTENT, connectInfo.toString());
 				startActivity(startQRCode);
 				break;
 			case R.id.menu_set_ftp_server_setting:
-				Log.v(TAG, "setting");
-				Intent startSetting = new Intent();
-				startSetting.setClass(this, ServerSettingActivity.class);
+				Log.v(TAG, "option menu setting");
+				Intent startSetting = new Intent(this, ServerSettingActivity.class);
 				startActivity(startSetting);
 				break;
 		}

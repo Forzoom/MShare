@@ -350,6 +350,8 @@ public class StateController {
 	 */
 	public static int getNfcState() {
 		Context context = MShareApp.getAppContext();
+		// 现在基本没有办法检测是否有NFC支持
+		// 这里会Log : this device does not have NFC support
 		if (NfcAdapter.getDefaultAdapter(context) != null) {
 			return STATE_NFC_ENABLE;
 		} else {

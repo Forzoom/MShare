@@ -25,6 +25,7 @@ import android.os.Parcelable;
  * TODO 创建AAR，AAR中的NdefRecord中包含应用的包名，如果扫描到AAR，就打开一个应用，如果没有该应用，就会从Google Play上下载该应用
  * AAR的存在阻止了其他的应用处理我们所部署的内容。对于AAR，dispatch system 1.使用intent filter发送intent,如果Activity的intent filter符合，并且包名符合
  * 将启动Activity 2.否则启动Application 3.到Google Play 下载该应用
+ * TODO 当手机并不支持NFC的时候该怎么办？
  * 
  * AAR仅仅支持Android 4.0 or later后的手机，对于其他的系统的手机并不支持
  * 
@@ -93,7 +94,7 @@ public class NfcServerActivity extends Activity {
 		// 因为在前面注册callback时，所加入的是this，所以Android Beam可能会打开该Activity
 		String action = getIntent().getAction();
 		// NDEF被正常的检测到
-		if (action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
+		if (action != null && action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
 			processIntent(getIntent());
 		}
 	}

@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 	<item 
 	    android:id="@+id/ftp_server_setting_confirm"
-	    android:title="@string/confirm"
+	    android:title="@string/option_confirm"
 	    android:showAsAction="ifRoom"/>    
 
 </menu>

@@ -166,9 +166,10 @@
     <string name="video">Video</string>
     <string name="picture">Image</string>
     
-    <!-- Activity -->
+    <!-- NewConn Activity Label -->
     <string name="activity_label_server_setting">修改配置</string>
-    <string name="activity_label_qrcode_login">二维码</string>
+    <string name="activity_label_qrcode_connect">二维码</string>
+    <string name="activity_label_nfc">NFC</string>
     
     <!-- 文件浏览器 -->
     <string name="activity_not_found">Application is not installed on your device.</string>
@@ -190,9 +191,10 @@
     <string name="external_storage_removed">扩展存储不可用</string>
     
     <!-- ActionBar -->
-    <string name="two_dimensions_bar">二维码</string>
-    <string name="setting">配置</string>
-    <string name="confirm">确定</string>
+    <string name="option_nfc">NFC</string>
+    <string name="option_two_dimensions_bar">二维码</string>
+    <string name="option_setting">配置</string>
+    <string name="option_confirm">确定</string>
     
     <!-- 二维码 -->
     <string name="please_scan">请扫描下面的二维码，接受文件共享</string>

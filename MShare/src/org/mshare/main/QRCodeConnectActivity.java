@@ -20,7 +20,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class QRCodeLogin extends Activity {
+public class QRCodeConnectActivity extends Activity {
 	private String contents = "12211017";
 	
 	private static final int WHITE = 0xFFFFFFFF;

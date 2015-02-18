@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item
+	    android:id="@+id/menu_nfc_connect" 
+	    android:title="@string/option_nfc"
+	    android:showAsAction="ifRoom" />
+    <item
 	    android:id="@+id/menu_set_ftp_server_qrcode" 
-	    android:title="@string/two_dimensions_bar"
+	    android:title="@string/option_two_dimensions_bar"
 	    android:showAsAction="ifRoom" />
 	<item
 	    android:id="@+id/menu_set_ftp_server_setting" 
-	    android:title="@string/setting"
+	    android:title="@string/option_setting"
 	    android:showAsAction="ifRoom" />
 </menu>
