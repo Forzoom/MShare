@@ -51,7 +51,7 @@ final class PreviewCallback implements Camera.PreviewCallback {
       Message message = thePreviewHandler.obtainMessage(previewMessage, cameraResolution.x,
           cameraResolution.y, data);
 //      message.sendToTarget();
-      thePreviewHandler.sendMessageDelayed(message, 1000);
+      thePreviewHandler.sendMessageDelayed(message, 500);
       // 为什么每次都将handler重置为null
       previewHandler = null;
     } else {

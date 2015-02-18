@@ -101,9 +101,9 @@ final class DecodeHandler extends Handler {
 		Result rawResult = null;
 		PlanarYUVLuminanceSource source = activity.getCameraManager().buildLuminanceSource(data, width, height);
 		if (source != null) {
+			// 并不是真正的bitmap
 			BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
 			// 需要将bitmap发送到Activity中进行浏览,或者直接将bitmap保存下来
-      
 			int[] pixels = source.renderThumbnail();
 			int thumbnailWidth = source.getThumbnailWidth();
 			int thumbnailHeight = source.getThumbnailHeight();
@@ -129,39 +129,40 @@ final class DecodeHandler extends Handler {
 				}
 			}
       
-      // 尝试将bitmap中的内容得到
-//      try {
-//		BitMatrix matrix = bitmap.getBlackMatrix();
-//		int area = matrix.getWidth() * matrix.getHeight();
-//		int[] container = new int[area];
-//		
-//		for (int x = 0; x < matrix.getWidth(); x++) {
-//			for (int y = 0; y < matrix.getHeight(); y++) {
-//				if (matrix.get(x, y)) {
-//					container[x * width + y] = 0x000000;
-//				} else {
-//					container[x * width + y] = 0xffffff;
-//				}
-//			}
-//		}
-//		
-//		// TODO 这里永远是失败，不知道为什么
-//		Bitmap getBitmap = Bitmap.createBitmap(container, matrix.getWidth(), matrix.getHeight(), Bitmap.Config.ARGB_8888);
-//		FileOutputStream fos = new FileOutputStream(path + File.separator + "get_capture" + index + ".jpg");
-//		boolean result = getBitmap.compress(Bitmap.CompressFormat.JPEG, 70, fos);
-//		Log.d(TAG, "get compress result " + result);
-//		
-//	} catch (Exception e) {
-//		// TODO Auto-generated catch block
-//		Log.e(TAG, "get compress fail");
-//		e.printStackTrace();
-//	}
+      // TODO 尝试将点阵中的内容得到
+      try {
+		BitMatrix matrix = bitmap.getBlackMatrix();
+		int area = matrix.getWidth() * matrix.getHeight();
+		int[] container = new int[area];
+		
+		for (int x = 0; x < matrix.getWidth(); x++) {
+			for (int y = 0; y < matrix.getHeight(); y++) {
+				if (matrix.get(x, y)) {
+					container[x * width + y] = 0x000000;
+				} else {
+					container[x * width + y] = 0xffffff;
+				}
+			}
+		}
+		
+		// TODO 这里永远是失败，不知道为什么
+		Bitmap getBitmap = Bitmap.createBitmap(container, matrix.getWidth(), matrix.getHeight(), Bitmap.Config.ARGB_8888);
+		fos = new FileOutputStream(path + File.separator + "get_capture" + index + ".jpg");
+		boolean result = getBitmap.compress(Bitmap.CompressFormat.JPEG, 70, fos);
+		Log.d(TAG, "get compress result " + result);
+		
+	} catch (Exception e) {
+		// TODO Auto-generated catch block
+		Log.e(TAG, "get compress fail");
+		e.printStackTrace();
+	}
       
       try {
         rawResult = qrCodeReader.decode(bitmap, null);
       } catch (ReaderException re) {
-        // continue
+    	  // continue
       } finally {
+    	  // 需要重置解析状态
     	  qrCodeReader.reset();
       }
     }

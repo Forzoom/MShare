@@ -7,6 +7,7 @@ import org.mshare.main.R;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
@@ -21,6 +22,8 @@ import android.widget.Toast;
 /**
  * 方向实在是不可调整
  * Preview的区域也许并不正确,所需要知道的是preview的区域是哪里
+ * TODO 是否需要使用startActivityForResult?
+ * TODO 解析的范围仍可能有问题
  * @author HM
  *
  */
@@ -48,8 +51,6 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 		
 		// 创建cameraManager
 		cameraManager = new CameraManager(this);
-		// 手动设置Framing的大小
-		cameraManager.setManualFramingRect(300, 300);
 		
 		viewfinderView = (ViewfinderView)findViewById(R.id.viewfinder_view);
 		viewfinderView.setCameraManager(cameraManager);
@@ -64,13 +65,14 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 			}
 		});
 		
-		// TODO 需要创建viewfinder
 		decodeThread = new DecodeThread(this, null, null, new ViewfinderResultPointCallback(viewfinderView));
 		decodeThread.start();
-		
-		// TODO 需要代码检测当前的版本
+
 		// 在3.0的版本之前需要下面的代码
-		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		// 在正式发布的时候应当删除
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+			holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		}
 	}
 
 	@Override
@@ -90,7 +92,7 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 	}
 	
 	/**
-	 * 使用unlock都无法使相机资源得到释放
+	 * 
 	 */
 	@Override
 	protected void onDestroy() {
@@ -111,15 +113,14 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 			cameraManager.startPreview();
 		}
 		// 需要设置的是DecodeThread和DecodeHandler
-		// 开始处理
-//		Log.d(TAG, "start request preview frame in Activity");
-//		cameraManager.requestPreviewFrame(decodeThread.getHandler(), DecodeHandler.WHAT_DECODE);
+		// TODO 在这里启动了解析
+		Log.d(TAG, "start request preview frame in Activity");
+		cameraManager.requestPreviewFrame(decodeThread.getHandler(), DecodeHandler.WHAT_DECODE);
 	}
 	
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
-		// TODO Auto-generated method stub
 	}
 
 	@Override

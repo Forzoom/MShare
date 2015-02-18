@@ -20,17 +20,21 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
- * 接下来的内容:为文件添加正确权限内容
- * 在第一次创建账户时无法登录
- * 单独创建默认账户的文件树，所有对该文件树的修改会同时反应到其他账户上，但是两个文件树并不能合并，还是将所有sessionThread中的文件树进行一一修改？
+ * TODO 针对文件权限返回正确的文件权限
+ * TODO 尝试使用正常用户、匿名用户对文件进行操作，但没有办法模拟管理员创建内容
+ * TODO 客户端应当根据返回的文件权限进行相应的显示处理
+ * TODO 是否需要将permission中的内容从Account中移动出去
+ * 在第一次创建账户时可能会比较慢
+ * 普通账户对于管理员内容无写权限
  * 当前不希望有多个人同时使用同一个账户，因为会导致其他人的文件树无法随之修改
+ * 所以可能是对于每个账户有一个文件树，而不是对于每个sessionThread
  * 当前服务器不希望在传递的路径中有..或者.的内容
  * TODO 当扩展存储不存在的时候，不允许的许多操作，服务器端只能在cmd里面对失败做出响应吗，客户端没有办法知道服务器是出现了什么样的问题导致了不可用
  * 当前扩展存储必须可用
  * TODO 需要了解MediaScan相关的类
  * TODO 可能需要一个刷新按钮,就像一个文件浏览器一样
  * 默认账户中的内容也能够被删除，因为现在所共享的文件都是默认账户中的内容
- * TODO 暂时不应该支持共享文件夹
+ * TODO 测试共享文件夹的功能
  * 如何在SharedLinkSystem启动的时候，创建文件树，应该只需要告诉SharedLinkSystem当前登录的对象是谁就可以创建
  * TODO 对于不合法的path，都将被SharedLinkSystem自动删除
  * 保存文件系统并要求用户手动保存文件系统，或者提供按钮用来清除无效的Link对象
@@ -96,19 +100,19 @@ public class SharedLinkSystem {
 	/**
 	 * 普通用户拥有写权限
 	 */
-	public static final int FILE_PERMISSION_USER = Account.PERMISSION_READ_ADMIN | Account.PERMISSION_WRITE_ADMIN
-			| Account.PERMISSION_READ | Account.PERMISSION_WRITE | Account.PERMISSION_READ_GUEST;;
+	public static final int FILE_PERMISSION_USER = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN
+			| Permission.PERMISSION_READ | Permission.PERMISSION_WRITE | Permission.PERMISSION_READ_GUEST;;
 	/**
 	 * 普通用户仅仅拥有读权限
 	 */
-	public static final int FILE_PERMISSION_ADMIN = Account.PERMISSION_READ_ADMIN | Account.PERMISSION_WRITE_ADMIN
-			| Account.PERMISSION_READ | Account.PERMISSION_READ_GUEST;
+	public static final int FILE_PERMISSION_ADMIN = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN
+			| Permission.PERMISSION_READ | Permission.PERMISSION_READ_GUEST;
 	
 	public SharedLinkSystem(SessionThread sessionThread) {
 		this.sessionThread = sessionThread;
 		// 不持久化根内容
 		Log.d(TAG, "root fakePath :" + root.getFakePath());
-		root = SharedLink.newFakeDirectory(this, SEPARATOR, Account.PERMISSION_READ_ADMIN | Account.PERMISSION_READ | Account.PERMISSION_READ_GUEST);
+		root = SharedLink.newFakeDirectory(this, SEPARATOR, Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_READ_GUEST);
 		// 设置当前的working directory为"/"
 		setWorkingDir(SEPARATOR); // root作为working directory
 
@@ -562,5 +566,75 @@ public class SharedLinkSystem {
 	 */
 	void print() {
 		root.print();
+	}
+	
+	/**
+	 * 
+	 * @author HM
+	 *
+	 */
+	public class Permission {
+		// 仅仅是作为帐号的权限，映射在用户文件上
+	    public static final int PERMISSION_READ_ADMIN = 0400;
+	    public static final int PERMISSION_WRITE_ADMIN = 0200;
+	    /**
+	     * 不应该被使用
+	     */
+	    public static final int PERMISSION_EXECUTE_ADMIN = 0100;// execute永远不开放
+	    
+	    public static final int PERMISSION_READ = 040;
+	    public static final int PERMISSION_WRITE = 020;
+	    /**
+	     * 不应该被使用
+	     */
+	    public static final int PERMISSION_EXECUTE = 010;
+	    
+	    public static final int PERMISSION_READ_GUEST = 04;
+	    public static final int PERMISSION_WRITE_GUEST = 02;
+	    /**
+	     * 不应该被使用
+	     */
+	    public static final int PERMISSION_EXECUTE_GUEST = 01;// execute永远不开放
+	    
+	    public static final int PERMISSION_READ_ALL = 0444;
+	    public static final int PERMISSION_WRITE_ALL = 0222;
+	    /**
+	     * 不应该被使用
+	     */
+	    public static final int PERMISSION_EXECUTE_ALL = 0111;// execute永远不开放
+	    
+	    // enum不能够使用|等位运算符
+//	    PERMISSION_READ_ADMIN(0400),
+//	    PERMISSION_WRITE_ADMIN(0200),
+//	    PERMISSION_EXECUTE_ADMIN(0100),
+//	    PERMISSION_READ(040),
+//	    PERMISSION_WRITE(020),
+//	    PERMISSION_EXECUTE(010),
+//	    PERMISSION_READ_GUEST(04),
+//	    PERMISSION_WRITE_GUEST(02),
+//	    PERMISSION_EXECUTE_GUEST(01);
+//	    
+//	    private Permission(int value) {
+//	    	this.value = value;
+//	    }
+//	    private int value;
+//	    
+//	    public static Permission valueOf(int value) {
+//	    	switch (value) {
+//	    	case 01:return PERMISSION_EXECUTE_GUEST;
+//	    	case 02:return PERMISSION_WRITE_GUEST;
+//	    	case 04:return PERMISSION_READ_GUEST;
+//	    	case 010:return PERMISSION_EXECUTE;
+//	    	case 020:return PERMISSION_WRITE;
+//	    	case 040:return PERMISSION_READ;
+//	    	case 0100:return PERMISSION_EXECUTE_ADMIN;
+//	    	case 0200:return PERMISSION_WRITE_ADMIN;
+//	    	case 0400:return PERMISSION_READ_ADMIN;
+//	    	}
+//	    }
+//	    
+//	    public int value() {
+//	    	return this.value;
+//	    }
 	}
 }

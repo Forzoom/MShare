@@ -141,12 +141,11 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
             // staticLog.l(Log.DEBUG, "Filename: " + lastNamePart);
         }
 
-        if (file.isDirectory() || file.isFakeDirectory()) {
-            response.append("drwxr-xr-x 1 owner group");
-        } else {
-            // TODO: think about special files, symlinks, devices
-            response.append("-rw-r--r-- 1 owner group");
-        }
+        // 获得文件的权限
+        // TODO: think about special files, symlinks, devices
+        // TODO 需要了解1和group是什么
+        // TODO 需要测试是否正确
+        response.append(file.getLsPermission() + " 1 owner group");
 
         // The next field is a 13-byte right-justified space-padded file size
         long fileSize = file.length();

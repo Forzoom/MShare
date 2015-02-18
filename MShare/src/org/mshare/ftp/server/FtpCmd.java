@@ -22,6 +22,8 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.lang.reflect.Constructor;
 
+import org.mshare.file.SharedLinkSystem.Permission;
+
 import android.util.Log;
 
 public abstract class FtpCmd implements Runnable {
@@ -130,9 +132,9 @@ public abstract class FtpCmd implements Runnable {
         // TODO 低耦合
         if (account != null && (session.isUserLoggedIn() || session.isAnonymouslyLoggedIn())) {
         	// TODO 在用户的权限上不能够很好地告知客户端,下面的方式不是很好
-        	if (Account.canWrite(account, Account.PERMISSION_WRITE_ALL)) { // 检测写权限
+        	if (Account.canWrite(account, Permission.PERMISSION_WRITE_ALL)) { // 检测写权限
         		cmdInstance.run();
-        	} else if (Account.canRead(account, Account.PERMISSION_READ_ALL)) { // 检测读权限
+        	} else if (Account.canRead(account, Permission.PERMISSION_READ_ALL)) { // 检测读权限
         		boolean validCmd = false;
                 for (Class<?> cl : allowedCmdsWhileRead) {
                     if (cmdInstance.getClass().equals(cl)) {

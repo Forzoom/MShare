@@ -33,6 +33,8 @@ import android.view.View;
 import com.google.zxing.ResultPoint;
 
 /**
+ * TODO 做的更加逼格一点
+ * 刷新的频率问题
  * This view is overlaid on top of the camera preview. It adds the viewfinder rectangle and partial
  * transparency outside it, as well as the laser scanner animation and result points.
  *
@@ -112,7 +114,6 @@ public final class ViewfinderView extends View {
     	// Draw a red "laser scanner" line through the middle to show decoding is active
     	// 绘制红色的线条，仅仅是改变了红色线条的透明度
     	// TODO 不再使用一个长方形作为线条,而是使用更加逼格的东西
-    	// 关键是刷新的频率问题
     	paint.setColor(laserColor);
     	int middle = frame.height() / 2 + frame.top;
     	// 使用一个正方形来代表线条

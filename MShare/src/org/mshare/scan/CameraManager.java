@@ -247,10 +247,16 @@ public final class CameraManager {
         return null;
       }
 
-      // TODO 需要调整，不能将两者分别设定八分之五，而是设定为宽的八分之五
+      // 设定为较短边的八分之五
       int width = findDesiredDimensionInRange(screenResolution.x, MIN_FRAME_WIDTH, MAX_FRAME_WIDTH);
       int height = findDesiredDimensionInRange(screenResolution.y, MIN_FRAME_HEIGHT, MAX_FRAME_HEIGHT);
-
+      // 调整为正方形
+      if (height < width) {
+    	  width = height;
+      } else {
+    	  height = width;
+      }
+      
       int leftOffset = (screenResolution.x - width) / 2;
       int topOffset = (screenResolution.y - height) / 2;
       framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
@@ -291,7 +297,8 @@ public final class CameraManager {
         return null;
       }
       Log.d(TAG, "get resolution");
-      // TODO 在这里调整，保证宽大于高对于cameraResolution和screenResolution来说
+      
+      // 对于cameraResolution和screenResolution来说，保证宽大于高
       int cameraX = cameraResolution.x, cameraY = cameraResolution.y, screenX = screenResolution.x, screenY = screenResolution.y;
       boolean cameraLandscape = cameraX > cameraY;
       int cameraWidth = cameraLandscape ? cameraX : cameraY;

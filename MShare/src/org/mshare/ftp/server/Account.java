@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.SharedLinkSystem.Permission;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -49,22 +50,6 @@ public class Account {
     private String mAttemptPassword = null;
     private boolean userAuthenticated = false;
     public int authFails = 0;
-    // 仅仅是作为帐号的权限，映射在用户文件上
-    public static final int PERMISSION_READ_ADMIN = 0400;
-    public static final int PERMISSION_WRITE_ADMIN = 0200;
-    public static final int PERMISSION_EXECUTE_ADMIN = 0100;// execute永远不开放
-    
-    public static final int PERMISSION_READ = 040;
-    public static final int PERMISSION_WRITE = 020;
-    public static final int PERMISSION_EXECUTE = 010;// execute永远不开放
-    
-    public static final int PERMISSION_READ_GUEST = 04;
-    public static final int PERMISSION_WRITE_GUEST = 02;
-    public static final int PERMISSION_EXECUTE_GUEST = 01;// execute永远不开放
-    
-    public static final int PERMISSION_READ_ALL = 0444;
-    public static final int PERMISSION_WRITE_ALL = 0222;
-    public static final int PERMISSION_EXECUTE_ALL = 0111;// execute永远不开放    
     
     public static final int PERMISSION_NONE = 0;
     
@@ -74,9 +59,9 @@ public class Account {
     private static final String KEY_PERMISSION = "mPermission";
     
     // 默认值拥有读权限,为测试添加写权限
-    private int mPermission = PERMISSION_READ | PERMISSION_WRITE;
+    private int mPermission = Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
     // 对于匿名登录账户的权限
-    private static final int PERMISSION_ANONYMOUS = PERMISSION_READ | PERMISSION_WRITE;
+    private static final int PERMISSION_ANONYMOUS = Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
     
     public static final String SP_KEY_ACCOUNT_INFO = "accounts";
     /**
@@ -173,7 +158,7 @@ public class Account {
 			Editor editor = userSp.edit();
 			editor.putString(KEY_PASSWORD, password);
 			// 当没有指定权限时，将使用普通账户的读写权限
-			editor.putInt(KEY_PERMISSION, permission == PERMISSION_NONE ? PERMISSION_READ | PERMISSION_WRITE: permission);
+			editor.putInt(KEY_PERMISSION, permission == PERMISSION_NONE ? Permission.PERMISSION_READ | Permission.PERMISSION_WRITE: permission);
 			createUserSuccess = editor.commit();
 		} else {
 			Log.e(TAG, "Register Fail:username has already existed");
@@ -210,7 +195,7 @@ public class Account {
 			
 			Log.d(TAG, "当前匿名账户信息不存在");
 			Log.d(TAG, "开始注册匿名账户");
-			int permission = PERMISSION_READ_GUEST;
+			int permission = Permission.PERMISSION_READ_GUEST;
 			boolean registerResult = register(AnonymousUsername, AnonymousPassword, permission);
 			Log.d(TAG, "结束注册匿名账户, 结果:" + registerResult);
 		} else {
@@ -222,7 +207,7 @@ public class Account {
 			
 			Log.d(TAG, "当前默认账户信息不存在");
 			Log.d(TAG, "开始注册默认账户");
-			int permission = PERMISSION_READ | PERMISSION_WRITE;
+			int permission = Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
 			boolean registerResult = register(FsSettings.getUsername(), FsSettings.getPassword(), permission);
 			Log.d(TAG, "结束注册默认账户, 结果:" + registerResult);
 		} else {
@@ -233,7 +218,7 @@ public class Account {
 		if (accountsSp.getBoolean(AdminUsername, false)) {
 			Log.d(TAG, "当前管理员账户信息不存在");
 			Log.d(TAG, "开始注册管理员账户");
-			int permission = PERMISSION_READ_ADMIN | PERMISSION_WRITE_ADMIN;
+			int permission = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN;
 			boolean registerResult = register(AdminUsername, AdminPassword, permission);
 			Log.d(TAG, "结束注册管理员账户, 结果:" + registerResult);
 		} else {
@@ -264,11 +249,11 @@ public class Account {
 	
 	// 用于判断当前用户能否对对应文件进行操作
 	public static boolean canRead(Account account, int filePermission) {
-		return (account.getPermission() & filePermission & PERMISSION_READ_ALL) != PERMISSION_NONE;
+		return (account.getPermission() & filePermission & Permission.PERMISSION_READ_ALL) != PERMISSION_NONE;
 	}
 	
 	public static boolean canWrite(Account account, int filePermission) {
-		return (account.getPermission() & filePermission & PERMISSION_WRITE_ALL) != PERMISSION_NONE; 
+		return (account.getPermission() & filePermission & Permission.PERMISSION_WRITE_ALL) != PERMISSION_NONE; 
 	}
 	
 	// 都不可以执行

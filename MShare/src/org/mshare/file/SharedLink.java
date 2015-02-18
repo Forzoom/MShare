@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.mshare.file.SharedLinkSystem.Permission;
 import org.mshare.ftp.server.Account;
 
 import android.util.Log;
@@ -99,7 +100,8 @@ public abstract class SharedLink {
 	public abstract boolean isFakeDirectory();
 	
 	/**
-	 * 所以覆写该函数的，都应该调用super该函数
+	 * override该函数应该调用super.canRead
+	 * 检测在SharedLinkSystem中，当前账户是否有权限读取该SharedLink的内容
 	 * TODO 所有的文件树中的文件都应该能够被读取，不能够被读取的内容，不应该出现在应用中
 	 * @return
 	 */
@@ -107,6 +109,10 @@ public abstract class SharedLink {
 		return Account.canRead(getSystem().getAccount(), getPermission());
 	}
 	
+	/**
+	 * override该函数应该调用super.canRead
+	 * @return
+	 */
 	public boolean canWrite() {
 		return Account.canWrite(getSystem().getAccount(), getPermission());
 	}
@@ -145,8 +151,7 @@ public abstract class SharedLink {
 	}
 	
 	/**
-	 * realFile可能会是null
-	 * @return
+	 * @return 将会返回File，不保证File一定能够正常使用
 	 */
 	public File getRealFile() {
 		if (realFile == null || !realFile.getAbsoluteFile().equals(realPath)) {
@@ -155,9 +160,13 @@ public abstract class SharedLink {
 		return realFile;
 	}
 	
+	/**
+	 * 文件的大小
+	 * @return
+	 */
 	public abstract long length();
 	
-	// TODO 可能消耗大量的内存资源
+	// TODO 可能消耗大量的内存资源,仅仅用于调试
 	void print() {
 		String fakeName = getName();
 		if (isDirectory()) {
@@ -175,10 +184,11 @@ public abstract class SharedLink {
 		
 	}
 	
-	
-	
+	/**
+	 * 调用的是SharedLinkSystem.getParent
+	 * @return
+	 */
 	public String getParent() {
-		
 		return SharedLinkSystem.getParent(getFakePath());
 	}
 	
@@ -201,5 +211,33 @@ public abstract class SharedLink {
 	
 	public int getPermission() {
 		return mPermission;
+	}
+	
+	/**
+	 * 用于获得ls中所对应的文件权限表示
+	 * TODO 需要更加优雅高效的方法
+	 * @return 
+	 */
+	public String getLsPermission() {
+		StringBuilder lsPermission = new StringBuilder();
+		if (isDirectory() || isFakeDirectory()) {
+			lsPermission.append("d");
+		} else {
+			lsPermission.append("-");
+		}
+
+		int filePermission = getPermission();
+		lsPermission.append((filePermission & Permission.PERMISSION_READ_ADMIN) != 0 ? "r" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_WRITE_ADMIN) != 0 ? "w" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_ADMIN) != 0 ? "x" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_READ) != 0 ? "r" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_WRITE) != 0 ? "w" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE) != 0 ? "x" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "r" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "w" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "x" : "-");
+		
+		Log.d(TAG, "Ls permission string : " + lsPermission.toString());
+		return lsPermission.toString();
 	}
 }
