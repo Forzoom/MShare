@@ -61,6 +61,7 @@ final class CameraConfigurationManager {
   /**
    * Reads, one time, values from the camera that are needed by the app.
    * 检测屏幕的尺寸和相机预览的尺寸
+   * 并不保证宽一定小于高
    */
   void initFromCameraParameters(Camera camera) {
     Camera.Parameters parameters = camera.getParameters();

@@ -129,59 +129,62 @@ final class DecodeHandler extends Handler {
 				}
 			}
       
-      // TODO 尝试将点阵中的内容得到
-      try {
-		BitMatrix matrix = bitmap.getBlackMatrix();
-		int area = matrix.getWidth() * matrix.getHeight();
-		int[] container = new int[area];
+			// TODO 尝试将点阵中的内容得到
+			// ArrayIndexOutOfBoundsException 出了错
+	
+			try {
+				BitMatrix matrix = bitmap.getBlackMatrix();
+				int area = matrix.getWidth() * matrix.getHeight();
+				int[] container = new int[area];
 		
-		for (int x = 0; x < matrix.getWidth(); x++) {
-			for (int y = 0; y < matrix.getHeight(); y++) {
-				if (matrix.get(x, y)) {
-					container[x * width + y] = 0x000000;
-				} else {
-					container[x * width + y] = 0xffffff;
+				for (int x = 0; x < matrix.getWidth(); x++) {
+					for (int y = 0; y < matrix.getHeight(); y++) {
+						if (matrix.get(x, y)) {
+							container[x * width + y] = 0x000000;
+						} else {
+							container[x * width + y] = 0xffffff;
+						}
+					}
 				}
+		
+				Bitmap getBitmap = Bitmap.createBitmap(container, matrix.getWidth(), matrix.getHeight(), Bitmap.Config.ARGB_8888);
+				fos = new FileOutputStream(path + File.separator + "get_capture" + index + ".jpg");
+				boolean result = getBitmap.compress(Bitmap.CompressFormat.JPEG, 70, fos);
+				Log.d(TAG, "get compress result " + result);
+				fos.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				Log.e(TAG, "get compress fail");
+				e.printStackTrace();
+			} finally {
+				fos = null;
+			}
+      
+			try {
+				rawResult = qrCodeReader.decode(bitmap, null);
+			} catch (ReaderException re) {
+				// continue
+			} finally {
+				// 需要重置解析状态
+				qrCodeReader.reset();
 			}
 		}
-		
-		// TODO 这里永远是失败，不知道为什么
-		Bitmap getBitmap = Bitmap.createBitmap(container, matrix.getWidth(), matrix.getHeight(), Bitmap.Config.ARGB_8888);
-		fos = new FileOutputStream(path + File.separator + "get_capture" + index + ".jpg");
-		boolean result = getBitmap.compress(Bitmap.CompressFormat.JPEG, 70, fos);
-		Log.d(TAG, "get compress result " + result);
-		
-	} catch (Exception e) {
-		// TODO Auto-generated catch block
-		Log.e(TAG, "get compress fail");
-		e.printStackTrace();
-	}
-      
-      try {
-        rawResult = qrCodeReader.decode(bitmap, null);
-      } catch (ReaderException re) {
-    	  // continue
-      } finally {
-    	  // 需要重置解析状态
-    	  qrCodeReader.reset();
-      }
-    }
 
-    // 将内容发送到CaptureActivityHandler中进行处理
-    // TODO 需要修正
+		// 将内容发送到CaptureActivityHandler中进行处理
+		// TODO 需要修正
     
-    // 成功的时候发送内容，失败的时候调用request继续尝试获得内容
-    if (rawResult != null) {
-      // Don't log the barcode contents for security.
-      long end = System.currentTimeMillis();
-      Log.d(TAG, "Found barcode in " + (end - start) + " ms");
-      Toast.makeText(activity, rawResult.toString(), Toast.LENGTH_SHORT).show();
-    } else {
-    	Log.e(TAG, "fail, request again!");
-    	Log.d(TAG, "request again preview frame in DecodeHandler, handler:" + this + " message:" + WHAT_DECODE);
-//    	activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
-    }
-  }
+		// 成功的时候发送内容，失败的时候调用request继续尝试获得内容
+		if (rawResult != null) {
+			// Don't log the barcode contents for security.
+			long end = System.currentTimeMillis();
+			Log.d(TAG, "Found barcode in " + (end - start) + " ms");
+			Toast.makeText(activity, rawResult.toString(), Toast.LENGTH_SHORT).show();
+		} else {
+			Log.e(TAG, "fail, request again!");
+			Log.d(TAG, "request again preview frame in DecodeHandler, handler:" + this + " message:" + WHAT_DECODE);
+			// activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
+		}
+	}
 
   private static void bundleThumbnail(PlanarYUVLuminanceSource source, Bundle bundle) {
     int[] pixels = source.renderThumbnail();

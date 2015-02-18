@@ -54,7 +54,6 @@ public final class ViewfinderView extends View {
   private final int resultColor;
   private final int laserColor;
   private final int resultPointColor;
-  private int scannerAlpha;
   private List<ResultPoint> possibleResultPoints;
   private List<ResultPoint> lastPossibleResultPoints;
 
@@ -72,7 +71,6 @@ public final class ViewfinderView extends View {
     resultColor = resources.getColor(R.color.result_view);
     laserColor = resources.getColor(R.color.viewfinder_laser);
     resultPointColor = resources.getColor(R.color.possible_result_points);
-    scannerAlpha = 0;
     possibleResultPoints = new ArrayList<ResultPoint>(5);
     lastPossibleResultPoints = null;
   }

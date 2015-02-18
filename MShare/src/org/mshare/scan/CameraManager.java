@@ -48,7 +48,9 @@ public final class CameraManager {
   private final ScanActivity activity;
   private final CameraConfigurationManager configManager;
   private Camera camera;
+  // 屏幕上预览情况下的大小
   private Rect framingRect;
+  // 对于PreviewCallback中应该被解析的大小内容
   private Rect framingRectInPreview;
   private boolean initialized;
   private boolean previewing; // 表明当前相机正在工作，预览正在进行，在startPreview和stopPreview中被处理
@@ -298,6 +300,7 @@ public final class CameraManager {
       }
       Log.d(TAG, "get resolution");
       
+      // TODO 这里需要保证屏幕是竖屏
       // 对于cameraResolution和screenResolution来说，保证宽大于高
       int cameraX = cameraResolution.x, cameraY = cameraResolution.y, screenX = screenResolution.x, screenY = screenResolution.y;
       boolean cameraLandscape = cameraX > cameraY;
@@ -307,11 +310,13 @@ public final class CameraManager {
       int screenWidth = screenLandscape ? screenX : screenY;
       int screenHeight = screenLandscape ? screenY : screenX;
       
-      // 不再调整，只有这样才是正确的
-      rect.left = rect.left * cameraWidth / screenWidth;
-      rect.right = rect.right * cameraWidth / screenWidth;
-      rect.top = rect.top * cameraHeight / screenHeight;
-      rect.bottom = rect.bottom * cameraHeight / screenHeight;
+      // 四个边是需要调整，但是需要根据旋转的内容来设置缩放的情况，因为width比height宽，所以对left和rigth使用height来调整，top和bottom使用width来调整
+      // TODO 因为这里，所以可能需要保证当前的应用必须是竖屏的
+      // 在<activity>中保证竖屏
+      rect.left = rect.left * cameraHeight / screenHeight;
+      rect.right = rect.right * cameraHeight / screenHeight;
+      rect.top = rect.top * cameraWidth / screenWidth;
+      rect.bottom = rect.bottom * cameraWidth / screenWidth;
       framingRectInPreview = rect;
 //      Log.d(TAG, "cameraX:" + cameraX + " cameraY:" + cameraY + " screenX:" + screenX + " screenY:" + screenY);
       Log.d(TAG, "Calculated framing rect in preview: " + framingRectInPreview);

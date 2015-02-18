@@ -60,7 +60,6 @@ final class PreviewCallback implements Camera.PreviewCallback {
     	} else {
     		Log.d(TAG, "Got preview callback, but no handler available");
     	}
-//      Log.d(TAG, "Got preview callback, but no handler or resolution available");
     }
   }
 

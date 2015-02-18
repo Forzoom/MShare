@@ -22,6 +22,7 @@ import android.widget.Toast;
 /**
  * 方向实在是不可调整
  * Preview的区域也许并不正确,所需要知道的是preview的区域是哪里
+ * TODO 现在viewfinder的范围仍是不大对
  * TODO 是否需要使用startActivityForResult?
  * TODO 解析的范围仍可能有问题
  * @author HM
@@ -115,6 +116,7 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 		// 需要设置的是DecodeThread和DecodeHandler
 		// TODO 在这里启动了解析
 		Log.d(TAG, "start request preview frame in Activity");
+		// 第一次request的情况下将会出现全黑的图片,可能是因为放在桌上
 		cameraManager.requestPreviewFrame(decodeThread.getHandler(), DecodeHandler.WHAT_DECODE);
 	}
 	

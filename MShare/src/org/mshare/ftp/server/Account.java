@@ -41,17 +41,22 @@ import android.util.Log;
  */
 public class Account {
 	private static final String TAG = Account.class.getSimpleName();
+	// 匿名账户的用户名和密码
 	public static final String AnonymousUsername = "anonymous";
 	public static final String AnonymousPassword = "guest";
+	// 管理员账户的用户名和密码
 	public static final String AdminUsername = "admin";
 	public static final String AdminPassword = "admin";
+	// 当前账户的用户名和密码
     private String mUserName = null;
     private String mPassword = null;
+    // 用户登录尝试的密码
     private String mAttemptPassword = null;
     private boolean userAuthenticated = false;
+    // 登录尝试失败的次数
+    // TODO 需要将最大次数放在这里？
     public int authFails = 0;
     
-    public static final int PERMISSION_NONE = 0;
     
     public static final String USER_DEFAULT = "default_username";
     
@@ -158,7 +163,7 @@ public class Account {
 			Editor editor = userSp.edit();
 			editor.putString(KEY_PASSWORD, password);
 			// 当没有指定权限时，将使用普通账户的读写权限
-			editor.putInt(KEY_PERMISSION, permission == PERMISSION_NONE ? Permission.PERMISSION_READ | Permission.PERMISSION_WRITE: permission);
+			editor.putInt(KEY_PERMISSION, permission == Permission.PERMISSION_NONE ? Permission.PERMISSION_READ | Permission.PERMISSION_WRITE: permission);
 			createUserSuccess = editor.commit();
 		} else {
 			Log.e(TAG, "Register Fail:username has already existed");
@@ -249,11 +254,11 @@ public class Account {
 	
 	// 用于判断当前用户能否对对应文件进行操作
 	public static boolean canRead(Account account, int filePermission) {
-		return (account.getPermission() & filePermission & Permission.PERMISSION_READ_ALL) != PERMISSION_NONE;
+		return (account.getPermission() & filePermission & Permission.PERMISSION_READ_ALL) != Permission.PERMISSION_NONE;
 	}
 	
 	public static boolean canWrite(Account account, int filePermission) {
-		return (account.getPermission() & filePermission & Permission.PERMISSION_WRITE_ALL) != PERMISSION_NONE; 
+		return (account.getPermission() & filePermission & Permission.PERMISSION_WRITE_ALL) != Permission.PERMISSION_NONE; 
 	}
 	
 	// 都不可以执行

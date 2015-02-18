@@ -20,19 +20,21 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * TODO 当有文件被更新的时候，服务器必须能够通知客户端
+ * TODO 在SharedLink中添加文件是否正在被使用isUsing?
+ * TODO 尝试将文件树放在Account中，并且对于每个sessionThread,并不是每个sessionThread都拥有一个Account，而是sessionThread持有account的引用
  * TODO 针对文件权限返回正确的文件权限
  * TODO 尝试使用正常用户、匿名用户对文件进行操作，但没有办法模拟管理员创建内容
  * TODO 客户端应当根据返回的文件权限进行相应的显示处理
- * TODO 是否需要将permission中的内容从Account中移动出去
  * 在第一次创建账户时可能会比较慢
  * 普通账户对于管理员内容无写权限
  * 当前不希望有多个人同时使用同一个账户，因为会导致其他人的文件树无法随之修改
  * 所以可能是对于每个账户有一个文件树，而不是对于每个sessionThread
  * 当前服务器不希望在传递的路径中有..或者.的内容
- * TODO 当扩展存储不存在的时候，不允许的许多操作，服务器端只能在cmd里面对失败做出响应吗，客户端没有办法知道服务器是出现了什么样的问题导致了不可用
- * 当前扩展存储必须可用
+ * TODO 当扩展存储不存在的时候，不允许的许多操作，服务器端只能在cmd里面对失败做出响应吗
+ * 客户端没有办法知道服务器是出现了什么样的问题导致了不可用
  * TODO 需要了解MediaScan相关的类
- * TODO 可能需要一个刷新按钮,就像一个文件浏览器一样
+ * TODO 可能需要一个刷新按钮,就像一个文件浏览器一样？
  * 默认账户中的内容也能够被删除，因为现在所共享的文件都是默认账户中的内容
  * TODO 测试共享文件夹的功能
  * 如何在SharedLinkSystem启动的时候，创建文件树，应该只需要告诉SharedLinkSystem当前登录的对象是谁就可以创建
@@ -56,7 +58,7 @@ import android.util.Log;
  * 对于权限系统来说:对于管理员来说是权限全开，而对于账户来说拥有的权限需要限制
  * 文件共享层的存在是为了支持多用户拥有不同的共享权限和内容
  * 
- * TODO 有没有必要将上传文件夹设置为共享文件夹
+ * 上传文件夹并不是共享文件夹
  * 
  * <h3>关于文件权限</h3>
  * 需要区分普通用户和管理员所创建的文件
@@ -73,8 +75,8 @@ public class SharedLinkSystem {
 	public static final String SEPARATOR = "/";
 	public static final char SEPARATOR_CHAR = '/';
 	private SharedLink root = null;
-	private String workingDirStr = "";
 	private SharedLink workingDir = root;
+	private String workingDirStr = "";
 	// 所有需要持久存储的文件
 	private ArrayList<String> arr = new ArrayList<String>();
 	// 上传文件所存放的位置
@@ -602,6 +604,8 @@ public class SharedLinkSystem {
 	     * 不应该被使用
 	     */
 	    public static final int PERMISSION_EXECUTE_ALL = 0111;// execute永远不开放
+
+	    public static final int PERMISSION_NONE = 0;
 	    
 	    // enum不能够使用|等位运算符
 //	    PERMISSION_READ_ADMIN(0400),
