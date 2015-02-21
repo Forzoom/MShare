@@ -25,6 +25,7 @@ import android.widget.Toast;
  * TODO 现在viewfinder的范围仍是不大对
  * TODO 是否需要使用startActivityForResult?
  * TODO 解析的范围仍可能有问题
+ * 在manifest文件中保证是竖屏
  * @author HM
  *
  */

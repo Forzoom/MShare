@@ -92,6 +92,8 @@ public class NewConn extends Activity implements StateCallback {
 	// 没有任何状态
 	private int state = 0;
 	
+	private ServerStateRecevier serverStateReceiver;
+	
 	protected void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.newconn);
@@ -162,13 +164,28 @@ public class NewConn extends Activity implements StateCallback {
 		uploadPathView.setText(FsSettings.getUpload());
 
 		mState.registerReceiver();
+		/*
+		 * 服务器状态监听器
+		 */
+		serverStateReceiver = new ServerStateRecevier();
+		ServerStateChangeListener ssclistener = new ServerStateChangeListener();
+		serverStateReceiver.setListener(ssclistener);
 		
+		IntentFilter serverStateFilter = new IntentFilter();
+		serverStateFilter.addAction(FsService.ACTION_STARTED);
+		serverStateFilter.addAction(FsService.ACTION_FAILEDTOSTART);
+		serverStateFilter.addAction(FsService.ACTION_STOPPED);
+		
+		registerReceiver(serverStateReceiver, serverStateFilter);
 	}
 	
 	@Override
 	protected void onStop() {
 		super.onStop();
 		mState.unregisterReceiver();
+		if (serverStateReceiver != null) {
+			unregisterReceiver(serverStateReceiver);
+		}
 	}
 	
 	@Override
@@ -414,10 +431,10 @@ public class NewConn extends Activity implements StateCallback {
 
 	@Override
 	public void onWifiStateChange(int state) {
+		Log.d(TAG, "on wifi state change");
 		switch (state) {
 		// 表示的是手机不支持WIFI
 		case StateController.STATE_WIFI_DISABLE:
-			break;
 		case StateController.STATE_WIFI_ENABLE:
 			changeState(WIFI_STATE_DISCONNECTED);
 			if (FsService.isRunning()) {
@@ -439,6 +456,7 @@ public class NewConn extends Activity implements StateCallback {
 	 */
 	@Override
 	public void onWifiApStateChange(int state) {
+		Log.d(TAG, "on wifi ap state change");
 		switch (state) {
 		case StateController.STATE_WIFI_AP_UNSUPPORT:
 			apTest.setEnabled(false);
@@ -474,16 +492,17 @@ public class NewConn extends Activity implements StateCallback {
 	@Override
 	public void onWifiP2pStateChange(int state) {
 		// TODO Auto-generated method stub
-		
+		Log.d(TAG, "on wifi p2p state change");
 	}
 
 	@Override
 	public void onExternalStorageChange(int state) {
 		// TODO 对于扩展存储的变化能够作为响应
+		Log.d(TAG, "on external storage state change");
 	}
 
 	@Override
 	public void onNfcStateChange(int state) {
-		
+		Log.d(TAG, "on nfc state change");
 	}
 }

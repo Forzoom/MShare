@@ -50,6 +50,11 @@ import android.util.Log;
 import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
+/**
+ * TODO 关键是现在如何通知client有文件需要更新，在FsService中使用通知是否合适
+ * @author HM
+ *
+ */
 public class FsService extends Service implements Runnable {
     private static final String TAG = FsService.class.getSimpleName();
 
@@ -77,7 +82,7 @@ public class FsService extends Service implements Runnable {
     public static final int WAKE_INTERVAL_MS = 1000; // milliseconds
 
     private TcpListener wifiListener = null;
-    // 所有客户连接
+    // 所有客户连接，每个客户都不应该知道其他的客户是如何工作的
     private final List<SessionThread> sessionThreads = new ArrayList<SessionThread>();
     
     // wifi和唤醒锁
@@ -105,7 +110,10 @@ public class FsService extends Service implements Runnable {
         }
         
         // 用于检测账户是否存在
-        Account.checkReservedAccount();
+        // TODO 向AccountFactory中传递SessionNotifier
+        SessionNotifier notifier = new SessionNotifier();
+        AccountFactory.checkReservedAccount();
+        AccountFactory.setSessionNotifier(notifier);
         
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
@@ -280,6 +288,7 @@ public class FsService extends Service implements Runnable {
 
     /**
      * 提醒所有的普通用户，有新的共享内容
+     * TODO 使用该方法来通知，可能会有安全方面的问题，该方法可能被人调用
      */
     public static void notifyAllSession() {
 //    	for (SessionThread sessionThread : sessionThreads) {
@@ -427,6 +436,7 @@ public class FsService extends Service implements Runnable {
     
     /**
      * All messages server<->client are also send to this call
+     * 不知道是干什么的
      * 
      * @param incoming
      * @param s
@@ -485,8 +495,9 @@ public class FsService extends Service implements Runnable {
     }
 
     /**
-     * 并不支持低版本
+     * 并不支持低版本，但是在使用的过程中，好像并没有什么用处，
      * 应该和Service的生命周期有关吧
+     * TODO 在发布版本中，应该将该函数去掉注释
      */
 //    @Override
 //    public void onTaskRemoved(Intent rootIntent) {
@@ -502,4 +513,34 @@ public class FsService extends Service implements Runnable {
 //                SystemClock.elapsedRealtime() + 2000, restartServicePI);
 //    }
 
+    /**
+     * 用于向多个Session发送消息，消息的内容已经包装好了
+     * 在客户端有小红点
+     * 不应该让所有人都可以使用Notifier，因为Notifier将会向用户发送消息
+     * TODO 发送消息通知其他线程:"有新的文件"，该如何发送这些消息呢？
+     * TODO 对于发送这个提醒的Session，不应该被提醒
+     * TODO SessionThread可能现在正在发送消息，需要用什么样的方式来发送消息提醒呢？
+     * @author HM
+     *
+     */
+    protected class SessionNotifier {
+    	/**
+    	 * 需要如何排除sender
+    	 */
+    	public void notifyNewFile(Account account, SessionThread sender) {
+    		int sessionCount = sessionThreads.size();
+    		for (int index = 0; index < sessionCount; index++) {
+    			// 在所有的session中寻找拥有相同的Accoount的SessionThread,但不包括sender
+    			SessionThread receiveSession = sessionThreads.get(index);
+    			// session和sender不相等如何判断
+    			if (receiveSession.getAccount().equals(account) && receiveSession != sender) {
+    				// 发送消息通知receiveSession
+//    				receiveSession.
+    			}
+    		}
+    	}
+    	
+    	// 需要通知当前内容：新文件，正在使用，删除
+    }
+    
 }

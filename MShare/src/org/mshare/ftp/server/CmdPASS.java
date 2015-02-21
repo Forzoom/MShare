@@ -54,7 +54,7 @@ public class CmdPASS extends FtpCmd implements Runnable {
         	Log.d(TAG, "使用密码:" + attemptPassword + " 尝试登录");
         	account.setAttemptPassword(attemptPassword);
         } else {
-        	Log.e(TAG, "未指定尝试使用的密码");
+        	Log.e(TAG, "未指定尝试密码");
         }
         
         if (account.authAttempt()) { // 尝试登陆

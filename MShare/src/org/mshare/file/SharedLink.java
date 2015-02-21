@@ -233,8 +233,8 @@ public abstract class SharedLink {
 		lsPermission.append((filePermission & Permission.PERMISSION_READ) != 0 ? "r" : "-");
 		lsPermission.append((filePermission & Permission.PERMISSION_WRITE) != 0 ? "w" : "-");
 		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE) != 0 ? "x" : "-");
-		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "r" : "-");
-		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "w" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_READ_GUEST) != 0 ? "r" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_WRITE_GUEST) != 0 ? "w" : "-");
 		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "x" : "-");
 		
 		Log.d(TAG, "Ls permission string : " + lsPermission.toString());

@@ -30,12 +30,12 @@ public class CmdSIZE extends FtpCmd {
         String param = getParameter(input);
         long size = 0;
         mainblock: {
-            SharedLink currentDir = sessionThread.sharedLinkSystem.getWorkingDir();
+            SharedLink currentDir = sessionThread.getAccount().getSystem().getWorkingDir();
             if (param.contains(File.separator)) {
                 errString = "550 No directory traversal allowed in SIZE param\r\n";
                 break mainblock;
             }
-            SharedLink target = sessionThread.sharedLinkSystem.getSharedLink(currentDir, param);
+            SharedLink target = sessionThread.getAccount().getSystem().getSharedLink(currentDir, param);
             // We should have caught any invalid location access before now, but
             // here we check again, just to be explicitly sure.
             

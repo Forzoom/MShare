@@ -42,7 +42,7 @@ public class CmdCWD extends FtpCmd implements Runnable {
         String param = getParameter(input);
         SharedLink newDir;
         String errString = null;
-    	newDir = sessionThread.sharedLinkSystem.getSharedLink(param);
+    	newDir = sessionThread.getAccount().getSystem().getSharedLink(param);
     	// TODO 确保newDir不是null且exist，不知道当不存在的时候该返回什么内容
     	
     	
@@ -52,7 +52,7 @@ public class CmdCWD extends FtpCmd implements Runnable {
         if (!(newDir.isDirectory() || newDir.isFakeDirectory())) {
             sessionThread.writeString("550 Can't CWD to invalid directory\r\n");
         } else if (newDir.canRead()) {
-            sessionThread.sharedLinkSystem.setWorkingDir(newDir.getFakePath());
+            sessionThread.getAccount().getSystem().setWorkingDir(newDir.getFakePath());
             sessionThread.writeString("250 CWD successful\r\n");
         } else {
             sessionThread.writeString("550 That path is inaccessible\r\n");

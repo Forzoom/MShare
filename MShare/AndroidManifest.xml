@@ -70,12 +70,10 @@
             android:name="org.mshare.main.FtpFileManage"
             android:label="@string/app_name" >
         </activity>
-        
         <activity
             android:name="org.mshare.nfc.NfcServerActivity"
             android:label="@string/activity_label_nfc" >
         </activity>
-        
         <activity
             android:name="org.mshare.main.MainActivity"
             android:label="@string/app_name" >

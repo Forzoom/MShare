@@ -58,14 +58,14 @@ public class CmdNLST extends CmdAbstractListing implements Runnable {
             }
             SharedLink fileToList = null;
             if (param.equals("")) {
-                fileToList = sessionThread.sharedLinkSystem.getWorkingDir();
+                fileToList = sessionThread.getAccount().getSystem().getWorkingDir();
             } else {
                 if (param.contains("*")) {
                     errString = "550 NLST does not support wildcards\r\n";
                     break mainblock;
                 }
                 // 所能接受的只是文件名, 所获得的是working directory中的内容
-                fileToList = sessionThread.sharedLinkSystem.getSharedLink(param);
+                fileToList = sessionThread.getAccount().getSystem().getSharedLink(param);
                 if (fileToList.isFile()) {
                     // Bernstein suggests that NLST should fail when a
                     // parameter is given and the parameter names a regular

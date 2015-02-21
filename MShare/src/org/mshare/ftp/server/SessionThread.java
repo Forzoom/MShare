@@ -51,14 +51,23 @@ public class SessionThread extends Thread {
     protected boolean binaryMode = false;
     private Account account = null;
     // TODO 从数据存储中将原本的文件数据取出
-    protected SharedLinkSystem sharedLinkSystem = null;
-    // 
+    /**
+     * 数据传送所使用的Socket
+     */
     protected Socket dataSocket = null;
     protected SharedLink renameFrom = null;
     protected LocalDataSocket localDataSocket;
-    // 
+    /**
+     * 从dataSocket中获得的OutputStream，只有当使用dataSocket发送的时候，才不是null
+     */
     OutputStream dataOutputStream = null;
+    /**
+     * 指示是否在开始的是否发送HELLO
+     */
     private boolean sendWelcomeBanner;
+    /**
+     * 所有通过writeString的内容都将使用
+     */
     protected String encoding = Defaults.SESSION_ENCODING;
     protected long offset = -1; // where to start append when using REST
 
@@ -87,6 +96,12 @@ public class SessionThread extends Thread {
         }
     }
 
+    /**
+     * see {@link #sendViaDataSocket(String)}
+     * @param bytes
+     * @param len
+     * @return
+     */
     public boolean sendViaDataSocket(byte[] bytes, int len) {
         return sendViaDataSocket(bytes, 0, len);
     }
@@ -122,6 +137,8 @@ public class SessionThread extends Thread {
      * Received some bytes from the data socket, which is assumed to already be connected.
      * The bytes are placed in the given array, and the number of bytes successfully read
      * is returned.
+     *
+     * 从dataSocket接收数据
      *
      * @param bytes
      *            Where to place the input bytes
@@ -301,6 +318,10 @@ public class SessionThread extends Thread {
         }
     }
 
+    /**
+     * 
+     * @param str
+     */
     public void writeString(String str) {
         FsService.writeMonitor(false, str);
         byte[] strBytes;
@@ -377,18 +398,17 @@ public class SessionThread extends Thread {
     		return false;
     	}
     }
-    
-    // TODO 和上面的方法好像重复了
-    // 检测当前是否是登录成功了
-    // 当每次登录PASS经过调用后就会被调用
+
+    /**
+     * 检测当前是否是登录成功了
+     * 当每次登录PASS经过调用后就会被调用
+     * 检测登录失败的次数，当次数太多的时候，线程退出
+     */
     public void authCheck() {
     	Account account = getAccount();
     	
-        if (account.isLoggedIn()) {
+        if (!account.isLoggedIn()) {
             Log.i(TAG, "Authentication complete");
-            // 当USER和PASS命令重新使用的时候，system也将被重新设置
-            // TODO 不知道将SharedLinkSystem放在这里生成是否好
-            sharedLinkSystem = new SharedLinkSystem(this);
             // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
             // LinkSystem是否需要形成一个自己的圈子呢
         } else {

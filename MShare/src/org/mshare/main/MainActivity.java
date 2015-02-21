@@ -6,6 +6,7 @@ import org.mshare.file.FileAdapter.ItemContainer;
 import org.mshare.file.MShareFileBrowser;
 import org.mshare.file.SharedLinkSystem;
 import org.mshare.ftp.server.Account;
+import org.mshare.ftp.server.AccountFactory;
 import org.mshare.main.R;
 
 import android.app.ActionBar;
@@ -181,14 +182,14 @@ public class MainActivity extends FragmentActivity
 				// 共享文件将放置在根目录下
 				String fakePath = SharedLinkSystem.SEPARATOR + shareActionFile.getName();
 				String realPath = shareActionFile.getAbsolutePath();
-				SharedLinkSystem.commonPersist(Account.adminAccount.getSharedPreferences(), fakePath, realPath);
+				SharedLinkSystem.commonPersist(AccountFactory.adminAccount.getSharedPreferences(), fakePath, realPath);
 				// 需要操作所有sessionThread文件树
 				
 				break;
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE: // 点击的是不共享
 
 				// TODO 所有的文件都假设在根目录下，但这样可能会出错
-				SharedLinkSystem.commonUnpersist(Account.adminAccount.getSharedPreferences(), SharedLinkSystem.SEPARATOR + shareActionFile.getName());
+				SharedLinkSystem.commonUnpersist(AccountFactory.adminAccount.getSharedPreferences(), SharedLinkSystem.SEPARATOR + shareActionFile.getName());
 				
 				break;
 		}
