@@ -6,11 +6,13 @@ import java.util.HashMap;
 import org.mshare.file.FileAdapter;
 import org.mshare.file.MShareCrumbController;
 import org.mshare.file.MShareFileBrowser;
+import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
 
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.Gravity;
@@ -38,7 +40,7 @@ public class DummyFragment extends Fragment
 	private static final String TAG = DummyFragment.class.getSimpleName();
 //	private Button btftp;
 	private RelativeLayout relative;
-	private ArrayList<HashMap<String, Object>> listImageItem;  
+	private ArrayList<HashMap<String, Object>> listImageItem;
     private SimpleAdapter simpleAdapter;
     
     private MShareFileBrowser mFileBrowser = null;
@@ -54,7 +56,9 @@ public class DummyFragment extends Fragment
 		Bundle args = getArguments();
 		int num = args.getInt(ARG_SECTION_NUMBER);
 		
-		mFileBrowser = new MShareFileBrowser(this.getActivity(), container);
+		String rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+		// 让文件浏览器显示扩展存储中的内容
+		mFileBrowser = new MShareFileBrowser(this.getActivity(), container, rootPath);
 		View fileBrowser = mFileBrowser.getView();
 		
 		View view2 = inflater.inflate(R.layout.ftpservice, container, false);

@@ -25,9 +25,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.mshare.file.SharedLink;
+
 import android.util.Log;
 
 /**
+ * TODO 需要检测修改是否有错
  * Implements File Modification Time
  */
 public class CmdMFMT extends FtpCmd implements Runnable {
@@ -65,8 +68,9 @@ public class CmdMFMT extends FtpCmd implements Runnable {
         }
 
         String pathName = params[1];
-        File file = inputPathToChrootedFile(sessionThread.getWorkingDir(), pathName);
-
+        // 文件名或者是相对路径
+        SharedLink file = sessionThread.sharedLinkSystem.getSharedLink(pathName);
+        
         if (file.exists() == false) {
             sessionThread.writeString("550 file does not exist on server\r\n");
             Log.d(TAG, "run: MFMT failed, file does not exist");
@@ -84,7 +88,7 @@ public class CmdMFMT extends FtpCmd implements Runnable {
 
         long lastModified = file.lastModified();
         String response = "213 " + df.format(new Date(lastModified)) + "; "
-                + file.getAbsolutePath() + "\r\n";
+                + file.getFakePath() + "\r\n";
         sessionThread.writeString(response);
 
         Log.d(TAG, "run: MFMT completed succesful");

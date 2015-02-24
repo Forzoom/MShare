@@ -29,7 +29,12 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import org.mshare.file.SharedLink;
 
 import android.util.Log;
 
@@ -52,39 +57,46 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         mainblock: {
             String param = getParameter(input);
             Log.d(TAG, "LIST parameter: " + param);
+            // 所有的LIST参数都将被忽略
             while (param.startsWith("-")) {
                 // Skip all dashed -args, if present
                 Log.d(TAG, "LIST is skipping dashed arg " + param);
                 param = getParameter(param);
             }
-            File fileToList = null;
-            if (param.equals("")) {
-                fileToList = sessionThread.getWorkingDir();
+            
+            // 筛除文件名不合格的文件
+            // 获得所需要列出的文件
+            SharedLink fileToList = null;
+            if (param.equals("")) { // 没有参数
+                fileToList = sessionThread.sharedLinkSystem.getWorkingDir();
             } else {
                 if (param.contains("*")) {
                     errString = "550 LIST does not support wildcards\r\n";
                     break mainblock;
                 }
-                fileToList = new File(sessionThread.getWorkingDir(), param);
-                if (violatesChroot(fileToList)) {
-                    errString = "450 Listing target violates chroot\r\n";
-                    break mainblock;
-                }
+                fileToList = sessionThread.sharedLinkSystem.getSharedLink(param);
             }
+            // 列表的结果
             String listing;
-            if (fileToList.isDirectory()) {
-                StringBuilder response = new StringBuilder();
+            // 当前是一个共享的文件夹 
+            // TODO 需要了解共享文件夹中是否可以有其他的文件
+            if (fileToList.isDirectory() || fileToList.isFakeDirectory()) {
+            	StringBuilder response = new StringBuilder();
                 errString = listDirectory(response, fileToList);
                 if (errString != null) {
                     break mainblock;
                 }
                 listing = response.toString();
-            } else {
+            } else if (fileToList.isFile()) { // 当前是一个文件
                 listing = makeLsString(fileToList);
                 if (listing == null) {
                     errString = "450 Couldn't list that file\r\n";
                     break mainblock;
                 }
+            } else {
+            	listing = ""; // 消除错误
+            	errString = "500 internal server error\r\n";
+            	break mainblock;
             }
             errString = sendListing(listing);
             if (errString != null) {
@@ -102,14 +114,16 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         // have already been handled by sendListing, so we can just quit now.
     }
 
+    // TODO 所有的操作都是SharedFile相关，该函数将来可以删除
+    // 注意：只会添加文件的名字，和路径并没有关系
     // Generates a line of a directory listing in the traditional /bin/ls
     // format.
     @Override
-    protected String makeLsString(File file) {
+    protected String makeLsString(SharedLink file) {
         StringBuilder response = new StringBuilder();
 
         if (!file.exists()) {
-            Log.i(TAG, "makeLsString had nonexistent file");
+            Log.i(TAG, "makeLsString had nonexistent file :" + file.getRealFile());
             return null;
         }
 
@@ -127,12 +141,11 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
             // staticLog.l(Log.DEBUG, "Filename: " + lastNamePart);
         }
 
-        if (file.isDirectory()) {
-            response.append("drwxr-xr-x 1 owner group");
-        } else {
-            // TODO: think about special files, symlinks, devices
-            response.append("-rw-r--r-- 1 owner group");
-        }
+        // 获得文件的权限
+        // TODO: think about special files, symlinks, devices
+        // TODO 需要了解1和group是什么
+        // TODO 需要测试是否正确
+        response.append(file.getLsPermission() + " 1 owner group");
 
         // The next field is a 13-byte right-justified space-padded file size
         long fileSize = file.length();
@@ -158,7 +171,9 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         response.append(format.format(new Date(file.lastModified())));
         response.append(lastNamePart);
         response.append("\r\n");
+        Log.d(TAG, "list result :" + response.toString());
         return response.toString();
     }
 
+    
 }

@@ -20,6 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
+import java.io.Externalizable;
 import java.io.File;
 
 import android.content.Context;
@@ -50,6 +51,15 @@ public class FsSettings {
     // 允许匿名
     public static final String KEY_ALLOW_ANONYMOUS = "allow_anonymous";
     public static final boolean VALUE_ALLOW_ANONYMOUS_DEFAULT = false;
+    
+    // FTP服务器所被限制的最大文件夹
+    public static final String KEY_ROOT_DIR = "root";
+    public static final String VALUE_ROOT_DIR_DEFAULT = Environment.getExternalStorageDirectory().getAbsolutePath();
+    
+    // 上传文件存放路径
+    public static final String KEY_UPLOAD = "upload";
+    // TODO 这个路径可能会出错
+    public static final String VALUE_UPLOAD_DEFAULT = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "org.mshare";
     
     /**
      * 获得用户名称
@@ -92,27 +102,24 @@ public class FsSettings {
     }
 
     /**
-     * 即便扩展存储不可使用，仍旧需要将chroot作为一个文件返回， 因为File并不是一个真正的文件
+     * TODO 目前SharedLinkSystem中的上传路径和该上传路径独立
+     * 如果路径不存在，将使用mkdirs来创建
      * @return
      */
-    public static File getChrootDir() {
-        final SharedPreferences sp = getSharedPreferences();
-        String dirName = sp.getString("chrootDir", "");
-        File chrootDir = new File(dirName);
-        if (dirName.equals("")) {
-            if (MShareUtil.isExternalStorageUsable()) {
-                chrootDir = Environment.getExternalStorageDirectory();
-            } else {
-                chrootDir = new File("/");
-            }
+    public static String getUpload() {
+    	final SharedPreferences sp = getSharedPreferences();
+        String uploadPath = sp.getString(KEY_UPLOAD, VALUE_UPLOAD_DEFAULT);
+        
+        File uploadRoot = new File(uploadPath);
+        // TODO 如何保证文件夹存在呢，如果不存在，就不能再使用共享文件层吧
+        if (!uploadRoot.exists()) {
+        	uploadRoot.mkdirs();
         }
-        if (!chrootDir.isDirectory()) {
-            Log.e(TAG, "getChrootDir: not a directory");
-            return null;
-        }
-        return chrootDir;
+        
+        Log.v(TAG, "upload path : " + uploadPath);
+        return uploadPath; 
     }
-
+    
     /**
      * 设置用户名
      * @param username
@@ -143,6 +150,13 @@ public class FsSettings {
     	final SharedPreferences sp = getSharedPreferences();
     	SharedPreferences.Editor editor = sp.edit();
     	editor.putString(KEY_PORT, port);
+    	editor.commit();
+    }
+
+    public static void setUpload(String uploadPath) {
+    	final SharedPreferences sp = getSharedPreferences();
+    	SharedPreferences.Editor editor = sp.edit();
+    	editor.putString(KEY_UPLOAD, uploadPath);
     	editor.commit();
     }
     

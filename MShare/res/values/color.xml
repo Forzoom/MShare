@@ -23,6 +23,17 @@
   	<color name="contents_text">#ff000000</color>
   	<color name="encode_view">#ffffffff</color>
   	
+  	<!-- state bar -->
+  	<color name="state_disable">#222222</color>
+  	<color name="state_enable">#ffffff</color>
+  	<color name="state_using">#00ff00</color>
+  	
+  	<!-- 二维码扫描 -->
+	<color name="viewfinder_laser">#ff00cc00</color> <!-- Android standard ICS color -->
+	<color name="viewfinder_mask">#60000000</color>
+	<color name="result_view">#b0000000</color>
+	<color name="possible_result_points">#c0ffbd21</color> <!-- Android standard ICS color -->
+  	
 	<drawable name="tv_normal">#FFFFFF</drawable>
 	<drawable name="tv_focused">#1F2FAB</drawable>
 	<drawable name="tv_pressed">#00cccc</drawable>

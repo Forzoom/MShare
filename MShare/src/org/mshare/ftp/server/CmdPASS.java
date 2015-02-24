@@ -34,30 +34,41 @@ public class CmdPASS extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "Executing PASS");
-        String attemptPassword = getParameter(input, true); // silent
-        // Always first USER command, then PASS command
-        String attemptUsername = sessionThread.account.getUsername();
-        if (attemptUsername == null) {
-            sessionThread.writeString("503 Must send USER first\r\n");
-            return;
+        String attemptPassword = getParameter(input); // silent
+        
+        Account account = sessionThread.getAccount();
+        if (account == null) {
+        	// TODO 可能使用ACCT来创建Account
+        	Log.e(TAG, "必须先调用USER");
+        	sessionThread.writeString("503 Must send USER first\r\n");
+        	return;
         }
-        String username = FsSettings.getUsername();
-        String password = FsSettings.getPassword();
-        if (username == null || password == null) {
-            Log.e(TAG, "Username or password misconfigured");
-            sessionThread.writeString("500 Internal error during authentication");
-        } else if (username.equals(attemptUsername) && password.equals(attemptPassword)) {
-            sessionThread.writeString("230 Access granted\r\n");
-            Log.i(TAG, "User " + username + " password verified");
-            sessionThread.authAttempt(true);
-        } else if (attemptUsername.equals("anonymous") && FsSettings.allowAnoymous()) {
-            sessionThread.writeString("230 Guest login ok, read only access.\r\n");
-            Log.i(TAG, "Guest logged in with email: " + attemptPassword);
+        if (account.getUsername() == null || account.getPassword() == null) {
+        	Log.e(TAG, "Account对象中的username或password为null");
+        	sessionThread.writeString("500 Internal error during authentication");
+        	return;
+        }
+        
+        // 输入的内容可能会有错误
+        if (attemptPassword != null && !attemptPassword.equals("")) {
+        	Log.d(TAG, "使用密码:" + attemptPassword + " 尝试登录");
+        	account.setAttemptPassword(attemptPassword);
         } else {
-            Log.i(TAG, "Failed authentication");
+        	Log.e(TAG, "未指定尝试使用的密码");
+        }
+        
+        if (account.authAttempt()) { // 尝试登陆
+        	Log.i(TAG, "User " + account.getUsername() + " password verified");
+        	if (account.isAnonymous()) {
+        		sessionThread.writeString("230 Guest login ok, read only access.\r\n");
+        	} else {
+            	sessionThread.writeString("230 Access granted\r\n");
+        	}
+        } else {
+        	Log.i(TAG, "Failed authentication");
             Util.sleepIgnoreInterupt(1000); // sleep to foil brute force attack
             sessionThread.writeString("530 Login incorrect.\r\n");
-            sessionThread.authAttempt(false);
         }
+        sessionThread.authCheck();
     }
 }

@@ -16,6 +16,8 @@
 
 package com.google.zxing;
 
+import android.util.Log;
+
 /**
  * This object extends LuminanceSource around an array of YUV data returned from the camera driver,
  * with the option to crop to a rectangle within the full data. This can be used to exclude
@@ -28,6 +30,8 @@ package com.google.zxing;
  */
 public final class PlanarYUVLuminanceSource extends LuminanceSource {
 
+	private static final String TAG = PlanarYUVLuminanceSource.class.getSimpleName();
+	
   private static final int THUMBNAIL_SCALE_FACTOR = 2;
   
   private final byte[] yuvData;
@@ -47,6 +51,8 @@ public final class PlanarYUVLuminanceSource extends LuminanceSource {
     super(width, height);
 
     if (left + width > dataWidth || top + height > dataHeight) {
+    	Log.e(TAG, "left :" + left + " width:" + width + " dataWidth:" + dataWidth);
+    	Log.e(TAG, "top :" + top + " height:" + height + " dataHeight:" + dataHeight);
       throw new IllegalArgumentException("Crop rectangle does not fit within image data.");
     }
 

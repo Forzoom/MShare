@@ -22,6 +22,8 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.lang.reflect.Constructor;
 
+import org.mshare.file.SharedLinkSystem.Permission;
+
 import android.util.Log;
 
 public abstract class FtpCmd implements Runnable {
@@ -51,12 +53,17 @@ public abstract class FtpCmd implements Runnable {
             new CmdMap("SITE", CmdSITE.class), //
     };
 
-    private static Class<?>[] allowedCmdsWhileAnonymous = { CmdUSER.class, CmdPASS.class, //
+    // 所有读权限所能够发送的命令
+    private static Class<?>[] allowedCmdsWhileRead = { CmdUSER.class, CmdPASS.class, //
             CmdCWD.class, CmdLIST.class, CmdMDTM.class, CmdNLST.class, CmdPASV.class, //
             CmdPWD.class, CmdQUIT.class, CmdRETR.class, CmdSIZE.class, CmdTYPE.class, //
             CmdCDUP.class, CmdNOOP.class, CmdSYST.class, CmdPORT.class, //
     };
 
+    private static Class<?>[] allowedCmdsWhileNotLoggedIn = {
+    	CmdUSER.class, CmdPASS.class, CmdQUIT.class
+    };
+    
     public FtpCmd(SessionThread sessionThread) {
         this.sessionThread = sessionThread;
     }
@@ -119,11 +126,35 @@ public abstract class FtpCmd implements Runnable {
             return;
         }
 
-        if (session.isUserLoggedIn()) {
-            cmdInstance.run();
-        } else if (session.isAnonymouslyLoggedIn() == true) {
-            boolean validCmd = false;
-            for (Class<?> cl : allowedCmdsWhileAnonymous) {
+        Account account = session.getAccount();
+        
+        // 对于已经登录的用户，将无条件地执行所发送的命令
+        // TODO 低耦合
+        if (account != null && (session.isUserLoggedIn() || session.isAnonymouslyLoggedIn())) {
+        	// TODO 在用户的权限上不能够很好地告知客户端,下面的方式不是很好
+        	if (Account.canWrite(account, Permission.PERMISSION_WRITE_ALL)) { // 检测写权限
+        		cmdInstance.run();
+        	} else if (Account.canRead(account, Permission.PERMISSION_READ_ALL)) { // 检测读权限
+        		boolean validCmd = false;
+                for (Class<?> cl : allowedCmdsWhileRead) {
+                    if (cmdInstance.getClass().equals(cl)) {
+                        validCmd = true;
+                        break;
+                    }
+                }
+                if (validCmd == true) {
+                    cmdInstance.run();
+                } else {
+                    session.writeString("530 user is not allowed to use that command\r\n");
+                }
+        	} else {
+        		// TODO 将返回无法执行
+        		Log.e(TAG, "没有任何权限");
+        		session.writeString("530 user is not allowed to use that command\r\n");
+        	}
+        } else {
+        	boolean validCmd = false;
+            for (Class<?> cl : allowedCmdsWhileNotLoggedIn) {
                 if (cmdInstance.getClass().equals(cl)) {
                     validCmd = true;
                     break;
@@ -132,14 +163,8 @@ public abstract class FtpCmd implements Runnable {
             if (validCmd == true) {
                 cmdInstance.run();
             } else {
-                session.writeString("530 Guest user is not allowed to use that command\r\n");
+                session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
             }
-        } else if (cmdInstance.getClass().equals(CmdUSER.class)
-                || cmdInstance.getClass().equals(CmdPASS.class)
-                || cmdInstance.getClass().equals(CmdQUIT.class)) {
-            cmdInstance.run();
-        } else {
-            session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
         }
     }
 
@@ -178,38 +203,18 @@ public abstract class FtpCmd implements Runnable {
         return getParameter(input, false);
     }
 
-    public static File inputPathToChrootedFile(File existingPrefix, String param) {
-        try {
-            if (param.charAt(0) == '/') {
-                // The STOR contained an absolute path
-                File chroot = FsSettings.getChrootDir();
-                return new File(chroot, param);
-            }
-        } catch (Exception e) {
-        }
+//    public static File inputPathToChrootedFile(File existingPrefix, String param) {
+//        try {
+//            if (param.charAt(0) == '/') {
+//                // The STOR contained an absolute path
+//                File chroot = FsSettings.getRootDir();
+//                return new File(chroot, param);
+//            }
+//        } catch (Exception e) {
+//        }
+//
+//        // The STOR contained a relative path
+//        return new File(existingPrefix, param);
+//    }
 
-        // The STOR contained a relative path
-        return new File(existingPrefix, param);
-    }
-
-    public boolean violatesChroot(File file) {
-        try {
-            // taking the canonical path as new devices have sdcard symlinked
-            // for multiuser support
-            File chroot = FsSettings.getChrootDir();
-            String canonicalChroot = chroot.getCanonicalPath();
-            String canonicalPath = file.getCanonicalPath();
-            if (!canonicalPath.startsWith(canonicalChroot)) {
-                Log.i(TAG, "Path violated folder restriction, denying");
-                Log.d(TAG, "path: " + canonicalPath);
-                Log.d(TAG, "chroot: " + chroot.toString());
-                return true; // the path must begin with the chroot path
-            }
-            return false;
-        } catch (Exception e) {
-            Log.i(TAG, "Path canonicalization problem: " + e.toString());
-            Log.i(TAG, "When checking file: " + file.getAbsolutePath());
-            return true; // for security, assume violation
-        }
-    }
 }

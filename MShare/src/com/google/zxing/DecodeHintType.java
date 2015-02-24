@@ -19,6 +19,8 @@ package com.google.zxing;
 import java.util.List;
 
 /**
+ * 包装了一种提示信息，用于传递给barcodeReader帮助它更快或者更加精确地解码
+ * 
  * Encapsulates a type of hint that a caller may pass to a barcode reader to help it
  * more quickly or accurately decode it. It is up to implementations to decide what,
  * if anything, to do with the information that is supplied.
@@ -35,12 +37,14 @@ public enum DecodeHintType {
  OTHER(Object.class),
 
   /**
+   * 单色的barcode
    * Image is a pure monochrome image of a barcode. Doesn't matter what it maps to;
    * use {@link Boolean#TRUE}.
    */
   PURE_BARCODE(Void.class),
 
   /**
+   * 
    * Image is known to be of one of a few possible formats.
    * Maps to a {@link List} of {@link BarcodeFormat}s.
    */

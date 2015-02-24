@@ -21,6 +21,9 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
+import org.mshare.file.SharedDirectory;
+import org.mshare.file.SharedLink;
+
 import android.util.Log;
 
 public class CmdRMD extends FtpCmd implements Runnable {
@@ -37,19 +40,17 @@ public class CmdRMD extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "RMD executing");
         String param = getParameter(input);
-        File toRemove;
+        SharedLink toRemove;
         String errString = null;
         mainblock: {
+        	// 为什么这里要判定和处理参数？为了反之将根文件删除?
+        	// TODO 需要加上"/"
             if (param.length() < 1) {
                 errString = "550 Invalid argument\r\n";
                 break mainblock;
             }
-            toRemove = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
-            if (violatesChroot(toRemove)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break mainblock;
-            }
-            if (!toRemove.isDirectory()) {
+            toRemove = sessionThread.sharedLinkSystem.getSharedLink(param);
+            if (!(toRemove.isDirectory() || toRemove.isFakeDirectory())) {
                 errString = "550 Can't RMD a non-directory\r\n";
                 break mainblock;
             }
@@ -72,20 +73,22 @@ public class CmdRMD extends FtpCmd implements Runnable {
     }
 
     /**
+     * TODO 可能出现删除不完整的情况
      * Accepts a file or directory name, and recursively deletes the contents of that
      * directory and all subdirectories.
      * 
      * @param toDelete
      * @return Whether the operation completed successfully
      */
-    protected boolean recursiveDelete(File toDelete) {
+    protected boolean recursiveDelete(SharedLink toDelete) {
         if (!toDelete.exists()) {
             return false;
         }
-        if (toDelete.isDirectory()) {
+        if (toDelete.isDirectory() || toDelete.isFakeDirectory()) { // 迭代删除其中内容
             // If any of the recursive operations fail, then we return false
             boolean success = true;
-            for (File entry : toDelete.listFiles()) {
+            SharedLink[] toDeleteList = toDelete.listFiles();
+            for (SharedLink entry : toDeleteList) {
                 success &= recursiveDelete(entry);
             }
             Log.d(TAG, "Recursively deleted: " + toDelete);
@@ -93,7 +96,8 @@ public class CmdRMD extends FtpCmd implements Runnable {
         } else {
             Log.d(TAG, "RMD deleting file: " + toDelete);
             boolean success = toDelete.delete();
-            MediaUpdater.notifyFileDeleted(toDelete.getPath());
+            // TODO 需要了解这里是为了什么
+            MediaUpdater.notifyFileDeleted(toDelete.getFakePath());
             return success;
         }
     }

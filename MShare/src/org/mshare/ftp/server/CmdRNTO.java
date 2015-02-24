@@ -22,6 +22,11 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.io.IOException;
 
+import org.mshare.file.SharedLink;
+import org.mshare.file.SharedLinkSystem;
+import org.mshare.main.MShareUtil;
+
+import android.test.RenamingDelegatingContext;
 import android.util.Log;
 
 public class CmdRNTO extends FtpCmd implements Runnable {
@@ -39,28 +44,73 @@ public class CmdRNTO extends FtpCmd implements Runnable {
         Log.d(TAG, "RNTO executing");
         String param = getParameter(input);
         String errString = null;
-        File toFile = null;
+        // 这需要文件的写权限
+        // 这里的文件重命名操作确实有点麻烦，不知道为什么要这么做
+        SharedLink toFile = null;
         mainblock: {
             Log.i(TAG, "param: " + param);
-            toFile = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
-            Log.i(TAG, "RNTO to file: " + toFile.getPath());
-            if (violatesChroot(toFile)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break mainblock;
+            // TODO 需要修改至三种文件类型都接受
+            // 需要能够响应相对路径和文件名两种情况
+            
+            // 写权限检测
+            if (!Account.canWrite(sessionThread.getAccount(), sessionThread.getRenameFrom().getPermission())) {
+            	errString = "550 permission denied\r\n";
+            	break mainblock;
             }
-            File fromFile = sessionThread.getRenameFrom();
+            
+            toFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+            // TODO 可能存在真实文件被删除的情况
+            if (toFile != null && toFile.exists()) {
+            	errString = "550 already exist\r\n";
+            	break mainblock;
+            }
+            
+            String fakePath = null, realPath = null;
+            SharedLink fromFile = sessionThread.getRenameFrom();
             if (fromFile == null) {
                 errString = "550 Rename error, maybe RNFR not sent\r\n";
                 break mainblock;
             }
-            Log.i(TAG, "RNTO from file: " + fromFile.getPath());
+            Log.i(TAG, "RNTO from file: " + fromFile.getFakePath());
+            String fromFileParentPath = fromFile.getParent();
+            
+            // TODO 在这里创建SharedLink的对象不是很好
+            if (fromFile.isFile()) {
+            	if (fromFileParentPath.equals(SharedLinkSystem.SEPARATOR)) {
+            		fakePath = fromFileParentPath + param;
+            	} else {
+            		fakePath = fromFileParentPath + SharedLinkSystem.SEPARATOR + param;
+            	}
+            	realPath = fromFile.getRealFile().getParent() + File.separator + MShareUtil.guessName(param);
+            	toFile = SharedLink.newFile(sessionThread.sharedLinkSystem, fakePath, realPath, fromFile.getPermission());
+            } else if (fromFile.isFakeDirectory()) {
+            	if (fromFileParentPath.equals(SharedLinkSystem.SEPARATOR)) {
+            		fakePath = fromFileParentPath + param;
+            	} else {
+            		fakePath = fromFileParentPath + SharedLinkSystem.SEPARATOR + param;
+            	}
+            	toFile = SharedLink.newFakeDirectory(sessionThread.sharedLinkSystem, fakePath, fromFile.getPermission());
+            } else if (fromFile.isDirectory()) {
+            	// 暂时没有
+            	toFile = null;
+            }
+            Log.i(TAG, "RNTO to file: " + toFile.getFakePath());
+            
             // TODO: this code is working around a bug that java6 and before cannot
             // reliable move a file, once java7 is supported by Dalvik, this code can
             // be replaced with Files.move()
+            
+            if (!fromFile.renameTo(toFile)) {
+            	errString = "550 Error during rename operation\r\n";
+            	break mainblock;
+            }
+            
+            /*
+            
             File tmpFile = null;
             try {
                 tmpFile = File.createTempFile("temp_" + fromFile.getName(), null,
-                        sessionThread.getWorkingDir());
+                        sessionThread.getWorkingDirStr());
                 if (fromFile.isDirectory()) {
                     String tmpFilePath = tmpFile.getPath();
                     tmpFile.delete();
@@ -80,6 +130,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
                 errString = "550 Error during rename operation\r\n";
                 break mainblock;
             }
+            */
         }
         if (errString != null) {
             sessionThread.writeString(errString);

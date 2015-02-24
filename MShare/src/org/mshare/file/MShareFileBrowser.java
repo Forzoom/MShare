@@ -1,6 +1,8 @@
 package org.mshare.file;
 
 import java.io.File;
+import java.util.Map;
+
 import org.mshare.main.*;
 import org.mshare.file.FileAdapter.ItemContainer;
 import org.mshare.ftp.server.FsSettings;
@@ -11,6 +13,8 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,8 +35,8 @@ import org.mshare.main.MShareUtil;
 public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
 
 	// TODO 暂时放置在这里，使用内容在MainActivity中
-	public static final int CM_ITEM_ID_SHARE = 4;
-	public static final int CM_ITEM_ID_UNSHARE = 5;
+	public static final int CONTEXT_MENU_ITEM_ID_SHARE = 4;
+	public static final int CONTEXT_MENU_ITEM_ID_UNSHARE = 5;
 	
 	private static final String TAG = MShareFileBrowser.class.getSimpleName();
 	
@@ -54,13 +58,23 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * 后退按钮
 	 */
 	private Button backBtn = null;
-	// TODO rootFile的设定必须和服务器中的内容相同
+	/**
+	 * 根目录路径，即扩展存储路径
+	 */
 	private MShareFile rootFile;
+	
 	private boolean enable = false;
 	
-	public MShareFileBrowser(Context context, ViewGroup container) {
+	/**
+	 * 被选定的文件对象
+	 * TODO 在何时删除selectedPath内容
+	 */
+	private String longClickPath;
+	
+	public MShareFileBrowser(Context context, ViewGroup container, String rootPath) {
 		this.context = context;
 		this.container = container;
+		this.rootFile = new MShareFile(rootPath);
 	}
 	
 	public View getView() {
@@ -71,9 +85,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backBtn.setOnClickListener(new BackBtnListener(context));
 		
-		// 根目录路径，即扩展存储路径
-		// TODO FsSettings.getChrootDir可能并不能获得正确的路径,虽然在使用FileBrowser之前已经判断了扩展存储是否可用
-		rootFile = new MShareFile(FsSettings.getChrootDir());
 		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
 		
 		// 面包屑导航控制器
@@ -86,25 +97,29 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
 		
+		// TODO 可能并不是很好的注册ContextMenu的方法，因为需要将context作为Activity来使用
+		((Activity)context).registerForContextMenu(gridView);
 		
 		// 检测扩展存储是否可用
-		setEnabled(MShareUtil.isExternalStorageUsable());
+		setEnabled(StateController.getExternalStorageState() == StateController.STATE_EXTERNAL_STORAGE_ENABLE);
 		if (!isEnabled()) {
 			Toast.makeText(context, R.string.external_storage_removed, Toast.LENGTH_SHORT).show();
 			return null;
 		} else {
 			// set adapter
-			if (adapter != null) {
-				adapter.release();
-			}
 			adapter = new FileAdapter(context, files); 
 			gridView.setAdapter(adapter);
 			return fileBrowserLayout;
 		}
 	}
 	
+	public String getShared() {
+		return longClickPath;
+	}
+	
 	/**
-	 * 检测扩展存储是否可用
+	 * 设置当前的文件浏览器是否可用
+	 * 一般在扩展存储不可用的时候，将文件浏览器设置为不可用
 	 * @return
 	 */
 	public boolean isEnabled() {
@@ -153,10 +168,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 */
 	public void refreshGridView(MShareFile[] files) {
 		// 新的适配器，用于刷新GridView
-		// TODO 在adapter中注册长按监听器
-		if (adapter != null) {
-			adapter.release();
-		}
 		adapter = new FileAdapter(context, files);
 		gridView.setAdapter(adapter);
 		
@@ -186,6 +197,37 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	}
 	
 	/**
+	 * 将一个文件设置为共享的
+	 * @param file
+	 */
+	public void setFileShared(MShareFile file, boolean shared) {
+		String filePath = file.getAbsolutePath();
+		// TODO 不适用SharedPreference来记录
+		// 当前登录用户的设置对象
+		SharedPreferences sp = context.getSharedPreferences("username", Context.MODE_PRIVATE);
+		// 判断当前文件路径是否是共享的
+		// 尝试获得所有的内容
+		Map<String, Boolean> map = (Map<String, Boolean>)sp.getAll();
+		
+		boolean isShared = sp.getBoolean(filePath, false);
+		
+		if (isShared != shared) {
+			Editor editor = sp.edit();
+			editor.putBoolean(filePath, shared);
+			editor.commit();
+		}
+	}
+	
+	/**
+	 * 设置一批文件是否共享
+	 * @param files
+	 * @param shared
+	 */
+	public void setFilesShared(MShareFile[] files, boolean shared) {
+		
+	}
+	
+	/**
 	 * 用于响应当面包屑导航中的内容被点击时的事件
 	 * @param selected
 	 * @param name
@@ -196,7 +238,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 //		this.selected = selected;
 		refreshGridView();
 	}
-	
+
 	/**
 	 * 用于相应GridView中的button的响应事件
 	 * @author HM
@@ -258,7 +300,8 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	}
 
 	/**
-	 * 监听扩展存储的状态
+	 * <p>监听扩展存储的状态</p>
+	 * TODO 将来将使用{@link ExternalStorageStateReceiver}来代替
 	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {

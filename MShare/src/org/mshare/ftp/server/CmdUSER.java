@@ -36,12 +36,21 @@ public class CmdUSER extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "USER executing");
         String username = FtpCmd.getParameter(input);
+        // 只允许这样的用户名
         if (!username.matches("[A-Za-z0-9]+")) {
+        	Log.e(TAG, "Invalid username " + username);
             sessionThread.writeString("530 Invalid username\r\n");
             return;
         }
+        Account account = Account.getInstance(username);
+        if (account == null) {
+        	Log.e(TAG, "username " + username + " is not exist");
+        	sessionThread.writeString("530 username is not exist\r\n");
+            return;
+        }
+        
+        sessionThread.setAccount(account);
         sessionThread.writeString("331 Send password\r\n");
-        sessionThread.account.setUsername(username);
     }
 
 }

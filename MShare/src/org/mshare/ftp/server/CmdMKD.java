@@ -21,8 +21,18 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
+import org.mshare.file.SharedLink;
+import org.mshare.file.SharedLinkSystem;
+import org.mshare.main.MShareUtil;
+import org.mshare.main.UploadFileChooserAdapter;
+
 import android.util.Log;
 
+/**
+ * 创建文件夹，通过该方法所创建的文件夹都是SharedFakeDirectory
+ * @author HM
+ *
+ */
 public class CmdMKD extends FtpCmd implements Runnable {
     private static final String TAG = CmdMKD.class.getSimpleName();
 
@@ -37,7 +47,7 @@ public class CmdMKD extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "MKD executing");
         String param = getParameter(input);
-        File toCreate;
+        SharedLink toCreate;
         String errString = null;
         mainblock: {
             // If the param is an absolute path, use it as is. If it's a
@@ -46,19 +56,26 @@ public class CmdMKD extends FtpCmd implements Runnable {
                 errString = "550 Invalid name\r\n";
                 break mainblock;
             }
-            toCreate = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
-            if (violatesChroot(toCreate)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break mainblock;
-            }
-            if (toCreate.exists()) {
+            // 传递的参数可能是相对路径，也可能是文件名
+            // TODO 要不要把所有的参数操作，都用这两种情况表示出来
+            // 这个肯定是不存在的，File可以是虚假的，但是SharedLink必须是真实的？
+            // 如果让SharedFakeDirectory在这里出现，会不会太过麻烦
+            SharedLinkSystem sharedLinkSystem = sessionThread.sharedLinkSystem;
+            
+            // 所能创建的仅仅是一个fakeDirectory
+            // 尝试在文件树中寻找对应内容
+            toCreate = sharedLinkSystem.getSharedLink(param);
+            if (toCreate != null && toCreate.exists()) {
                 errString = "550 Already exists\r\n";
                 break mainblock;
             }
-            if (!toCreate.mkdir()) {
-                errString = "550 Error making directory (permissions?)\r\n";
-                break mainblock;
-            }
+            
+            // 可以是相对路径也可以是文件名
+            String fakePath = sessionThread.sharedLinkSystem.getFakePath(param);
+            
+            sessionThread.sharedLinkSystem.addSharedPath(fakePath, "", SharedLinkSystem.FILE_PERMISSION_USER);
+            sessionThread.sharedLinkSystem.persist(fakePath, "");
+            
         }
         if (errString != null) {
             sessionThread.writeString(errString);

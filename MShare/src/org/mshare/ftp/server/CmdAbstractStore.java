@@ -33,7 +33,10 @@ import java.io.RandomAccessFile;
 
 import android.util.Log;
 
+import org.mshare.file.SharedLink;
+import org.mshare.file.SharedLinkSystem;
 import org.mshare.ftp.server.*;
+import org.mshare.main.MShareUtil;
 
 abstract public class CmdAbstractStore extends FtpCmd {
     private final static String TAG = "CmdAbstractStore"; // TODO: .class.getSimpleName()
@@ -46,19 +49,20 @@ abstract public class CmdAbstractStore extends FtpCmd {
 
     public void doStorOrAppe(String param, boolean append) {
         Log.d(TAG, "STOR/APPE executing with append=" + append);
-        File storeFile = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
+        
+        // TODO 保证param的正确性
+        // 获得的可能是文件名也可能是相对路径
+        String fileName = MShareUtil.guessName(param);
+        String fakePath = sessionThread.sharedLinkSystem.getFakePath(param);
+        String realPath = sessionThread.sharedLinkSystem.getUploadDirPath() + File.separator + fileName;
+        
+        // 先创建真实文件
+        File storeFile = new File(realPath);
 
         String errString = null;
         OutputStream out = null;
-        // DedicatedWriter dedicatedWriter = null;
-        // int origPriority = Thread.currentThread().getPriority();
-        // myLog.l(Log.DEBUG, "STOR original priority: " + origPriority);
         storing: {
             // Get a normalized absolute path for the desired file
-            if (violatesChroot(storeFile)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break storing;
-            }
             if (storeFile.isDirectory()) {
                 errString = "451 Can't overwrite a directory\r\n";
                 break storing;
@@ -129,6 +133,8 @@ abstract public class CmdAbstractStore extends FtpCmd {
             } else {
                 Log.d(TAG, "Mode is ascii");
             }
+            
+            // 文件传送
             while (true) {
                 /*
                  * if(dedicatedWriter.checkErrorFlag()) { errString =
@@ -207,8 +213,9 @@ abstract public class CmdAbstractStore extends FtpCmd {
                     }
                     break;
                 }
-            }
-        }
+            } // 完成循环
+        } // 完成storing块
+        
         // // Clean up the dedicated writer thread
         // if(dedicatedWriter != null) {
         // dedicatedWriter.exit(); // set its exit flag
@@ -235,6 +242,13 @@ abstract public class CmdAbstractStore extends FtpCmd {
             MediaUpdater.notifyFileCreated(storeFile.getPath());
         }
         sessionThread.closeDataSocket();
+        
+        // 文件传送已经完成
+        // 添加到文件树中
+        sessionThread.sharedLinkSystem.addSharedPath(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_USER);
+        // 持久化内容
+        sessionThread.sharedLinkSystem.persist(fakePath, realPath);
+        
         Log.d(TAG, "STOR finished");
     }
 }

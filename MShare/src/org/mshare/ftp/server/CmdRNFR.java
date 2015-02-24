@@ -21,6 +21,8 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
+import org.mshare.file.SharedLink;
+
 import android.util.Log;
 
 public class CmdRNFR extends FtpCmd implements Runnable {
@@ -38,13 +40,11 @@ public class CmdRNFR extends FtpCmd implements Runnable {
         Log.d(TAG, "Executing RNFR");
         String param = getParameter(input);
         String errString = null;
-        File file = null;
+        SharedLink file = null;
         mainblock: {
-            file = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
-            if (violatesChroot(file)) {
-                errString = "550 Invalid name or chroot violation\r\n";
-                break mainblock;
-            }
+        	// 参数或者是文件名
+            file = sessionThread.sharedLinkSystem.getSharedLink(param);
+            Log.d(TAG, "from file fake name " + file.getFakePath());
             if (!file.exists()) {
                 errString = "450 Cannot rename nonexistent file\r\n";
             }

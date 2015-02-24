@@ -31,12 +31,15 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+import org.mshare.file.SharedLink;
+import org.mshare.file.SharedLinkSystem;
+
 import android.util.Log;
 
 /**
  * 代表的应该是与Client的Thread
  * @author HM
- *
+ * TODO 主要是如果出现..的情况下的文件路径，可能会出现问题
  */
 public class SessionThread extends Thread {
     private static final String TAG = SessionThread.class.getSimpleName();
@@ -46,19 +49,18 @@ public class SessionThread extends Thread {
     protected ByteBuffer buffer = ByteBuffer.allocate(Defaults.getInputBufferSize());
     protected boolean pasvMode = false;
     protected boolean binaryMode = false;
-    protected Account account = new Account();
-    protected boolean userAuthenticated = false;
-    protected File workingDir = FsSettings.getChrootDir();
+    private Account account = null;
+    // TODO 从数据存储中将原本的文件数据取出
+    protected SharedLinkSystem sharedLinkSystem = null;
     // 
     protected Socket dataSocket = null;
-    protected File renameFrom = null;
+    protected SharedLink renameFrom = null;
     protected LocalDataSocket localDataSocket;
     // 
     OutputStream dataOutputStream = null;
     private boolean sendWelcomeBanner;
     protected String encoding = Defaults.SESSION_ENCODING;
     protected long offset = -1; // where to start append when using REST
-    int authFails = 0;
 
     public static int MAX_AUTH_FAILS = 3;
 
@@ -343,55 +345,58 @@ public class SessionThread extends Thread {
      * @return true if we should allow FTP opperations
      */
     public boolean isAuthenticated() {
-        if (userAuthenticated == true || FsSettings.allowAnoymous() == true) {
-            return true;
-        }
-        return false;
+    	Account account = getAccount();
+    	if (account != null) {
+    		return account.isLoggedIn();
+    	} else {
+    		return false;
+    	}
     }
 
     /**
      * @return true only when we are anonymously logged in
      */
     public boolean isAnonymouslyLoggedIn() {
-        if (userAuthenticated == true) {
-            return false;
-        }
-        if (FsSettings.allowAnoymous() == true) {
-            return true;
-        }
-        return false;
+    	Account account = getAccount();
+    	if (account != null) {
+    		return account.isLoggedIn() && account.isAnonymous();
+    	} else {
+    		return false;
+    	}
     }
 
     /**
+     * 通过身份认证并且不是通过匿名登录的
      * @return true if a valid user has logged in
      */
     public boolean isUserLoggedIn() {
-        return userAuthenticated;
+    	Account account = getAccount();
+    	if (account != null) {
+    		return account.isLoggedIn() && !account.isAnonymous();
+    	} else {
+    		return false;
+    	}
     }
-
-    public void authAttempt(boolean authenticated) {
-        if (authenticated) {
+    
+    // TODO 和上面的方法好像重复了
+    // 检测当前是否是登录成功了
+    // 当每次登录PASS经过调用后就会被调用
+    public void authCheck() {
+    	Account account = getAccount();
+    	
+        if (account.isLoggedIn()) {
             Log.i(TAG, "Authentication complete");
-            userAuthenticated = true;
+            // 当USER和PASS命令重新使用的时候，system也将被重新设置
+            // TODO 不知道将SharedLinkSystem放在这里生成是否好
+            sharedLinkSystem = new SharedLinkSystem(this);
+            // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
+            // LinkSystem是否需要形成一个自己的圈子呢
         } else {
-            authFails++;
-            Log.i(TAG, "Auth failed: " + authFails + "/" + MAX_AUTH_FAILS);
-            if (authFails > MAX_AUTH_FAILS) {
+            Log.i(TAG, "Auth failed: " + account.authFails + "/" + MAX_AUTH_FAILS);
+            if (account.authFails > MAX_AUTH_FAILS) {
                 Log.i(TAG, "Too many auth fails, quitting session");
                 quit();
             }
-        }
-    }
-
-    public File getWorkingDir() {
-        return workingDir;
-    }
-
-    public void setWorkingDir(File workingDir) {
-        try {
-            this.workingDir = workingDir.getCanonicalFile().getAbsoluteFile();
-        } catch (IOException e) {
-            Log.i(TAG, "SessionThread canonical error");
         }
     }
 
@@ -403,11 +408,11 @@ public class SessionThread extends Thread {
         this.dataSocket = dataSocket;
     }
 
-    public File getRenameFrom() {
+    public SharedLink getRenameFrom() {
         return renameFrom;
     }
-
-    public void setRenameFrom(File renameFrom) {
+    // TODO 需要修改
+    public void setRenameFrom(SharedLink renameFrom) {
         this.renameFrom = renameFrom;
     }
 

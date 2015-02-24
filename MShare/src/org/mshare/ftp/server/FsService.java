@@ -35,6 +35,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
@@ -61,15 +63,6 @@ public class FsService extends Service implements Runnable {
     // 有一个Receiver的存在用于监听下面的内容，用于启动和停止服务器
 	public static final String ACTION_START_FTPSERVER = "org.mshare.ftp.server.ACTION_START_FTPSERVER";
     public static final String ACTION_STOP_FTPSERVER = "org.mshare.ftp.server.ACTION_STOP_FTPSERVER";
-    
-    // TODO 使用反射来获得WifiAp状态改变的广播
-    public static final String WIFI_AP_STATE_CHANGED_ACTION = "android.net.wifi.WIFI_AP_STATE_CHANGED";
-    public static final int WIFI_AP_STATE_DISABLING = 10;
-    public static final int WIFI_AP_STATE_DISABLED = 11;
-    public static final int WIFI_AP_STATE_ENABLING = 12;
-    public static final int WIFI_AP_STATE_ENABLED = 13;
-    public static final int WIFI_AP_STATE_FAILED = 14;
-    public static final String EXTRA_WIFI_AP_STATE = "wifi_state";
     
     // server thread
     protected static Thread serverThread = null;
@@ -110,6 +103,10 @@ public class FsService extends Service implements Runnable {
                 return START_STICKY;
             }
         }
+        
+        // 用于检测账户是否存在
+        Account.checkReservedAccount();
+        
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
         serverThread.start();
@@ -282,6 +279,15 @@ public class FsService extends Service implements Runnable {
     }
 
     /**
+     * 提醒所有的普通用户，有新的共享内容
+     */
+    public static void notifyAllSession() {
+//    	for (SessionThread sessionThread : sessionThreads) {
+//    		
+//    	}
+    }
+    
+    /**
      * Takes the wake lock
      * 
      * Many devices seem to not properly honor a PARTIAL_WAKE_LOCK, which should prevent
@@ -359,6 +365,16 @@ public class FsService extends Service implements Runnable {
         return null;
     }
 
+    /**
+     * 判断当前的网络环境是否可以开启服务器
+     * @return
+     */
+    public static boolean isNetworkAccess() {
+    	// WIFI或者WIFIP2P或者AP情况下允许开启网络
+    	
+    	return false;
+    }
+    
     /**
      * Checks to see if we are connected to a local network, for instance wifi or ethernet
      * 检测当前是否是在一个局域网内。
@@ -460,26 +476,30 @@ public class FsService extends Service implements Runnable {
         Log.d(TAG, "Registered session thread");
     }
 
+    // TODO 可能需要监听器来监听当前的sessionThread的数量变化
+//    public static int getCurrentLink
+    
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
     /**
+     * 并不支持低版本
      * 应该和Service的生命周期有关吧
      */
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        super.onTaskRemoved(rootIntent);
-        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
-        Intent restartService = new Intent(getApplicationContext(), this.getClass());
-        restartService.setPackage(getPackageName());
-        PendingIntent restartServicePI = PendingIntent.getService(
-                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
-        AlarmManager alarmService = (AlarmManager) getApplicationContext()
-                .getSystemService(Context.ALARM_SERVICE);
-        alarmService.set(AlarmManager.ELAPSED_REALTIME,
-                SystemClock.elapsedRealtime() + 2000, restartServicePI);
-    }
+//    @Override
+//    public void onTaskRemoved(Intent rootIntent) {
+//        super.onTaskRemoved(rootIntent);
+//        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
+//        Intent restartService = new Intent(getApplicationContext(), this.getClass());
+//        restartService.setPackage(getPackageName());
+//        PendingIntent restartServicePI = PendingIntent.getService(
+//                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
+//        AlarmManager alarmService = (AlarmManager) getApplicationContext()
+//                .getSystemService(Context.ALARM_SERVICE);
+//        alarmService.set(AlarmManager.ELAPSED_REALTIME,
+//                SystemClock.elapsedRealtime() + 2000, restartServicePI);
+//    }
 
 }

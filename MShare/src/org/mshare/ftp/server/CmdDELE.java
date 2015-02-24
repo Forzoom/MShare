@@ -21,8 +21,15 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
+import org.mshare.file.SharedLink;
+
 import android.util.Log;
 
+/**
+ * TODO 对于客户端，应该可以发送是否删除磁盘上的文件,应该提示用户是取消共享还是删除文件
+ * @author HM
+ *
+ */
 public class CmdDELE extends FtpCmd implements Runnable {
     private static final String TAG = CmdDELE.class.getSimpleName();
 
@@ -37,10 +44,11 @@ public class CmdDELE extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "DELE executing");
         String param = getParameter(input);
-        File storeFile = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
+        SharedLink storeFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+        
         String errString = null;
-        if (violatesChroot(storeFile)) {
-            errString = "550 Invalid name or chroot violation\r\n";
+        if (storeFile == null) {
+        	errString = "550 file is not exist\r\n";
         } else if (storeFile.isDirectory()) {
             errString = "550 Can't DELE a directory\r\n";
         } else if (!storeFile.delete()) {
@@ -52,7 +60,8 @@ public class CmdDELE extends FtpCmd implements Runnable {
             Log.i(TAG, "DELE failed: " + errString.trim());
         } else {
             sessionThread.writeString("250 File successfully deleted\r\n");
-            MediaUpdater.notifyFileDeleted(storeFile.getPath());
+            // TODO 这里必须了解MediaUpdater是干什么用的
+//            MediaUpdater.notifyFileDeleted(storeFile.getPath());
         }
         Log.d(TAG, "DELE finished");
     }
