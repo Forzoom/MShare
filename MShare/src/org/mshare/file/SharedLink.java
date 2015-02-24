@@ -151,23 +151,29 @@ public abstract class SharedLink {
 	}
 	
 	/**
-	 * @return 将会返回File，不保证File一定能够正常使用
+	 * 当FakeDirectory调用getRealFile的时候返回null
+	 * @return 将会返回File，不保证File一定能够正常使用，可能是null
 	 */
 	public File getRealFile() {
-		if (realFile == null || !realFile.getAbsoluteFile().equals(realPath)) {
-			realFile = new File(realPath);
+		if (isFile() || isFakeDirectory()) {
+			if (realFile == null || !realFile.getAbsoluteFile().equals(realPath)) {
+				realFile = new File(realPath);
+			}
+			return realFile;
+		} else {
+			return null;
 		}
-		return realFile;
 	}
 	
 	/**
 	 * 文件的大小
-	 * @return
+	 * @return 对于文件返回0
 	 */
 	public abstract long length();
 	
 	// TODO 可能消耗大量的内存资源,仅仅用于调试
-	void print() {
+	// 而且样式并不是很好看
+	public void print() {
 		String fakeName = getName();
 		if (isDirectory()) {
 			System.out.println("(" + fakeName);

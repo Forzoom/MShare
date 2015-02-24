@@ -36,6 +36,8 @@ import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 /**
+ * 管理员账户中的文件树是有必要存在的，用以判断持久化内容是否正确
+ * 当管理员账户的内容持久化的时候，需要向所有的文件树中添加内容，需要这样做
  * 原本打算存在一个存放所有Account是否存在的信息，是否有必要有这样的信息呢？
  * 我们有必要对所有的账户进行列表吗？
  * 许多账户可能都是临时的，很有可能，服务器的存在是持久的，但是文件共享因为在手机端，可能更多并不是在一个长时间内容进行使用
@@ -67,10 +69,8 @@ public class Account {
     // TODO 不知道是否需要修改，这个有用吗
     public static final String USER_DEFAULT = "default_username";
     
-    // 默认值拥有读权限,为测试添加写权限
-    private int mPermission = Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
-    // 对于匿名登录账户的权限,暂时拥有写权限
-    private static final int PERMISSION_GUEST = Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
+    // 默认没有权限
+    private int mPermission = Permission.PERMISSION_NONE;
 
 	// 存放在SharedPreferences中的键值
     // TODO 使用public合适吗
@@ -82,7 +82,7 @@ public class Account {
     public static final String KEY_UPLOAD = "upload";
 
     /**
-     * 
+     * SessionNotifier，用以提醒其他Session，自己发生了变化
      */
     private SessionNotifier mNotifier;
     
@@ -92,28 +92,34 @@ public class Account {
     public int sessionCount;
     
     // TODO 考虑将Account的内容移动到AccountFactory中，多例模式是怎么弄的？
+    // TODO 考虑unprepared函数，用于将文件树释放
     public Account(String username, String password) {
     	// TODO username,mPassword仍有可能是null
     	this.mUserName = username;
     	this.mPassword = password;
+    	// TODO 调用USER的时候文件树就生成了
     	mSharedLinkSystem = new SharedLinkSystem(this);
+    	mSharedLinkSystem.prepare();
     }
     
     /**
      * 检测当前使用 {@link #mAttemptPassword} 是否登录成功
+     * TODO 管理员的权限在哪里设定？
+     * TODO 用户可以随时使用其他的账户登录，所以并不能要求用户必须调用QUIT
      * @return
      */
     public boolean authAttempt() {
 		if (!mUserName.equals(AccountFactory.AnonymousUsername) && mAttemptPassword != null && mAttemptPassword.equals(mPassword)) {
-			Log.d(TAG, "使用非匿名账户尝试登录");
+			mPermission = AccountFactory.PERMISSION_USER;
+			Log.d(TAG, "User logged in");
 			userAuthenticated = true;
 		} else if (FsSettings.allowAnoymous() && mUserName.equals(AccountFactory.AnonymousUsername)) {
 			// 设置权限为匿名账户权限
-			mPermission = PERMISSION_GUEST;
+			mPermission = AccountFactory.PERMISSION_GUEST;
 			Log.i(TAG, "Guest logged in with password: " + mAttemptPassword);
 			userAuthenticated = true;
 		} else {
-			Log.d(TAG, "尝试登录失败");
+			Log.d(TAG, "Logged fail");
 			authFails++;
 			userAuthenticated = false;
 		}
@@ -189,6 +195,7 @@ public class Account {
 		return mUserName.equals(AccountFactory.AnonymousUsername);
 	}
 	
+	// TODO 需要增加判断用户类型的内容，用户是管理员、普通用户、匿名用户，在Account被创建的时候，就为账户分配类型
 	public boolean isAdministrator() {
 		return mUserName.equals(AccountFactory.AdminUsername);
 	}
@@ -251,6 +258,15 @@ public class Account {
     	} else {
     		return false;
     	}
+    }
+    
+    public void registerSession() {
+    	sessionCount++;
+    }
+    
+    // TODO 是否需要在这里尝试回收Account
+    public void unregisterSession() {
+    	sessionCount--;
     }
     
     public int getSessionCount() {

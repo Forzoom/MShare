@@ -51,6 +51,8 @@ import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
 /**
+ * TODO 如何获得Service的实例对象
+ * TODO 当有Session的数量发生变化的时候，如果能够通知就好了，以保证当前的Session数量合适
  * TODO 关键是现在如何通知client有文件需要更新，在FsService中使用通知是否合适
  * @author HM
  *
@@ -72,7 +74,7 @@ public class FsService extends Service implements Runnable {
     // server thread
     protected static Thread serverThread = null;
     protected boolean shouldExit = false;
-    // 用于接收客户的socket
+    // 用于接收客户端的socket
     protected ServerSocket listenSocket;
 
     // The server thread will check this often to look for incoming
@@ -85,7 +87,7 @@ public class FsService extends Service implements Runnable {
     // 所有客户连接，每个客户都不应该知道其他的客户是如何工作的
     private final List<SessionThread> sessionThreads = new ArrayList<SessionThread>();
     
-    // wifi和唤醒锁
+    // wifi和wake锁
     private WakeLock wakeLock;
     private WifiLock wifiLock = null;
     
@@ -515,29 +517,49 @@ public class FsService extends Service implements Runnable {
 
     /**
      * 用于向多个Session发送消息，消息的内容已经包装好了
-     * 在客户端有小红点
+     * TODO 在客户端有小红点
      * 不应该让所有人都可以使用Notifier，因为Notifier将会向用户发送消息
      * TODO 发送消息通知其他线程:"有新的文件"，该如何发送这些消息呢？
      * TODO 对于发送这个提醒的Session，不应该被提醒
-     * TODO SessionThread可能现在正在发送消息，需要用什么样的方式来发送消息提醒呢？
+     * TODO SessionThread可能现在正在发送消息，需要用什么样的方式来发送消息提醒呢？使用消息队列？
+     * TODO 将发送消息处理成一个函数
      * @author HM
      *
      */
     protected class SessionNotifier {
     	/**
     	 * 需要如何排除sender
+    	 * TODO 如果是管理员账户该怎么办？
+    	 * @param sender 可以是null
     	 */
-    	public void notifyNewFile(Account account, SessionThread sender) {
+    	public void notifyAddFile(Account account, SessionThread sender) {
     		int sessionCount = sessionThreads.size();
-    		for (int index = 0; index < sessionCount; index++) {
-    			// 在所有的session中寻找拥有相同的Accoount的SessionThread,但不包括sender
-    			SessionThread receiveSession = sessionThreads.get(index);
-    			// session和sender不相等如何判断
-    			if (receiveSession.getAccount().equals(account) && receiveSession != sender) {
-    				// 发送消息通知receiveSession
-//    				receiveSession.
-    			}
+    		
+    		// 对于管理员账户来说
+    		if (account.isAdministrator()) {
+    			for (int index = 0; index < sessionCount; index++) {
+        			SessionThread receiveSession = sessionThreads.get(index);
+    				// 发送消息通知所有的Session
+//        			receiveSession.
+        		}
+    		} else {
+    			// 普通账户
+    			for (int index = 0; index < sessionCount; index++) {
+        			// 在所有的session中寻找拥有相同的Accoount的SessionThread,但不包括sender
+        			SessionThread receiveSession = sessionThreads.get(index);
+        			// session和sender不相等如何判断
+        			if (receiveSession.getAccount().equals(account) && receiveSession != sender) {
+        				// 发送消息通知
+//        				receiveSession.
+        			}
+        		}
     		}
+    		
+    		
+    	}
+    	
+    	public void notifyDeleteFile(Account account, SessionThread sender) {
+    		
     	}
     	
     	// 需要通知当前内容：新文件，正在使用，删除

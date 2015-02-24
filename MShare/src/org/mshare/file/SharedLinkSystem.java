@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * TODO 考虑B+树
  * TODO 使用AccountFactory来管理Account账户的创建和回收,当用户QUIT的时候，或者是超时（是否需要设置超时？）的时候，会将Account中的sessionThread的register回收
  * 当有持久化内容被更新的时候，将会通知所有的Session
  * TODO 管理员账户并不存在文件树，所有对于管理员账户中所有持久化内容，当一棵文件树被构建的时候，都将在新的文件树中创建
@@ -60,7 +61,7 @@ import android.util.Log;
  * TODO 只是共享文件被删除还是本地文件被删除？
  * 对于权限系统来说:对于管理员来说是权限全开，而对于账户来说拥有的权限需要限制
  * 
- * TODO 管理员该如何显示内容呢？在MShareFileBrowser中？
+ * TODO 管理员该如何显示内容呢？在MShareFileBrowser中？需要在文件浏览器启动的时候在文件树中查看内容，但是文件树所对应的realPath并不知道在哪里，是不是需要构造一个真实的文件树
  * 
  * 文件共享层的存在是为了支持多用户拥有不同的共享权限和内容
  * 上传文件夹并不是共享文件夹
@@ -80,8 +81,7 @@ public class SharedLinkSystem {
 	public static final String SEPARATOR = "/";
 	public static final char SEPARATOR_CHAR = '/';
 	private SharedLink root = null;
-	private SharedLink workingDir = root;
-	private String workingDirStr = "";
+	private SharedLink workingDir = null;
 	// 所有需要持久存储的文件
 	private ArrayList<String> arr = new ArrayList<String>();
 	// 上传文件所存放的位置
@@ -91,10 +91,19 @@ public class SharedLinkSystem {
 //	private SessionThread sessionThread;
 	/**
 	 * 所有上传文件存放的位置，默认为sd卡下的org.mshare文件夹
+	 * TODO 使用static好吗?
 	 */
 	public static String uploadRoot = null;
 	
+	/**
+	 * SharedLinkSystem所对应的Account
+	 */
 	private Account mAccount;
+	
+	/**
+	 * 用以表明当前文件树是否已经准备完成，可以使用
+	 */
+	private boolean prepared = false;
 	
 	/**
 	 * 因为对于SharedPreferences中返回的realPath可能会是正常的，也可能为""，即fakeDirectory的情况
@@ -107,35 +116,52 @@ public class SharedLinkSystem {
 	public static final String REAL_PATH_FAKE_DIRECTORY = "";
 	
 	/**
-	 * 普通用户拥有写权限
+	 * 普通用户所创建的文件拥有写权限
 	 */
 	public static final int FILE_PERMISSION_USER = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN
-			| Permission.PERMISSION_READ | Permission.PERMISSION_WRITE | Permission.PERMISSION_READ_GUEST;;
+			| Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
 	/**
+	 * 管理员所创建的文件
 	 * 普通用户仅仅拥有读权限
 	 */
 	public static final int FILE_PERMISSION_ADMIN = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN
 			| Permission.PERMISSION_READ | Permission.PERMISSION_READ_GUEST;
+	
+	/**
+	 * 回调内容
+	 */
+	private Callback mCallback;
+	
 	// TODO 获得文件树对应的Account,如果Account是空的怎么办？要不要使用多例模式？当Account为null的时候，将无法获得一个SharedLinkSystem，或者是使用initial函数来让文件树prepare
 	// 将构造函数中的一些操作移动到prepare函数中
 	public SharedLinkSystem(Account account) {
 		this.mAccount = account;
-		// 不持久化根内容
-		root = SharedLink.newFakeDirectory(this, SEPARATOR, Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_READ_GUEST);
+	}
+	
+	/**
+	 * 需要使用prepared来确保文件树被创建了
+	 * prepared要怎么使用呢，用来判断
+	 */
+	public void prepare() {
+		// 根没有被持久化，所以需要每次自行创建,根文件只有读权限
+		root = SharedLink.newFakeDirectory(this, SEPARATOR, Permission.PERMISSION_READ_ALL);
+		
 		// 设置当前的working directory为"/"
 		setWorkingDir(SEPARATOR); // root作为working directory
 
 		// 当不是默认账户时，将默认账户中的内容一并加入
 		if (!getAccount().isAdministrator()) { // 对于普通账户，需要加入管理员账户中所设置的共享文件
+			// TODO 需要考虑更好的方法来保存这些内容，考虑B+树，在树形结构上仍能递归处理
 			SharedPreferences adminSp = AccountFactory.adminAccount.getSharedPreferences();
 			Log.d(TAG, "sp size : " + adminSp.getAll().size());
 			load(adminSp, "default", FILE_PERMISSION_ADMIN);
 		}
-		SharedPreferences privateSp = account.getSharedPreferences();
+		SharedPreferences privateSp = mAccount.getSharedPreferences();
 		Log.d(TAG, "sp size : " + privateSp.getAll().size());
 		load(privateSp, "private", FILE_PERMISSION_USER);
 		
 		prepareUpload();
+		prepared = true;
 	}
 	
 	/**
@@ -171,7 +197,7 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * 准备存放上传文件的位置
+	 * 准备存放上传文件的位置，创建真实的文件夹
 	 */
 	private void prepareUpload() {
 		uploadPath = getAccount().getUpload();
@@ -479,30 +505,6 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * 在文件树中寻找当前workingDir对应的SharedLink
-	 * @return
-	 */
-	public SharedLink searchWorkingDir() {
-		
-		String[] crumbs = split(workingDirStr);
-    	SharedLink sf = root;
-    	for (int i = 0; i < crumbs.length; i++) {
-    		sf = sf.list().get(crumbs[i]);
-    		if (sf == null) {
-    			Log.w(TAG, "internal file is not exist");
-        		return null;
-        	}
-    	}
-    	
-		return sf;
-	}
-	
-	public File getRealFile(String pathname) {
-//		getFile(pathname).get
-		return null;
-	}
-	
-	/**
 	 * 当前用于接收上传文件的路径
 	 * @return
 	 */
@@ -515,7 +517,7 @@ public class SharedLinkSystem {
 	 * @return
 	 */
 	public String getWorkingDirStr() {
-		return workingDirStr;
+		return workingDir.getFakePath();
 	}
 	
 	/**
@@ -528,18 +530,20 @@ public class SharedLinkSystem {
 	
 	/**
 	 * 设置当前的工作路径,包括对于String和SharedFile对象的修改
-	 * @param workingDir
+	 * @param workingDir 支持文件名和相对路径
 	 */
 	public void setWorkingDir(String workingDir) {
-		try {
-			// TODO Canonical路径可能需要自己来实现
-        	this.workingDirStr = new File(workingDir).getCanonicalPath();
-        	this.workingDir = searchWorkingDir();
-        } catch (IOException e) {
-            Log.i(TAG, "SessionThread canonical error");
-        }
+		Log.d(TAG, "set working dir");
+    	this.workingDir = getSharedLink(workingDir);
 	}
-
+	
+	/**
+	 * 只能有一个Callback,新的Callback将会顶替旧的Callback
+	 */
+	public void setCallback(Callback callback) {
+		mCallback = callback;
+	}
+	
 	public static String join(String[] crumbs) {
 		return join(crumbs, 0, crumbs.length);
 	}
@@ -588,10 +592,14 @@ public class SharedLinkSystem {
 		return ret;
 	}
 	
+	public boolean isPrepared() {
+		return prepared;
+	}
+	
 	/**
 	 * 深度优先打印
 	 */
-	void print() {
+	public void print() {
 		root.print();
 	}
 	
@@ -665,5 +673,23 @@ public class SharedLinkSystem {
 //	    public int value() {
 //	    	return this.value;
 //	    }
+	}
+	
+	/**
+	 * 当文件树发生变化的时候的回调函数
+	 * @author HM
+	 *
+	 */
+	public interface Callback {
+		public void onPersist(String fakePath, String realPath);
+		public void onUnpersist(String fakePath);
+		/**
+		 * 当调用了{@link SharedLinkSystem#addSharedPath(String, String, int)}时的回调函数
+		 */
+		public void onAdd();
+		/**
+		 * 当调用了{@link SharedLinkSystem#deleteSharedPath(String)}时的回调函数
+		 */
+		public void onDelete();
 	}
 }
