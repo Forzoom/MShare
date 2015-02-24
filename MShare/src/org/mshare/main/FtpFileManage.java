@@ -19,6 +19,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -68,7 +69,9 @@ public class FtpFileManage extends Activity{
 
 	private String mCurrentPWD; // 当前远程目录
 	private static final String OLIVE_DIR_NAME = "MShareDownload";
+	private static final String CACHE_DIR_NAME = "MShareCache";
 
+	
 	// Upload
 	private GridView mGridView;
 	private View fileChooserView;
@@ -106,7 +109,9 @@ public class FtpFileManage extends Activity{
 	private static final int MSG_CMD_RENAME_FAILED = MENU_OPTIONS_BASE + 10;
 	private static final int MSG_CMD_CDU_OK = MENU_OPTIONS_BASE + 11;
 	private static final int MSG_CMD_CDU_FAILED = MENU_OPTIONS_BASE + 12;
-
+	private static final int MSG_CMD_OPEN_OK = MENU_OPTIONS_BASE + 13;
+	private static final int MSG_CMD_OPEN_FAILED = MENU_OPTIONS_BASE + 14;
+	 
 	private static final int MENU_OPTIONS_DOWNLOAD = MENU_OPTIONS_BASE + 20;
 	private static final int MENU_OPTIONS_RENAME = MENU_OPTIONS_BASE + 21;
 	private static final int MENU_OPTIONS_DELETE = MENU_OPTIONS_BASE + 22;
@@ -180,6 +185,10 @@ public class FtpFileManage extends Activity{
 					int positioin, long id) {
 				if (mFileList.get(positioin).getType() == FTPFile.TYPE_DIRECTORY) {
 					executeCWDRequest(mFileList.get(positioin).getName());
+				}else if(mFileList.get(positioin).getType() == FTPFile.TYPE_FILE){
+					mSelectedPosistion = positioin;
+					showDialog(DIALOG_LOAD);
+					new CmdOPEN().execute();
 				}
 			}
 		});
@@ -421,6 +430,12 @@ public class FtpFileManage extends Activity{
 			case MSG_CMD_RENAME_FAILED:
 				toast("请求数据失败。");
 				break;
+			case MSG_CMD_OPEN_OK:
+				toast("请求数据成功。");
+				break;
+			case MSG_CMD_OPEN_FAILED:
+				toast("请求数据失败。");
+				break;
 			default:
 				break;
 			}
@@ -483,6 +498,23 @@ public class FtpFileManage extends Activity{
 				return mAtSDCardPath;
 			} else {
 				mAtSDCardPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + OLIVE_DIR_NAME;
+				File rootFile = new File(mAtSDCardPath);
+				if (!rootFile.exists()) {
+					rootFile.mkdir();
+				}
+				return mAtSDCardPath;
+			}
+		}
+		return null;
+	}
+	
+	private static String getParentCachePath() {
+		if (Environment.getExternalStorageState().equals(
+				Environment.MEDIA_MOUNTED)) {
+			if (mAtSDCardPath != null) {
+				return mAtSDCardPath;
+			} else {
+				mAtSDCardPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + CACHE_DIR_NAME;
 				File rootFile = new File(mAtSDCardPath);
 				if (!rootFile.exists()) {
 					rootFile.mkdir();
@@ -676,6 +708,44 @@ public class FtpFileManage extends Activity{
 		}
 	}
 
+	public class CmdOPEN extends AsyncTask<Void, Integer, Boolean> {
+		
+		String localPath = getParentCachePath() + File.separator
+				+ mFileList.get(mSelectedPosistion).getName();
+		
+		File cacheFile = new File(localPath);
+		
+		public CmdOPEN() {
+			
+		}
+
+		@Override
+		protected Boolean doInBackground(Void... params) {
+
+			try {
+				mFTPClient.download(
+						mFileList.get(mSelectedPosistion).getName(),cacheFile,
+						new DownloadFTPDataTransferListener(mFileList.get(
+								mSelectedPosistion).getSize()));
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				return false;
+			}
+			openFile(cacheFile);
+			return true;
+		}
+
+		protected void onProgressUpdate(Integer... progress) {
+
+		}
+
+		protected void onPostExecute(Boolean result) {
+			
+			toast(result ? "打开成功" : "打开失败");
+			progressDialog.dismiss();
+		}
+	}
+	
 	public class CmdDELE extends FtpCmd {
 
 		String realivePath;
@@ -732,7 +802,7 @@ public class FtpFileManage extends Activity{
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			try {
-				String localPath = getParentRootPath() + File.separator
+				String localPath = getParentCachePath() + File.separator
 						+ mFileList.get(mSelectedPosistion).getName();
 				mFTPClient.download(
 						mFileList.get(mSelectedPosistion).getName(),
@@ -752,7 +822,7 @@ public class FtpFileManage extends Activity{
 		}
 
 		protected void onPostExecute(Boolean result) {
-			toast(result ? "下载成功,文件已保存到/MShareDownload" : "下载失败,请检查是否已插入SD卡");
+			toast(result ? "打开成功" : "打开失败");
 			progressDialog.dismiss();
 		}
 	}
@@ -946,6 +1016,124 @@ public class FtpFileManage extends Activity{
 			mPbLoad.setProgress(progress);
 		}
 	}
+	
+	private String detectType(String fileName) throws IOException,
+	FTPIllegalReplyException, FTPException {
+		int start = fileName.lastIndexOf('.') + 1;
+		int stop = fileName.length();
+		if (start > 0 && start < stop - 1) {
+			String ext = fileName.substring(start, stop);
+			ext = ext.toLowerCase();
+			return ext;
+		}
+		return null;
+	}
+	
+	private void openFile(File file){
+		Intent intent = new Intent();
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		//设置intent的Action属性 
+		intent.setAction(Intent.ACTION_VIEW);
+		//获取文件file的MIME类型 
+		String type = getMIMEType(file);
+		//设置intent的data和Type属性。 
+		intent.setDataAndType(/*uri*/Uri.fromFile(file), type);
+		file.deleteOnExit();
+		//跳转 
+		startActivity(intent);
+	}
+	
+	private String getMIMEType(File file) {  
+		final String[][] MIME_MapTable={
+				//{后缀名，	MIME类型}
+				{".3gp",	"video/3gpp"},
+				{".apk",	"application/vnd.android.package-archive"},
+				{".asf",	"video/x-ms-asf"},
+				{".avi",	"video/x-msvideo"},
+				{".bin",	"application/octet-stream"},
+				{".bmp",  	"image/bmp"},
+				{".c",	"text/plain"},
+				{".class",	"application/octet-stream"},
+				{".conf",	"text/plain"},
+				{".cpp",	"text/plain"},
+				{".doc",	"application/msword"},
+				{".docx",	"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+				{".xls",	"application/vnd.ms-excel"}, 
+				{".xlsx",	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+				{".exe",	"application/octet-stream"},
+				{".gif",	"image/gif"},
+				{".gtar",	"application/x-gtar"},
+				{".gz",	"application/x-gzip"},
+				{".h",	"text/plain"},
+				{".htm",	"text/html"},
+				{".html",	"text/html"},
+				{".jar",	"application/java-archive"},
+				{".java",	"text/plain"},
+				{".jpeg",	"image/jpeg"},
+				{".jpg",	"image/jpeg"},
+				{".js",	"application/x-javascript"},
+				{".log",	"text/plain"},
+				{".m3u",	"audio/x-mpegurl"},
+				{".m4a",	"audio/mp4a-latm"},
+				{".m4b",	"audio/mp4a-latm"},
+				{".m4p",	"audio/mp4a-latm"},
+				{".m4u",	"video/vnd.mpegurl"},
+				{".m4v",	"video/x-m4v"},	
+				{".m4v",	"video/x-matroska"},
+				{".mov",	"video/quicktime"},
+				{".mp2",	"audio/x-mpeg"},
+				{".mp3",	"audio/x-mpeg"},
+				{".mp4",	"video/mp4"},
+				{".mpc",	"application/vnd.mpohun.certificate"},		
+				{".mpe",	"video/mpeg"},	
+				{".mpeg",	"video/mpeg"},	
+				{".mpg",	"video/mpeg"},	
+				{".mpg4",	"video/mp4"},	
+				{".mpga",	"audio/mpeg"},
+				{".msg",	"application/vnd.ms-outlook"},
+				{".ogg",	"audio/ogg"},
+				{".pdf",	"application/pdf"},
+				{".png",	"image/png"},
+				{".pps",	"application/vnd.ms-powerpoint"},
+				{".ppt",	"application/vnd.ms-powerpoint"},
+				{".pptx",	"application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+				{".prop",	"text/plain"},
+				{".rc",	"text/plain"},
+				{".rmvb",	"audio/x-pn-realaudio"},
+				{".rtf",	"application/rtf"},
+				{".sh",	"text/plain"},
+				{".tar",	"application/x-tar"},	
+				{".tgz",	"application/x-compressed"}, 
+				{".txt",	"text/plain"},
+				{".wav",	"audio/x-wav"},
+				{".wma",	"audio/x-ms-wma"},
+				{".wmv",	"audio/x-ms-wmv"},
+				{".wps",	"application/vnd.ms-works"},
+				{".xml",	"text/plain"},
+				{".z",	"application/x-compress"},
+				{".zip",	"application/x-zip-compressed"},
+				{"",		"*/*"}	
+			};
+	      
+	    String type="*/*";  
+	    String fName = file.getName();  
+	    //获取后缀名前的分隔符"."在fName中的位置。  
+	    int dotIndex = fName.lastIndexOf(".");  
+	    if(dotIndex < 0){  
+	        return type;  
+	    }  
+	    /* 获取文件的后缀名 */  
+	    String end=fName.substring(dotIndex,fName.length()).toLowerCase();  
+	    if(end=="")return type;  
+	    //在MIME和文件类型的匹配表中找到对应的MIME类型。  
+	    for(int i=0;i<MIME_MapTable.length;i++){ //MIME_MapTable??在这里你一定有疑问，这个MIME_MapTable是什么？  
+	        if(end.equals(MIME_MapTable[i][0]))  
+	            type = MIME_MapTable[i][1];  
+	    }         
+	    return type;  
+	}  
 }
+
+
 
 
