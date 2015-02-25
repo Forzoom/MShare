@@ -33,6 +33,7 @@ import java.nio.ByteBuffer;
 
 import org.mshare.file.SharedLink;
 import org.mshare.file.SharedLinkSystem;
+import org.mshare.ftp.server.AccountFactory.Token;
 
 import android.util.Log;
 
@@ -49,7 +50,8 @@ public class SessionThread extends Thread {
     protected ByteBuffer buffer = ByteBuffer.allocate(Defaults.getInputBufferSize());
     protected boolean pasvMode = false;
     protected boolean binaryMode = false;
-    private Account account = null;
+    private Token token;
+    protected String username;
     // TODO 从数据存储中将原本的文件数据取出
     /**
      * 数据传送所使用的Socket
@@ -338,14 +340,6 @@ public class SessionThread extends Thread {
         return cmdSocket;
     }
 
-    public Account getAccount() {
-        return account;
-    }
-
-    public void setAccount(Account account) {
-        this.account = account;
-    }
-
     public boolean isPasvMode() {
         return pasvMode;
     }
@@ -444,4 +438,19 @@ public class SessionThread extends Thread {
         this.encoding = encoding;
     }
 
+    public Token getToken() {
+    	return token;
+    }
+    
+    public void setToken(Token token) {
+    	this.token = token;
+    }
+    
+    public String getUsername() {
+    	return username;
+    }
+    
+    public void setUsername(String username) {
+    	this.username = username;
+    }
 }

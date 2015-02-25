@@ -47,6 +47,7 @@ import android.os.PowerManager.WakeLock;
 import android.os.SystemClock;
 import android.util.Log;
 
+import org.mshare.ftp.server.AccountFactory.Token;
 import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
@@ -91,6 +92,8 @@ public class FsService extends Service implements Runnable {
     private WakeLock wakeLock;
     private WifiLock wifiLock = null;
     
+    private static AccountFactory mAccountFactory;
+    
     /**
      * 当start被调用的时候，即尝试启动一个新的服务器线程
      */
@@ -114,8 +117,10 @@ public class FsService extends Service implements Runnable {
         // 用于检测账户是否存在
         // TODO 向AccountFactory中传递SessionNotifier
         SessionNotifier notifier = new SessionNotifier();
-        AccountFactory.checkReservedAccount();
-        AccountFactory.setSessionNotifier(notifier);
+        // 创建AccountFactory
+        mAccountFactory = new AccountFactory();
+        mAccountFactory.checkReservedAccount();
+        mAccountFactory.setSessionNotifier(notifier);
         
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
@@ -515,6 +520,10 @@ public class FsService extends Service implements Runnable {
 //                SystemClock.elapsedRealtime() + 2000, restartServicePI);
 //    }
 
+    public static Token getToken() {
+    	return mAccountFactory.getAdminAccountToken();
+    }
+    
     /**
      * 用于向多个Session发送消息，消息的内容已经包装好了
      * TODO 在客户端有小红点

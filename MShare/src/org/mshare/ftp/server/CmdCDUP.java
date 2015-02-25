@@ -44,7 +44,7 @@ public class CmdCDUP extends FtpCmd implements Runnable {
         SharedLink newDir;
         String errString = null;
         mainBlock: {
-            SharedLink workingDir = sessionThread.getAccount().getSystem().getWorkingDir();
+            SharedLink workingDir = sessionThread.getToken().getSystem().getWorkingDir();
             newDir = sessionThread.getAccount().getSystem().getSharedLink(workingDir.getParent());
             if (newDir == null) {
                 errString = "550 Current dir cannot find parent\r\n";

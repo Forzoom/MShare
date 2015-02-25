@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.mshare.file.SharedLinkSystem;
 import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.ftp.server.AccountFactory.Token;
 import org.mshare.ftp.server.FsService.SessionNotifier;
 import org.mshare.main.MShareApp;
 
@@ -41,6 +42,7 @@ import android.util.Log;
  * 原本打算存在一个存放所有Account是否存在的信息，是否有必要有这样的信息呢？
  * 我们有必要对所有的账户进行列表吗？
  * 许多账户可能都是临时的，很有可能，服务器的存在是持久的，但是文件共享因为在手机端，可能更多并不是在一个长时间内容进行使用
+ * 将auth转变为使用token
  * TODO 需要考虑修改用户名的事情
  * TODO 考虑是否将Account作为AccountFactory的内部类，因为Account不应该能够被随便new出来，在内部类中不知道能不能保证其不被new出来
  * TODO 考虑将文件树的修改操作都在Account中复制一份，并且加上notify,只需要对add和delete文件树进行notify,对于persist并不需要notify
@@ -51,7 +53,7 @@ import android.util.Log;
  * @author HM
  *
  */
-public class Account {
+public abstract class Account {
 	private static final String TAG = Account.class.getSimpleName();
 	
 	// 当前账户的用户名和密码
@@ -59,8 +61,6 @@ public class Account {
     private String mPassword = null;
     // 用户登录尝试的密码
     private String mAttemptPassword = null;
-    // 用户是否登录成功
-    private boolean userAuthenticated = false;
     // 登录尝试失败的次数
     // TODO 需要将最大次数放在这里？
     public int authFails = 0;
@@ -68,9 +68,6 @@ public class Account {
     private SharedLinkSystem mSharedLinkSystem;
     // TODO 不知道是否需要修改，这个有用吗
     public static final String USER_DEFAULT = "default_username";
-    
-    // 默认没有权限
-    private int mPermission = Permission.PERMISSION_NONE;
 
 	// 存放在SharedPreferences中的键值
     // TODO 使用public合适吗
@@ -97,33 +94,9 @@ public class Account {
     	// TODO username,mPassword仍有可能是null
     	this.mUserName = username;
     	this.mPassword = password;
-    	// TODO 调用USER的时候文件树就生成了
+    	// TODO 调用USER的时候文件树就生成了，改为调用
     	mSharedLinkSystem = new SharedLinkSystem(this);
     	mSharedLinkSystem.prepare();
-    }
-    
-    /**
-     * 检测当前使用 {@link #mAttemptPassword} 是否登录成功
-     * TODO 管理员的权限在哪里设定？
-     * TODO 用户可以随时使用其他的账户登录，所以并不能要求用户必须调用QUIT
-     * @return
-     */
-    public boolean authAttempt() {
-		if (!mUserName.equals(AccountFactory.AnonymousUsername) && mAttemptPassword != null && mAttemptPassword.equals(mPassword)) {
-			mPermission = AccountFactory.PERMISSION_USER;
-			Log.d(TAG, "User logged in");
-			userAuthenticated = true;
-		} else if (FsSettings.allowAnoymous() && mUserName.equals(AccountFactory.AnonymousUsername)) {
-			// 设置权限为匿名账户权限
-			mPermission = AccountFactory.PERMISSION_GUEST;
-			Log.i(TAG, "Guest logged in with password: " + mAttemptPassword);
-			userAuthenticated = true;
-		} else {
-			Log.d(TAG, "Logged fail");
-			authFails++;
-			userAuthenticated = false;
-		}
-		return userAuthenticated;
     }
     
     /**
@@ -136,13 +109,13 @@ public class Account {
     }
     
     /**
-     * 修正当前账户 
+     * 修正当前账户的上传路径
      * @param path
      * @return
      */
 	public boolean setUpload(String path) {
 		if (path == null || path.equals("")) {
-			Log.e(TAG, "无效的上传路径");
+			Log.e(TAG, "invalid upload path");
 			return false;
 		}
 		
@@ -187,41 +160,55 @@ public class Account {
 		return false;
 	}
 	
-	public boolean isLoggedIn() {
-		return userAuthenticated;
+	// TODO 需要其他的判断方法
+	public boolean isLoggedIn(Token token) {
+		return false;
 	}
 	
-	public boolean isAnonymous() {
-		return mUserName.equals(AccountFactory.AnonymousUsername);
-	}
+	/**
+	 * 判断当前的账户是否是匿名账户
+	 * @return
+	 */
+	public abstract boolean isAnonymous();
 	
-	// TODO 需要增加判断用户类型的内容，用户是管理员、普通用户、匿名用户，在Account被创建的时候，就为账户分配类型
-	public boolean isAdministrator() {
-		return mUserName.equals(AccountFactory.AdminUsername);
-	}
+	/**
+	 * 判断当前账户是否为管理员账户
+	 * @return
+	 */
+	public abstract boolean isAdministrator();
 	
+	/**
+	 * 判断当前账户是否为普通用户账户
+	 * @return
+	 */
+	public abstract boolean isUser();
+	
+	/**
+	 * TODO 保证返回的内容不为null
+	 * @return 用户名，不为null
+	 */
     public String getUsername() {
         return mUserName;
     }
 
+    /**
+     * TODO 保证返回的内容不为null
+	 * @return 密码，不为null
+     */
     public String getPassword() {
     	return mPassword;
-    }
-    
-    public boolean isDefaultAccount() {
-    	return mUserName.equals(FsSettings.getUsername());
     }
     
     public void setAttemptPassword(String attemptPassword) {
     	mAttemptPassword = attemptPassword;
     }
     
-    private void setPermission(int permission) {
-    	mPermission = permission;
-    }
-    
+    /**
+     * 默认返回{@link Permission#PERMISSION_NONE}
+     * @return
+     */
     public int getPermission() {
-    	return mPermission;
+    	return Permission.PERMISSION_NONE;
     }
     
     /**

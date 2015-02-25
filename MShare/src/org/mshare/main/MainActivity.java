@@ -7,6 +7,8 @@ import org.mshare.file.MShareFileBrowser;
 import org.mshare.file.SharedLinkSystem;
 import org.mshare.ftp.server.Account;
 import org.mshare.ftp.server.AccountFactory;
+import org.mshare.ftp.server.AccountFactory.Token;
+import org.mshare.ftp.server.FsService;
 import org.mshare.main.R;
 
 import android.app.ActionBar;
@@ -175,6 +177,8 @@ public class MainActivity extends FragmentActivity
 				// TODO 当前仅仅对默认账户的SharedPreferences进行操作,但是这样的操作需要和FTP服务器进行交互
 				// 所以对于Account中的内容可能需要修改部分内容为静态
 				
+				Token token = FsService.getToken();
+				
 				if (!shareActionFile.exists()) {
 					// TODO 文件不存在的时候，需要能够刷新内容
 					Toast.makeText(this, "文件名不存在", Toast.LENGTH_SHORT).show();
@@ -182,14 +186,15 @@ public class MainActivity extends FragmentActivity
 				// 共享文件将放置在根目录下
 				String fakePath = SharedLinkSystem.SEPARATOR + shareActionFile.getName();
 				String realPath = shareActionFile.getAbsolutePath();
-				SharedLinkSystem.commonPersist(AccountFactory.adminAccount.getSharedPreferences(), fakePath, realPath);
+				FsService.getToken().persist(fakePath, realPath);
 				// 需要操作所有sessionThread文件树
 				
 				break;
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE: // 点击的是不共享
 
 				// TODO 所有的文件都假设在根目录下，但这样可能会出错
-				SharedLinkSystem.commonUnpersist(AccountFactory.adminAccount.getSharedPreferences(), SharedLinkSystem.SEPARATOR + shareActionFile.getName());
+				// TODO 需要将文件树中的内容删除
+				FsService.getToken().unpersist(SharedLinkSystem.SEPARATOR + shareActionFile.getName());
 				
 				break;
 		}
