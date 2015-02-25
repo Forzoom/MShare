@@ -26,7 +26,6 @@ import android.util.Log;
  * 当有持久化内容被更新的时候，将会通知所有的Session
  * TODO 管理员账户并不存在文件树，所有对于管理员账户中所有持久化内容，当一棵文件树被构建的时候，都将在新的文件树中创建
  * TODO 将USER权限暂时改为管理员权限，用来测试管理员权限是否好使？
- * TODO 更好地区分管理员和普通用户，有什么办法吗？
  * TODO 当有文件被更新的时候，服务器必须能够通知客户端
  * TODO 在SharedLink中添加文件是否正在被使用isUsing?
  * TODO 尝试将文件树放在Account中，并且对于每个sessionThread,并不是每个sessionThread都拥有一个Account，而是sessionThread持有account的引用
@@ -80,7 +79,7 @@ public class SharedLinkSystem {
 	private static final String TAG = SharedLinkSystem.class.getSimpleName();
 	public static final String SEPARATOR = "/";
 	public static final char SEPARATOR_CHAR = '/';
-	private SharedLink root = null;
+	private final SharedLink root;
 	private SharedLink workingDir = null;
 	// 所有需要持久存储的文件
 	private ArrayList<String> arr = new ArrayList<String>();
@@ -136,6 +135,11 @@ public class SharedLinkSystem {
 	// 将构造函数中的一些操作移动到prepare函数中
 	public SharedLinkSystem(Account account) {
 		this.mAccount = account;
+		// 根没有被持久化，所以需要每次自行创建,根文件只有读权限
+		root = SharedLink.newFakeDirectory(this, SEPARATOR, Permission.PERMISSION_READ_ALL);
+		
+		// 设置当前的working directory为"/"
+		setWorkingDir(SEPARATOR); // root作为working directory
 	}
 	
 	/**
@@ -148,23 +152,10 @@ public class SharedLinkSystem {
 			return;
 		}
 		
-		// 根没有被持久化，所以需要每次自行创建,根文件只有读权限
-		root = SharedLink.newFakeDirectory(this, SEPARATOR, Permission.PERMISSION_READ_ALL);
-		
-		// 设置当前的working directory为"/"
-		setWorkingDir(SEPARATOR); // root作为working directory
-		
 		// TODO 这样不好,需要将这些内容放在哪里加载呢？
-		
-		if (account != null) {
-			// 当不是默认账户时，将默认账户中的内容一并加入
-			if (!account.isAdministrator()) { // 对于普通账户，需要加入管理员账户中所设置的共享文件
-				
-				SharedPreferences adminSp = adminAccount.getSharedPreferences();
-				account.getSystem().load(adminSp, SharedLinkSystem.FILE_PERMISSION_ADMIN);
-			}
-			SharedPreferences privateSp = account.getSharedPreferences();
-			account.getSystem().load(privateSp, SharedLinkSystem.FILE_PERMISSION_USER);
+		if (getAccount() != null) {
+			SharedPreferences privateSp = getAccount().getSharedPreferences();
+			getAccount().getSystem().load(privateSp, SharedLinkSystem.FILE_PERMISSION_USER);
 		}
 		
 		prepareUpload();
@@ -175,7 +166,7 @@ public class SharedLinkSystem {
 	 * 临时用来为SharedLink对象获得Account所使用的
 	 * @return
 	 */
-	public Account getAccount() {
+	private Account getAccount() {
 		return mAccount;
 	}
 	
@@ -198,7 +189,7 @@ public class SharedLinkSystem {
 				// 不可能在keySet中有，但是在sp中没有的情况
 				String value = sp.getString(key, REAL_PATH_NONE);
 				Log.d(TAG, "+content:fakePath:" + key + " realPath:" + value);
-				if (addSharedPath(key, value, filePermission)) {
+				if (addSharedLink(key, value, filePermission)) {
 					count++;
 				}
 			}
@@ -226,38 +217,44 @@ public class SharedLinkSystem {
 	}
 	
 	/**
+	 * 根据当前Account的类型来添加文件
+	 * @param fakePath
+	 * @param realPath
+	 * @return
+	 */
+	public boolean addSharedPath(String fakePath, String realPath) {
+		int filePermission = mAccount.isAdministrator() ? FILE_PERMISSION_ADMIN : FILE_PERMISSION_USER;
+		return addSharedLink(fakePath, realPath, filePermission);
+	}
+	
+	/**
 	 * 为SharedFileSystem添加新的内容，可以是文件或者文件夹
 	 * 当realPath为{@link #REAL_PATH_FAKE_DIRECTORY}时，将其作为SharedFakeDirectory添加
 	 * 如果添加的是一个共享文件夹，那么就要将共享文件夹下的所有内容递归加入文件树
-	 * 但是共享文件夹下的内容不会被持久化
-	 * 当遇到无法添加到文件树中的Path的时候，也会将其持久化内容删除
-	 * TODO 如何判断是否添加成功了
+	 * TODO ?当遇到无法添加到文件树中的Path的时候，也会将其持久化内容删除
 	 * @param fakePath 对应的是SharedFileSystem中的文件路径，不能为""或者"/",并且必须是'/'开头
 	 * @param realPath 只有在添加最终的内容的时候才会被使用
-	 * @param filePermission 所添加的
+	 * @param filePermission 所添加的文件权限
 	 * @return 成功返回true
 	 */
-	public boolean addSharedPath(String fakePath, String realPath, int filePermission) {
-		Log.d(TAG, "+文件树: fakePath:" + fakePath + " realPath:" + realPath);
-		// 检测第一个char是否是'/'
-		if (fakePath.charAt(0) != SEPARATOR_CHAR) {
+	public boolean addSharedLink(String fakePath, String realPath, int filePermission) {
+		if (!prepared) {
+			Log.e(TAG, "invoke prepare first!");
 			return false;
 		}
-		// 分割成碎片
+		// split
 		String[] crumbs = split(fakePath);
+		// 检测fakePath是否有效
+		if (!isFakePathValid(fakePath) || crumbs.length == 0) {
+			Log.e(TAG, "invalid fakePath");
+			return false;
+		}
+		
+		Log.d(TAG, "+文件树: fakePath:" + fakePath + " realPath:" + realPath);
 		String fileName = null;
 		SharedLink file = root;
 		
-		if (file == null) {
-			Log.e(TAG, "root is null");
-			return false;
-		}
-		if (crumbs.length == 0) {
-			Log.e(TAG, "cannot change root path");
-			return false;
-		}
-		
-		// TODO 是否要检查添加的路径是否是合法的内容
+		// 是否要检查添加的路径是否是合法的内容
 		for (int i = 0, len = crumbs.length - 1; i < len; i++) {
 			fileName = crumbs[i];
 			
@@ -303,7 +300,7 @@ public class SharedLinkSystem {
 							File f = files[index];
 							String _fakePath = getFakePath(newSharedLink.getFakePath(), f.getName()), _realPath = f.getAbsolutePath();
 							// TODO 尝试添加,可能会出现错误
-							addSharedPath(_fakePath, _realPath, filePermission);
+							addSharedLink(_fakePath, _realPath, filePermission);
 						}
 					}
 				} else {
@@ -332,7 +329,7 @@ public class SharedLinkSystem {
 	 * 将文件树中的节点删除
 	 * @param fakePath 既支持相对路径，也支持文件名
 	 */
-	public boolean deleteSharedPath(String fakePath) {
+	public boolean deleteSharedLink(String fakePath) {
 		// getSharedLink并不是为了在这个时候使用的
 		// 因为如果fakePath中是文件名的话，那么就会得到working directory文件夹下的内容
 		// TODO 所以需要保证fakePath是相对路径
@@ -562,6 +559,7 @@ public class SharedLinkSystem {
 	
 	/**
 	 * 只能有一个Callback,新的Callback将会顶替旧的Callback
+	 * @see Callback
 	 */
 	public void setCallback(Callback callback) {
 		mCallback = callback;
@@ -618,12 +616,13 @@ public class SharedLinkSystem {
 	public boolean isPrepared() {
 		return prepared;
 	}
+
+	public static boolean isFakePathValid(String fakePath) {
+		return fakePath.charAt(0) == SEPARATOR_CHAR;
+	}
 	
-	/**
-	 * 深度优先打印
-	 */
-	public void print() {
-		root.print();
+	public int getAccountPermission() {
+		return mAccount.getPermission();
 	}
 	
 	/**
@@ -635,67 +634,22 @@ public class SharedLinkSystem {
 		// 仅仅是作为帐号的权限，映射在用户文件上
 	    public static final int PERMISSION_READ_ADMIN = 0400;
 	    public static final int PERMISSION_WRITE_ADMIN = 0200;
-	    /**
-	     * 不应该被使用
-	     */
 	    public static final int PERMISSION_EXECUTE_ADMIN = 0100;// execute永远不开放
 	    
 	    public static final int PERMISSION_READ = 040;
 	    public static final int PERMISSION_WRITE = 020;
-	    /**
-	     * 不应该被使用
-	     */
-	    public static final int PERMISSION_EXECUTE = 010;
+	    public static final int PERMISSION_EXECUTE = 010;// execute永远不开放
 	    
 	    public static final int PERMISSION_READ_GUEST = 04;
 	    public static final int PERMISSION_WRITE_GUEST = 02;
-	    /**
-	     * 不应该被使用
-	     */
 	    public static final int PERMISSION_EXECUTE_GUEST = 01;// execute永远不开放
 	    
 	    public static final int PERMISSION_READ_ALL = 0444;
 	    public static final int PERMISSION_WRITE_ALL = 0222;
-	    /**
-	     * 不应该被使用
-	     */
 	    public static final int PERMISSION_EXECUTE_ALL = 0111;// execute永远不开放
 
 	    public static final int PERMISSION_NONE = 0;
 	    
-	    // enum不能够使用|等位运算符
-//	    PERMISSION_READ_ADMIN(0400),
-//	    PERMISSION_WRITE_ADMIN(0200),
-//	    PERMISSION_EXECUTE_ADMIN(0100),
-//	    PERMISSION_READ(040),
-//	    PERMISSION_WRITE(020),
-//	    PERMISSION_EXECUTE(010),
-//	    PERMISSION_READ_GUEST(04),
-//	    PERMISSION_WRITE_GUEST(02),
-//	    PERMISSION_EXECUTE_GUEST(01);
-//	    
-//	    private Permission(int value) {
-//	    	this.value = value;
-//	    }
-//	    private int value;
-//	    
-//	    public static Permission valueOf(int value) {
-//	    	switch (value) {
-//	    	case 01:return PERMISSION_EXECUTE_GUEST;
-//	    	case 02:return PERMISSION_WRITE_GUEST;
-//	    	case 04:return PERMISSION_READ_GUEST;
-//	    	case 010:return PERMISSION_EXECUTE;
-//	    	case 020:return PERMISSION_WRITE;
-//	    	case 040:return PERMISSION_READ;
-//	    	case 0100:return PERMISSION_EXECUTE_ADMIN;
-//	    	case 0200:return PERMISSION_WRITE_ADMIN;
-//	    	case 0400:return PERMISSION_READ_ADMIN;
-//	    	}
-//	    }
-//	    
-//	    public int value() {
-//	    	return this.value;
-//	    }
 	}
 	
 	/**
@@ -707,12 +661,12 @@ public class SharedLinkSystem {
 		public void onPersist(String fakePath, String realPath);
 		public void onUnpersist(String fakePath);
 		/**
-		 * 当调用了{@link SharedLinkSystem#addSharedPath(String, String, int)}时的回调函数
+		 * 当调用了{@link SharedLinkSystem#addSharedLink(String, String, int)}时的回调函数
 		 * 只有成功时才会调用
 		 */
 		public void onAdd();
 		/**
-		 * 当调用了{@link SharedLinkSystem#deleteSharedPath(String)}时的回调函数
+		 * 当调用了{@link SharedLinkSystem#deleteSharedLink(String)}时的回调函数
 		 * 只有成功时才会调用
 		 */
 		public void onDelete();

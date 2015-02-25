@@ -168,6 +168,9 @@ public class MainActivity extends FragmentActivity
 	public boolean onContextItemSelected(MenuItem item) {
 		
 		int itemId = item.getItemId();
+		SharedLinkSystem system = null;
+		String fakePath = null, realPath = null;
+		Token token = FsService.getAdminToken();
 		
 		switch (itemId) {
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE: // 当点击的是共享
@@ -175,27 +178,32 @@ public class MainActivity extends FragmentActivity
 				// 获得当前被点击的对象
 				// 所有被共享的文件都将保存在SharedLink的根目录下,这需要对所有的SharedLink都动作？当前仅仅是对于默认账户进行操作
 				// TODO 当前仅仅对默认账户的SharedPreferences进行操作,但是这样的操作需要和FTP服务器进行交互
-				// 所以对于Account中的内容可能需要修改部分内容为静态
-				
-				Token token = FsService.getToken();
 				
 				if (!shareActionFile.exists()) {
-					// TODO 文件不存在的时候，需要能够刷新内容
+					// TODO 文件不存在的时候，需要能够刷新内容，但是这里无法调用文件浏览器
 					Toast.makeText(this, "文件名不存在", Toast.LENGTH_SHORT).show();
 				}
 				// 共享文件将放置在根目录下
-				String fakePath = SharedLinkSystem.SEPARATOR + shareActionFile.getName();
-				String realPath = shareActionFile.getAbsolutePath();
-				FsService.getToken().persist(fakePath, realPath);
-				// 需要操作所有sessionThread文件树
-				
+				fakePath = SharedLinkSystem.SEPARATOR + shareActionFile.getName();
+				realPath = shareActionFile.getAbsolutePath();
+				if (token.isValid()) {
+					system = token.getSystem();
+					// 添加内容
+					system.persist(fakePath, realPath);
+					system.addSharedLink(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_ADMIN);
+				}
 				break;
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE: // 点击的是不共享
 
 				// TODO 所有的文件都假设在根目录下，但这样可能会出错
 				// TODO 需要将文件树中的内容删除
-				FsService.getToken().unpersist(SharedLinkSystem.SEPARATOR + shareActionFile.getName());
-				
+				// TODO 如何才能在文件浏览器中
+				if (token.isValid()) {
+					system = token.getSystem();
+					fakePath = SharedLinkSystem.SEPARATOR + shareActionFile.getName();
+					system.unpersist(fakePath);
+					system.deleteSharedLink(fakePath);
+				}
 				break;
 		}
 		
@@ -203,22 +211,14 @@ public class MainActivity extends FragmentActivity
 	}
 	
 	@Override
-	public void onTabUnselected(ActionBar.Tab tab,
-			FragmentTransaction fragmentTransaction)
-	{
-	}
+	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {}
 
 	// 当指定Tab被选中时激发该方法
 	@Override
-	public void onTabSelected(ActionBar.Tab tab,
-			FragmentTransaction fragmentTransaction)
-	{
-		viewPager.setCurrentItem(tab.getPosition());  //②
+	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+		viewPager.setCurrentItem(tab.getPosition());
 	}
 
 	@Override
-	public void onTabReselected(ActionBar.Tab tab,
-			FragmentTransaction fragmentTransaction)
-	{
-	}
+	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {}
 }

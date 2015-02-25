@@ -37,6 +37,7 @@ import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 /**
+ * TODO 使用HASH值作为SP的键
  * 管理员账户中的文件树是有必要存在的，用以判断持久化内容是否正确
  * 当管理员账户的内容持久化的时候，需要向所有的文件树中添加内容，需要这样做
  * 原本打算存在一个存放所有Account是否存在的信息，是否有必要有这样的信息呢？
@@ -59,42 +60,30 @@ public abstract class Account {
 	// 当前账户的用户名和密码
     private String mUserName = null;
     private String mPassword = null;
-    // 用户登录尝试的密码
-    private String mAttemptPassword = null;
-    // 登录尝试失败的次数
-    // TODO 需要将最大次数放在这里？
-    public int authFails = 0;
     
     private SharedLinkSystem mSharedLinkSystem;
-    // TODO 不知道是否需要修改，这个有用吗
-    public static final String USER_DEFAULT = "default_username";
 
 	// 存放在SharedPreferences中的键值
     // TODO 使用public合适吗
     public static final String KEY_PASSWORD = "password";
     public static final String KEY_PERMISSION = "permission";
-    /**
-     * 在user_sp中保存上传路径的键值
-     */
     public static final String KEY_UPLOAD = "upload";
-
-    /**
-     * SessionNotifier，用以提醒其他Session，自己发生了变化
-     */
-    private SessionNotifier mNotifier;
     
     /**
      * 总共有多少个Session在使用当前的Account
      */
-    public int sessionCount;
+    public int tokenCount;
     
     // TODO 考虑将Account的内容移动到AccountFactory中，多例模式是怎么弄的？
     // TODO 考虑unprepared函数，用于将文件树释放
     public Account(String username, String password) {
-    	// TODO username,mPassword仍有可能是null
-    	this.mUserName = username;
+    	this.mUserName = username != null ? username : "";
     	this.mPassword = password;
     	// TODO 调用USER的时候文件树就生成了，改为调用
+    	
+    }
+    
+    public void prepare() {
     	mSharedLinkSystem = new SharedLinkSystem(this);
     	mSharedLinkSystem.prepare();
     }
@@ -135,33 +124,49 @@ public abstract class Account {
 	}
 	
 	/**
-	 * 判断当前用户是否拥有任意的读权限，用于执行读相关的FtpCmd
-	 * @param account
+	 * Account对象并不是可以随意得到的，所以该方法是检测权限的核心方法
+	 * 判断当前用户是否拥有读相关权限，用于执行读相关的FtpCmd
+	 * @param accountPermission
 	 * @param filePermission
 	 * @return
 	 */
-	public static boolean canRead(Account account, int filePermission) {
-		return (account.getPermission() & filePermission & Permission.PERMISSION_READ_ALL) != Permission.PERMISSION_NONE;
+	public static boolean canRead(int accountPermission, int filePermission) {
+		return (accountPermission & filePermission & Permission.PERMISSION_READ_ALL) != Permission.PERMISSION_NONE;
+	}
+	
+	/**
+	 * 检测当前账户是否拥有读相关权限，{@link #canRead(int, int)}
+	 * @param filePermission
+	 * @return
+	 */
+	public boolean canRead(int filePermission) {
+		return canRead(getPermission(), filePermission);
 	}
 	/**
+	 * Account对象并不是可以随意得到的，所以该方法是检测权限的核心方法
 	 * 判断当前用户是否拥有任意的写权限，用于执行写相关的FtpCmd
-	 * @param account
+	 * @param accountPermission
 	 * @param filePermission
 	 * @return
 	 */
-	public static boolean canWrite(Account account, int filePermission) {
-		return (account.getPermission() & filePermission & Permission.PERMISSION_WRITE_ALL) != Permission.PERMISSION_NONE; 
+	public static boolean canWrite(int accountPermission, int filePermission) {
+		return (accountPermission & filePermission & Permission.PERMISSION_WRITE_ALL) != Permission.PERMISSION_NONE; 
 	}
 	
-	// TODO 需要函数给SharedLinkSystem调用，当SharedLinkSystem出现变化时，可以通知所有的SessionThread
-	// TODO 当所有获得Account的SessionThread都退出的时候，就会将Account从allAccounts中删除
-	// 都不可以执行
-	public boolean canExecute() {
-		return false;
+	/**
+	 * 拥有写相关权限，{@link #canWrite(int, int)}
+	 * @param filePermission
+	 * @return
+	 */
+	public boolean canWrite(int filePermission) {
+		return canWrite(getPermission(), filePermission);
 	}
-	
-	// TODO 需要其他的判断方法
-	public boolean isLoggedIn(Token token) {
+	/**
+	 * 不可以执行
+	 * TODO 是否以后可以是在线浏览的权限
+	 * @return
+	 */
+	public static boolean canExecute() {
 		return false;
 	}
 	
@@ -169,7 +174,7 @@ public abstract class Account {
 	 * 判断当前的账户是否是匿名账户
 	 * @return
 	 */
-	public abstract boolean isAnonymous();
+	public abstract boolean isGuest();
 	
 	/**
 	 * 判断当前账户是否为管理员账户
@@ -199,10 +204,6 @@ public abstract class Account {
     	return mPassword;
     }
     
-    public void setAttemptPassword(String attemptPassword) {
-    	mAttemptPassword = attemptPassword;
-    }
-    
     /**
      * 默认返回{@link Permission#PERMISSION_NONE}
      * @return
@@ -218,14 +219,6 @@ public abstract class Account {
      */
     public SharedLinkSystem getSystem() {
     	return mSharedLinkSystem;
-    }
-    
-    /**
-     * 这样真的好吗
-     * @return
-     */
-    public SessionNotifier getNotifier() {
-    	return mNotifier;
     }
     
     /**
@@ -247,16 +240,21 @@ public abstract class Account {
     	}
     }
     
-    public void registerSession() {
-    	sessionCount++;
+    /**
+     * 添加Token的个数
+     */
+    public void registerToken() {
+    	tokenCount++;
     }
     
-    // TODO 是否需要在这里尝试回收Account
-    public void unregisterSession() {
-    	sessionCount--;
+    /**
+     * 减少Token的个数
+     */
+    public void unregisterToken() {
+    	tokenCount--;
     }
     
-    public int getSessionCount() {
-    	return sessionCount;
+    public int getTokenCount() {
+    	return tokenCount;
     }
 }

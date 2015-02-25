@@ -84,7 +84,7 @@ public class SharedFile extends SharedLink {
 			String fakePath = getFakePath(), realPath = getRealPath();
 			getSystem().unpersist(fakePath);
 			// 去持久化可能会失败，但是在下次加载系统的时候，应该能够被删除
-			getSystem().deleteSharedPath(fakePath);
+			getSystem().deleteSharedLink(fakePath);
 			return true;
 		} else {
 			return false;

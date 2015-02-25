@@ -16,7 +16,7 @@ public class GuestAccount extends Account {
 	}
 
 	@Override
-	public boolean isAnonymous() {
+	public boolean isGuest() {
 		return true;
 	}
 

@@ -106,7 +106,7 @@ public abstract class SharedLink {
 	 * @return
 	 */
 	public boolean canRead() {
-		return Account.canRead(getSystem().getAccount(), getPermission());
+		return Account.canRead(getSystem().getAccountPermission(), getPermission());
 	}
 	
 	/**
@@ -114,7 +114,7 @@ public abstract class SharedLink {
 	 * @return
 	 */
 	public boolean canWrite() {
-		return Account.canWrite(getSystem().getAccount(), getPermission());
+		return Account.canWrite(getSystem().getAccountPermission(), getPermission());
 	}
 	
 	public abstract long lastModified();
@@ -215,6 +215,10 @@ public abstract class SharedLink {
 		mPermission = permission;
 	}
 	
+	/**
+	 * 获得当前文件的相关内容
+	 * @return
+	 */
 	public int getPermission() {
 		return mPermission;
 	}

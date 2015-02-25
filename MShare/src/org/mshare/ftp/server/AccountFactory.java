@@ -23,10 +23,9 @@ import android.util.Log;
  * TODO 该如何判断一个Account对象需要回收呢？在SessionThread中，没过一段时间，就向客户端发送一个消息，以验证当前客户端仍在线
  * 存在管理员账户，当文件浏览器打开的时候，可以查看有哪些文件被共享了
  * 
- * 管理员账户不是用getAccount生成的
- * TODO 当调用USER的时候不会获得Account，或者使用Token来代替Account
- * Token的加入增加了消耗，但是不会让Account暴露
- * Token中仅仅拥有username,password,和sessionThread，sessionThread用来反向调用
+ * SessionThread在创建的时候应该通过FsService获得AccountFactory中的mVerifier，用来验证登录信息
+ * 
+ * Token的引入增加了消耗
  * SessionThread中不再拥有Account,而是拥有token
  * 使用token来对Account进行操作，可以private Token();
  * 使用Token操作将会提高耦合度
@@ -68,9 +67,9 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	
 	// 所有的账户内容,新的账户从这里获得，每个sessionThread仅仅是获得对应其中的引用
     private static HashMap<String, Account> allAccounts = new HashMap<String, Account>();
+    
     // 匿名账户
     private Account guestAccount;
-    
     // 默认的管理员账户
     private Account adminAccount;
     // adminAccount所对应的唯一Token
@@ -78,6 +77,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     // 用于通知其他的Session
     // TODO 使用static是否好，在多个线程中，将会使用同一个Notifier,这样会不会有什么错误,两个线程同时调用一个方法会不会有问题
     private static SessionNotifier mNotifier;
+    private Verifier mVerifier;
     
     public static final int PERMISSION_ADMIN = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
     public static final int PERMISSION_USER = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
@@ -91,21 +91,20 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     	// 加载adminAccount
     	adminAccount = new AdminAccount(AdminUsername, AdminPassword);
 		adminAccount.getSystem().setCallback(this);
-		// TODO 考虑管理员的Token对象应该怎么获得比较好，直接new?
-		adminAccountToken = null;
-//		adminAccount.se
+		adminAccountToken = new Token(AdminUsername, AdminPassword, null);
 		
 		// 创建匿名账户信息
 		guestAccount = new GuestAccount(AnonymousUsername, AnonymousPassword);
+		
+		// prepare
+		mVerifier = new Verifier();
 	}
     
 	/**
-     * 获得对应的Accouont，只有存在的username才能获得Account的对象
-     * 获得的Account对象用于验证密码是否正确
-     * 对于同一个账户，获得的Account是同一个Account对象的引用
+     * 获得对应的Token
      * @param username 登录所使用的用户名
      * @param password
-     * @return 返回null代表账户不存在，或者密码错误
+     * @return 返回null表示请求失败，可能是所请求的账户不存在，或者是请求时的密码错误
      */
 	public Token getToken(String username, String password, SessionThread owner) {
 		Context context = MShareApp.getAppContext();
@@ -116,6 +115,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			return null;
 		}
 		
+		// 加载到allAccounts中
 		if (username != null && username.matches("[0-9a-zA-Z]+")) {
 			if (!allAccounts.containsKey(username)) {
 				if (!loadAccount(username)) {
@@ -124,10 +124,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 				}
 			}
 			
+			// 判断账户信息是否正确
 			Account account = allAccounts.get(username);
-			
 			if (account != null && authAttempt(account, username, password)) {
-				return new Token(username, password, owner);
+				Token token = new Token(username, password, owner);;
+				token.setAccount(account);
+				account.registerToken();
+				return token;
 			} else {
 				Log.e(TAG, "loggin fail");
 				return null;
@@ -141,13 +144,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
 	
 	/**
-     * 检测是否登录成功
+     * 检测用户名和密码是否正确
      * TODO 用户可以随时使用其他的账户登录，所以并不能要求用户必须调用QUIT
      * @return
      */
     private boolean authAttempt(Account account, String username, String password) {
     	String correctUsername = account.getUsername(), correctPassword = account.getPassword();
-		if (username != null && !account.isAnonymous() && password != null && password.equals(correctPassword)) {
+		if (username != null && !account.isGuest() && password != null && password.equals(correctPassword)) {
 			Log.d(TAG, "User logged in");
 			return true;
 		} else if (FsSettings.allowAnoymous() && correctUsername.equals(AccountFactory.AnonymousUsername)) {
@@ -164,7 +167,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	/**
 	 * 使用之前，应当检测，所注册用户的用户名不能和默认用户、匿名用户以及管理员账户冲突
 	 * 允许通过该函数注册和生成普通账户
-	 * 
+	 * TODO 需要检测用户名和密码的安全性和合法性
 	 * @param username
 	 * @param password
 	 * @param mPermission 
@@ -253,7 +256,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	 * TODO 真的需要recycle这样的函数吗？
 	 */
 	public static boolean recycleAccount(Account account) {
-		if (account.getSessionCount() != 0) {
+		if (account.getTokenCount() != 0) {
 			return false;
 		}
 		String username = account.getUsername();
@@ -284,22 +287,24 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
 	
 	/**
-	 * 设置notifier
+	 * 设置notifier，如果没有设置，那么当管理员账户中的内容发生变化时，不会通知其他的Session
 	 * @param notifier
 	 */
 	public void setSessionNotifier(SessionNotifier notifier) {
 		mNotifier = notifier;
 	}
 
-	// TODO 需要修正
+	/**
+	 * 需要保证不会为null
+	 * @return 返回值不会为null
+	 */
 	public Token getAdminAccountToken() {
-		
-		return new Token(AdminUsername, AdminPassword, null);
+		return adminAccountToken;
 	}
 	
 	/**
 	 * 从SharedPreferences中加载普通用户账户的内容
-	 * @param username
+	 * @param username 需要加载的用户名
 	 * @return
 	 */
 	private boolean loadAccount(String username) {
@@ -323,6 +328,14 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
 	
 	/**
+	 * 获得AccountFactory中的验证器对象
+	 * @return
+	 */
+	public Verifier getVerifier() {
+		return mVerifier;
+	}
+	
+	/**
 	 * 当管理员账户中有新内容持久化
 	 * TODO 应该如何通知其他的Session?
 	 */
@@ -335,11 +348,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		while (iterator.hasNext()) {
 			String key = iterator.next();
 			Account account = allAccounts.get(key);
-			account.getSystem().addSharedPath(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_ADMIN);
+			account.getSystem().addSharedLink(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_ADMIN);
 		}
 		
 		// TODO 通知所有的Session，使用Notifier
-		mNotifier.notifyAddFile(adminAccount, null);
+		if (mNotifier != null) {
+			mNotifier.notifyAddFile(adminAccountToken, null);
+		}
 	}
 
 	@Override
@@ -351,11 +366,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		while (iterator.hasNext()) {
 			String key = iterator.next();
 			Account account = allAccounts.get(key);
-			account.getSystem().deleteSharedPath(fakePath);
+			account.getSystem().deleteSharedLink(fakePath);
 		}
 		
 		// TODO 通知所有的Session，使用Notifier
-		mNotifier.notifyDeleteFile(adminAccount, null);
+		if (mNotifier != null) {
+			mNotifier.notifyDeleteFile(adminAccount, null);
+		}
 	}
 
 	@Override
@@ -369,8 +386,29 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
 	
 	/**
+	 * 用于检测用户的登录信息是否正确，并且向Session返回Token
+	 * @author HM
+	 *
+	 */
+	public class Verifier {
+		/**
+		 * Session通过调用auth来获得对应的Token，当失败的时候，返回null
+		 * 即包装了AccountFactory中的getToken方法
+		 * @param owner 增加了耦合度？
+		 * @return 失败时返回null
+		 */
+		public Token auth(String username, String password, SessionThread owner) {
+			return AccountFactory.this.getToken(username, password, owner);
+		}
+	}
+	
+	/**
 	 * 允许对Account中的文件树进行操作，包括添加，删除，持久化和非持久化
 	 * Token由AccountFactory保管和发放，交由AccountFactory来对Account进行操作
+	 * TODO 需要release函数来释放？
+	 * TODO 需要当所有的用户都结束的时候，token才有可能是无效的，不能在用户仍在使用的时候，token变为无效的了，为了防止意外发生，还是需要调用isValid
+	 * 需要类似Lock的机制，Token就是Lock，所以需要release
+	 * 如何记录Account总共有多少个Token
 	 * @author HM
 	 *
 	 */
@@ -378,6 +416,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		private String username;
 		private String password;
 		private SessionThread owner;
+		private Account account;
 		
 		// 不能被随意创建
 		// 包含username,password,sessionThread
@@ -392,22 +431,58 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			this.password = password;
 			this.owner = owner;
 		}
-
-		public boolean addSharedPath(String fakePath, String realPath, int filePermission) {
-			// TODO 使用allAccount来获得并不是很好
-			return allAccounts.get(username).getSystem().addSharedPath(fakePath, realPath, filePermission);
+		
+		public boolean accessRead() {
+			return Account.canWrite(account.getPermission(), Permission.PERMISSION_READ_ALL);
 		}
 		
-		public boolean deleteSharedPath(String fakePath) {
-			return allAccounts.get(username).getSystem().deleteSharedPath(fakePath);
+		public boolean accessWrite() {
+			return Account.canWrite(account.getPermission(), Permission.PERMISSION_WRITE_ALL);
 		}
 		
-		public boolean persist(String fakePath, String realPath) {
-			return allAccounts.get(username).getSystem().persist(fakePath, realPath);
+		public boolean isAdministrator() {
+			return account.isAdministrator();
 		}
 		
-		public boolean unpersist(String fakePath) {
-			return allAccounts.get(username).getSystem().unpersist(fakePath);
+		public boolean isUser() {
+			return account.isUser();
+		}
+		
+		public boolean isGuest() {
+			return account.isGuest();
+		}
+		
+		/**
+		 * 设置Account，不用每次都去allAccounts中寻找
+		 * @param account
+		 */
+		private void setAccount(Account account) {
+			this.account = account;
+		}
+		
+		public SharedLinkSystem getSystem() {
+			if (account != null) {
+				return account.getSystem();
+			} else {
+				return null;
+			}
+		}
+		
+		/**
+		 * 在调用token的方法之前，最好调用以便判断当前的token正常
+		 * @return
+		 */
+		public boolean isValid() {
+			return (account != null && account.getUsername().equals(username) && account.getPassword().equals(password));
+		}
+		
+		public void release() {
+			this.username = null;
+			this.password = null;
+			this.owner = null;
+			
+			account.unregisterToken();
+			this.account = null;
 		}
 	}
 }

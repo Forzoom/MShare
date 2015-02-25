@@ -52,9 +52,10 @@ abstract public class CmdAbstractStore extends FtpCmd {
         
         // TODO 保证param的正确性
         // 获得的可能是文件名也可能是相对路径
+        SharedLinkSystem system = sessionThread.getToken().getSystem();
         String fileName = MShareUtil.guessName(param);
-        String fakePath = sessionThread.getAccount().getSystem().getFakePath(param);
-        String realPath = sessionThread.getAccount().getSystem().getUploadDirPath() + File.separator + fileName;
+        String fakePath = system.getFakePath(param);
+        String realPath = system.getUploadDirPath() + File.separator + fileName;
         
         // 先创建真实文件
         File storeFile = new File(realPath);
@@ -245,9 +246,9 @@ abstract public class CmdAbstractStore extends FtpCmd {
         
         // 文件传送已经完成
         // 添加到文件树中
-        sessionThread.getAccount().getSystem().addSharedPath(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_USER);
+        system.addSharedLink(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_USER);
         // 持久化内容
-        sessionThread.getAccount().getSystem().persist(fakePath, realPath);
+        system.persist(fakePath, realPath);
         
         Log.d(TAG, "STOR finished");
     }

@@ -488,6 +488,7 @@ public class FsService extends Service implements Runnable {
             }
 
             // Cleanup is complete. Now actually add the new thread to the list.
+            newSession.verifier = mAccountFactory.getVerifier();
             sessionThreads.add(newSession);
         }
         Log.d(TAG, "Registered session thread");
@@ -520,7 +521,7 @@ public class FsService extends Service implements Runnable {
 //                SystemClock.elapsedRealtime() + 2000, restartServicePI);
 //    }
 
-    public static Token getToken() {
+    public static Token getAdminToken() {
     	return mAccountFactory.getAdminAccountToken();
     }
     
@@ -539,13 +540,14 @@ public class FsService extends Service implements Runnable {
     	/**
     	 * 需要如何排除sender
     	 * TODO 如果是管理员账户该怎么办？
+    	 * TODO 需要调整
     	 * @param sender 可以是null
     	 */
-    	public void notifyAddFile(Account account, SessionThread sender) {
+    	public void notifyAddFile(Token token, SessionThread sender) {
     		int sessionCount = sessionThreads.size();
     		
     		// 对于管理员账户来说
-    		if (account.isAdministrator()) {
+    		if (token.isAdministrator()) {
     			for (int index = 0; index < sessionCount; index++) {
         			SessionThread receiveSession = sessionThreads.get(index);
     				// 发送消息通知所有的Session
@@ -557,7 +559,7 @@ public class FsService extends Service implements Runnable {
         			// 在所有的session中寻找拥有相同的Accoount的SessionThread,但不包括sender
         			SessionThread receiveSession = sessionThreads.get(index);
         			// session和sender不相等如何判断
-        			if (receiveSession.getAccount().equals(account) && receiveSession != sender) {
+        			if (receiveSession.getToken().equals(token) && receiveSession != sender) {
         				// 发送消息通知
 //        				receiveSession.
         			}

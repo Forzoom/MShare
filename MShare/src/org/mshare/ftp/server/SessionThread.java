@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import org.mshare.file.SharedLink;
 import org.mshare.file.SharedLinkSystem;
 import org.mshare.ftp.server.AccountFactory.Token;
+import org.mshare.ftp.server.AccountFactory.Verifier;
 
 import android.util.Log;
 
@@ -73,8 +74,12 @@ public class SessionThread extends Thread {
     protected String encoding = Defaults.SESSION_ENCODING;
     protected long offset = -1; // where to start append when using REST
 
+    // 当每次调用USER的时候重置
+    public int authFails = 0;
     public static int MAX_AUTH_FAILS = 3;
 
+    public Verifier verifier;
+    
     public SessionThread(Socket socket, LocalDataSocket dataSocket) {
         this.cmdSocket = socket;
         this.localDataSocket = dataSocket;
@@ -258,7 +263,7 @@ public class SessionThread extends Thread {
         Log.i(TAG, "SessionThread started");
 
         if (sendWelcomeBanner) {
-            writeString("220 SwiFTP ready\r\n");
+            writeString("220 FTP Server ready\r\n");
         }
         // Main loop: read an incoming line and process it
         try {
@@ -357,57 +362,25 @@ public class SessionThread extends Thread {
     }
 
     /**
-     * @return true if we should allow FTP opperations
+     * 检测当前是否登录成功了
+     * 当每次调用PASS命令的时候
+     * 同时记录失败的次数，当次数超过限制时，会话退出
      */
-    public boolean isAuthenticated() {
-    	Account account = getAccount();
-    	if (account != null) {
-    		return account.isLoggedIn();
-    	} else {
-    		return false;
+    public void authAttempt(String username, String password) {
+    	// 当前已经以某个账户登录，获得了Token，将其释放
+    	Token currentToken = getToken();
+    	if (currentToken != null) {
+    		currentToken.release();
     	}
-    }
-
-    /**
-     * @return true only when we are anonymously logged in
-     */
-    public boolean isAnonymouslyLoggedIn() {
-    	Account account = getAccount();
-    	if (account != null) {
-    		return account.isLoggedIn() && account.isAnonymous();
-    	} else {
-    		return false;
-    	}
-    }
-
-    /**
-     * 通过身份认证并且不是通过匿名登录的
-     * @return true if a valid user has logged in
-     */
-    public boolean isUserLoggedIn() {
-    	Account account = getAccount();
-    	if (account != null) {
-    		return account.isLoggedIn() && !account.isAnonymous();
-    	} else {
-    		return false;
-    	}
-    }
-
-    /**
-     * 检测当前是否是登录成功了
-     * 当每次登录PASS经过调用后就会被调用
-     * 检测登录失败的次数，当次数太多的时候，线程退出
-     */
-    public void authCheck() {
-    	Account account = getAccount();
-    	
-        if (!account.isLoggedIn()) {
+    	Token newToken = null;
+        if ((newToken = verifier.auth(username, password, this)) != null) {
+        	setToken(newToken);
             Log.i(TAG, "Authentication complete");
             // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
-            // LinkSystem是否需要形成一个自己的圈子呢
         } else {
-            Log.i(TAG, "Auth failed: " + account.authFails + "/" + MAX_AUTH_FAILS);
-            if (account.authFails > MAX_AUTH_FAILS) {
+        	authFails++;
+            Log.i(TAG, "Auth failed: " + authFails + "/" + MAX_AUTH_FAILS);
+            if (authFails > MAX_AUTH_FAILS) {
                 Log.i(TAG, "Too many auth fails, quitting session");
                 quit();
             }
