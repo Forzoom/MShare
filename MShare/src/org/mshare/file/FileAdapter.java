@@ -27,21 +27,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
- * how to refresh the content
+ * TODO 如果有更好的方法用来更新FileAdapter中的内容，已经刷新GridView中的内容就更好了
  * @author HM
- * TODO drawable的线条宽度设置为3的情况下可能不太好，设置成4吧，到底需要考虑一些什么因素呢？
  */
 public class FileAdapter extends BaseAdapter {
-	private static final String TAG = "FileAdapter";
+	private static final String TAG = FileAdapter.class.getSimpleName();
 	
-	/**
-	 * 上下文对象
-	 */
 	private Context context = null;
 	/**
 	 * 所需要显示的文件数组
 	 */
 	private MShareFile[] files = null;
+	private MShareFileBrowser fileBrowser;
 	/**
 	 * 保存所有支持类型的图片，静态类型以提供给所有的FileAdapter实例使用，因为刷新GridView的时候将生成新的FileAdapter
 	 */
@@ -52,25 +49,15 @@ public class FileAdapter extends BaseAdapter {
 	private static boolean DRAWABLE_PREPARED = false;
 	
 	/**
-	 * GridView中的Item所包含的内容
-	 * @author HM
-	 *
+	 * 
+	 * @param context 上下文对象
+	 * @param fileBrowser 文件浏览器的引用，当图标LongClick事件触发的时候，设置fileBrowser当前被选定的内容
+	 * @param files 所需要显示的内容
 	 */
-	public class ItemContainer {
-		public ImageView fileIcon = null;
-		/**
-		 * 对应GridView中的TextView内容
-		 */
-		public TextView fileName = null;
-		/**
-		 * 和TextView相对应的file文件
-		 */
-		public MShareFile file = null;
-	}
-	
-	public FileAdapter(Context context, MShareFile[] files) {
+	public FileAdapter(Context context, MShareFileBrowser fileBrowser, MShareFile[] files) {
 		super();
 		this.context = context;
+		this.fileBrowser = fileBrowser;
 		this.files = files;
 		initDrawable(context);
 	}
@@ -98,7 +85,7 @@ public class FileAdapter extends BaseAdapter {
 		DRAWABLES.put(".txt", getResourceDrawable(context, R.drawable.txt));
 		DRAWABLES.put(".xml", getResourceDrawable(context, R.drawable.xml));
 		
-		// 默认
+		// 默认,所有其他的文件
 		DRAWABLES.put("file", getResourceDrawable(context, R.drawable.all));
 		// 文件夹
 		DRAWABLES.put("directory", getResourceDrawable(context, R.drawable.folder));
@@ -113,6 +100,7 @@ public class FileAdapter extends BaseAdapter {
 	private static Drawable getResourceDrawable(Context context, int resId) {
 		Drawable drawable = context.getResources().getDrawable(resId);
 		drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+		Log.d(TAG, "get drawable");
 		return drawable;
 	}
 	
@@ -137,7 +125,7 @@ public class FileAdapter extends BaseAdapter {
 		if (convertView != null) {
 			ItemContainer item = (ItemContainer)convertView.getTag();
 			if (item != null) {
-				// 更新file
+				// 更新内容
 				item.file = files[position];
 				item.fileName.setText(files[position].getName());
 				item.fileIcon.setImageDrawable(getDrawable(item.file));
@@ -145,8 +133,9 @@ public class FileAdapter extends BaseAdapter {
 		} else { // 第一次使用的convertView
 			convertView = (View)LayoutInflater.from(context).inflate(R.layout.grid_item, null);
 			
-			// 为convertView设置长按响应
-			// TODO 尝试为GridView添加LongClick监听器
+			convertView.setClickable(true);
+			// 为convertView设置LongClick响应
+			convertView.setLongClickable(true);
 			convertView.setOnLongClickListener(new OnItemLongClickListener());
 			
 			// create content
@@ -157,14 +146,10 @@ public class FileAdapter extends BaseAdapter {
 			item.fileIcon = (ImageView)convertView.findViewById(R.id.item_file_image);
 			item.fileName = (TextView)convertView.findViewById(R.id.item_file_name);
 			item.fileName.setTextColor(Color.BLACK);
-			Drawable icon = getDrawable(item.file);
-			String displayName = item.file.getDisplayName();
-			item.fileName.setText(displayName);
+			item.fileName.setText(item.file.getDisplayName());
 			item.fileIcon.setImageDrawable(getDrawable(item.file));
-			int maxTextWidth = (int)(icon.getIntrinsicWidth() * 1.5);
-			item.fileName.setWidth(maxTextWidth);
-			
-			// register for long click
+			item.fileName.setClickable(false);
+			item.fileIcon.setClickable(false);
 			
 			// save content
 			convertView.setTag(item);
@@ -180,6 +165,7 @@ public class FileAdapter extends BaseAdapter {
 	 */
 	private Drawable getDrawable(MShareFile file) {
 		if (file == null) {
+			Log.e(TAG, "file is null");
 			return null;
 		}
 		
@@ -199,18 +185,42 @@ public class FileAdapter extends BaseAdapter {
 		return drawable; 
 	}
 
+	/**
+	 * GridView中的Item所包含的内容
+	 */
+	public class ItemContainer {
+		public ImageView fileIcon = null;
+		/**
+		 * 对应GridView中的TextView内容
+		 */
+		public TextView fileName = null;
+		/**
+		 * 和TextView相对应的file文件
+		 */
+		public MShareFile file = null;
+	}
+	
+	/**
+	 * 当图标被长按时触发，将设置FileBrowser当前这被选中的内容
+	 * @author HM
+	 *
+	 */
 	private class OnItemLongClickListener implements View.OnLongClickListener {
 
 		@Override
 		public boolean onLongClick(View v) {
 			// 针对convertView进行处理
 			Object tag = v.getTag();
-			if (tag != null) {
-				// 可能会出现问题
-				ItemContainer item = (ItemContainer)tag;
-				
+			if (tag == null || !(tag instanceof ItemContainer)) {
+				Log.e(TAG, "null tag or invalid tag");
+				return false;
 			}
+			// 可能会出现问题
+			ItemContainer item = (ItemContainer)tag;
+			fileBrowser.setSelectFile(item.file);
+			Log.d(TAG, "set select file : " + item.file.getAbsolutePath());
 			
+			// TODO 设置成false，是这样?
 			return false;
 		}
 		

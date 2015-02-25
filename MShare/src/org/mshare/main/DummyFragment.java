@@ -9,6 +9,7 @@ import org.mshare.file.MShareFileBrowser;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
 
+import android.app.backup.FileBackupHelper;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -34,10 +35,10 @@ import android.view.View.OnClickListener;
  * @author 
  * @version 1.0
  */
-public class DummyFragment extends Fragment 
-{
-	public static final String ARG_SECTION_NUMBER = "section_number";
+public class DummyFragment extends Fragment {
 	private static final String TAG = DummyFragment.class.getSimpleName();
+	public static final String ARG_SECTION_NUMBER = "section_number";
+	
 //	private Button btftp;
 	private RelativeLayout relative;
 	private ArrayList<HashMap<String, Object>> listImageItem;
@@ -46,13 +47,12 @@ public class DummyFragment extends Fragment
     private MShareFileBrowser mFileBrowser = null;
     
 	/**
-	 * 该方法的返回值就是该Fragment显示的View组件(non-Javadoc)
+	 * 该方法的返回值就是该Fragment显示的View组件
 	 * @see android.support.v4.app.Fragment#onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
 	 */
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState)
-	{
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		
 		Bundle args = getArguments();
 		int num = args.getInt(ARG_SECTION_NUMBER);
 		
@@ -89,5 +89,14 @@ public class DummyFragment extends Fragment
 		
 		mFileBrowser.refresh();  
         super.onStart();  
-    }  
+    }
+	
+	/**
+	 * 为了MainActivity能够获得FileBrowser
+	 * TODO 将DummyFragment移动到MainActivity中作为内部类？
+	 * @return
+	 */
+	public MShareFileBrowser getFileBrowser() {
+		return mFileBrowser;
+	}
 }
