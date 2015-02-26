@@ -45,7 +45,6 @@ public class ConnectInfo {
 	
 	/**
 	 * 转化成文本进行传输
-	 * TODO 考虑Pacercal还是什么的
 	 * @return
 	 */
 	public static String stringify(ConnectInfo connectInfo) {
@@ -60,5 +59,33 @@ public class ConnectInfo {
 	@Override
 	public String toString() {
 		return ConnectInfo.stringify(this);
+	}
+	
+	/**
+	 * @return the host
+	 */
+	public String getHost() {
+		return host;
+	}
+
+	/**
+	 * @return the port
+	 */
+	public String getPort() {
+		return port;
+	}
+
+	/**
+	 * @return the username
+	 */
+	public String getUsername() {
+		return username;
+	}
+
+	/**
+	 * @return the password
+	 */
+	public String getPassword() {
+		return password;
 	}
 }

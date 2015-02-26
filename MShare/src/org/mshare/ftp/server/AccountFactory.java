@@ -90,6 +90,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     	
     	// 加载adminAccount
     	adminAccount = new AdminAccount(AdminUsername, AdminPassword);
+    	adminAccount.prepare();
 		adminAccount.getSystem().setCallback(this);
 		adminAccountToken = new Token(AdminUsername, AdminPassword, null);
 		
@@ -108,9 +109,8 @@ public class AccountFactory implements SharedLinkSystem.Callback {
      */
 	private Token getToken(String username, String password, SessionThread owner) {
 		Context context = MShareApp.getAppContext();
-		SharedPreferences accountsSp = context.getSharedPreferences(SP_ACCOUNT_INFO, Context.MODE_PRIVATE);
-		// 检测account中的内容
-		if (accountsSp.getBoolean(username, false)) {
+		// 检测accountSp中的内容
+		if (!isAccountExists(context, username)) {
 			Log.e(TAG, "帐号 " + username + " 不存在");
 			return null;
 		}
@@ -187,12 +187,12 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			editor.putInt(Account.KEY_PERMISSION, permission == Permission.PERMISSION_NONE ? PERMISSION_USER : permission);
 			createAccountSuccess = editor.commit();
 		} else {
-			Log.e(TAG, "Register Fail:username has already existed");
+			Log.e(TAG, "+结果:username has already existed");
 			return false;
 		}
 		// 当创建用户文件失败
 		if (!createAccountSuccess) {
-			Log.e(TAG, "Register Fail:create sharedPreferences fail");
+			Log.e(TAG, "+结果:create sharedPreferences fail");
 			return false;
 		}
 		
@@ -201,10 +201,10 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		Editor accountEditor = accountsSp.edit();
 		accountEditor.putBoolean(username, true);
 		if (accountEditor.commit()) {
-			Log.d(TAG, "Register Success:success");
+			Log.d(TAG, "+结果:success");
 			return true;
 		} else {
-			Log.e(TAG, "Register Fail:Fail");
+			Log.e(TAG, "+结果:Fail");
 			return false;
 		}			
 	}
@@ -266,9 +266,10 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	
 	/**
 	 * 检测服务器中是否存在用户名为username的账户
+	 * 如果调用{@link #register(String, String, int)}函数所注册的账户，调用该方法应该返回true
 	 * @param context
 	 * @param username
-	 * @return
+	 * @return 存在则返回true，否则返回false
 	 */
 	public boolean isAccountExists(Context context, String username) {
 		SharedPreferences sp = context.getSharedPreferences(SP_ACCOUNT_INFO, Context.MODE_PRIVATE);
@@ -306,7 +307,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	/**
 	 * 从SharedPreferences中加载普通用户账户的内容
 	 * @param username 需要加载的用户名
-	 * @return
+	 * @return 成功返回true，否则返回false
 	 */
 	private boolean loadAccount(String username) {
 		if (allAccounts.containsKey(username)) {
@@ -324,7 +325,9 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		}
 		
 		Log.d(TAG, "add new account : " + username);
-		allAccounts.put(username, new UserAccount(username, password));
+		Account newAccount = new UserAccount(username, password);
+		newAccount.prepare();
+		allAccounts.put(username, newAccount);
 		return true;
 	}
 	
@@ -387,7 +390,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
 	
 	/**
-	 * 用于检测用户的登录信息是否正确，并且向Session返回Token
+	 * 用于检测用户的登录信息是否正确，并且向Session返回验证成功后的{@link Token}
 	 * @author HM
 	 *
 	 */

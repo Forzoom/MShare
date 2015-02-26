@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 /**
+ * BUG 当需要上传的文件名因为编码的不同而导致文件名乱码的时候，上传文件将失败
  * TODO 需要考虑更好的方法来保存这些内容，考虑B+树，在树形结构上仍能递归处理
  * TODO 使用AccountFactory来管理Account账户的创建和回收,当用户QUIT的时候，或者是超时（是否需要设置超时？）的时候，会将Account中的sessionThread的register回收
  * 当有持久化内容被更新的时候，将会通知所有的Session

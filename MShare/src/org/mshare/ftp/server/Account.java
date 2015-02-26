@@ -54,6 +54,9 @@ import android.util.Log;
  * TODO 考虑将notify直接分出来调用，但是notifier不应该在SharedLinkSystem中被调用了，或者将Notifier改为静态函数
  * 在Account中设置addSharedPath和persist并不合适
  * 可能要将system中的内容移动到Account中,尝试一下，如果全部都放在Account中，会导致耦合度高
+ * 
+ * 需要调用{@link #prepare()}才能让文件树生成
+ * 
  * @author HM
  *
  */
@@ -86,6 +89,9 @@ public abstract class Account {
     	
     }
     
+    /**
+     * 创建Account对应的文件树
+     */
     public void prepare() {
     	mSharedLinkSystem = new SharedLinkSystem(this);
     	mSharedLinkSystem.prepare();
@@ -202,7 +208,7 @@ public abstract class Account {
     /**
      * Account拥有SharedLinkSystem
      * 使用public是因为很多的地方，例如FtpCmd中都需要对SharedLinkSystem进行操作
-     * @return
+     * @return 当没有调用{@link #prepare()}时，文件树还没有生成，返回null
      */
     public SharedLinkSystem getSystem() {
     	return mSharedLinkSystem;
