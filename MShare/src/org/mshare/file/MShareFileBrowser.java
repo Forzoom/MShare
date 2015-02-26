@@ -28,17 +28,18 @@ import android.widget.Toast;
 
 import org.mshare.main.MShareUtil;
 /**
- * 入口类
+ * 文件浏览器
+ * 包含GridView中图标的点击事件 {@link GridViewItemClickListener}
  * @author HM
  *
  */
 public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
 
+	private static final String TAG = MShareFileBrowser.class.getSimpleName();
+	// 用于ContextMenu中的groupId
 	// TODO 暂时放置在这里，使用内容在MainActivity中
 	public static final int CONTEXT_MENU_ITEM_ID_SHARE = 4;
 	public static final int CONTEXT_MENU_ITEM_ID_UNSHARE = 5;
-	
-	private static final String TAG = MShareFileBrowser.class.getSimpleName();
 	
 	private Context context = null;
 	private ViewGroup container = null;
@@ -64,12 +65,12 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	private MShareFile rootFile;
 	
 	private boolean enable = false;
-	
 	/**
-	 * 被选定的文件对象
-	 * TODO 在何时删除selectedPath内容
+	 * 当前被长按选择的内容
+	 * 需要保证得到及时的更新
+	 * TODO 在何时删除内容
 	 */
-	private String longClickPath;
+	private MShareFile selectFile = null;
 	
 	public MShareFileBrowser(Context context, ViewGroup container, String rootPath) {
 		this.context = context;
@@ -95,10 +96,12 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		MShareFile[] files = crumbController.getFiles();
 		// create grid view
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
+		Log.d(TAG, "register click listener");
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
+		// 有setOnContextMenuCreateListener
 		
 		// TODO 可能并不是很好的注册ContextMenu的方法，因为需要将context作为Activity来使用
-		((Activity)context).registerForContextMenu(gridView);
+		 ((Activity)context).registerForContextMenu(gridView);
 		
 		// 检测扩展存储是否可用
 		setEnabled(StateController.getExternalStorageState() == StateController.STATE_EXTERNAL_STORAGE_ENABLE);
@@ -107,14 +110,26 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			return null;
 		} else {
 			// set adapter
-			adapter = new FileAdapter(context, files); 
+			adapter = new FileAdapter(context, this, files); 
 			gridView.setAdapter(adapter);
 			return fileBrowserLayout;
 		}
 	}
 	
-	public String getShared() {
-		return longClickPath;
+	/**
+	 * 设置当前被选中的文件内容
+	 * @param file
+	 */
+	public void setSelectFile(MShareFile file) {
+		selectFile = file;
+	}
+	
+	/**
+	 * 获得当前正在共享的文件，仅仅用于ContextMenu中，其他情况下不保证信息的及时性
+	 * @return 在非ContextMenu的情况下调用可能是null
+	 */
+	public MShareFile getSelectFile() {
+		return selectFile;
 	}
 	
 	/**
@@ -168,7 +183,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 */
 	public void refreshGridView(MShareFile[] files) {
 		// 新的适配器，用于刷新GridView
-		adapter = new FileAdapter(context, files);
+		adapter = new FileAdapter(context, this, files);
 		gridView.setAdapter(adapter);
 		
 		// 设置导航后退按钮的样式，即是否可以被按下
@@ -219,15 +234,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	}
 	
 	/**
-	 * 设置一批文件是否共享
-	 * @param files
-	 * @param shared
-	 */
-	public void setFilesShared(MShareFile[] files, boolean shared) {
-		
-	}
-	
-	/**
 	 * 用于响应当面包屑导航中的内容被点击时的事件
 	 * @param selected
 	 * @param name
@@ -254,7 +260,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			
+			Log.d(TAG, "item click!");
 			Object tag = view.getTag();
 			
 			if (tag != null) {
@@ -262,16 +268,20 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 				MShareFile file = item.file;
 				if (file.isDirectory()) { // whether is a directory
 					
-					if (file != null && file.canRead()) { // 文件夹可以打开 
+					if (file != null && file.canRead()) { // 文件夹可以打开
+						Log.d(TAG, "成功打开");
 						pushCrumb(file);
 						refreshGridView(file);
-					} else { // 文件夹无法打开
+					} else {
+						// TODO 文件夹无法打开，可能是权限问题
 						Toast.makeText(context, "文件夹无法访问", Toast.LENGTH_SHORT).show();
 					}
 				} else {
+					Log.d(TAG, "所点击的是一个文件");
 					// 是文件
 				}
 			} else {
+				Log.e(TAG, "tag是null");
 				// error
 			}
 		}
