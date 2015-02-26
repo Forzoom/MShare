@@ -48,6 +48,8 @@
             android:name="android.support.PARENT_ACTIVITY"
             android:value="org.mshare.main.NewConn" />
 		</activity>
+		
+		<!-- 用于显示登录二维码的Activity -->
 		<activity
             android:name="org.mshare.main.QRCodeConnectActivity"
             android:label="@string/activity_label_qrcode_connect"
@@ -60,7 +62,7 @@
             android:name="org.mshare.scan.ScanActivity"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:screenOrientation="landscape" >
+            android:screenOrientation="portrait" >
         </activity>
 		<activity
             android:name="org.mshare.main.FtpMainActivity"

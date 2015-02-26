@@ -60,7 +60,7 @@ public class CmdMKD extends FtpCmd implements Runnable {
             // TODO 要不要把所有的参数操作，都用这两种情况表示出来
             // 这个肯定是不存在的，File可以是虚假的，但是SharedLink必须是真实的？
             // 如果让SharedFakeDirectory在这里出现，会不会太过麻烦
-            SharedLinkSystem sharedLinkSystem = sessionThread.getAccount().getSystem();
+            SharedLinkSystem sharedLinkSystem = sessionThread.getToken().getSystem();
             
             // 所能创建的仅仅是一个fakeDirectory
             // 尝试在文件树中寻找对应内容

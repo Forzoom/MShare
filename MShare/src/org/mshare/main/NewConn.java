@@ -44,6 +44,7 @@ import android.widget.TextView;
 import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
 import org.mshare.main.StateController.StateCallback;
 import org.mshare.nfc.NfcServerActivity;
+import org.mshare.scan.ScanActivity;
 
 /**
  * TODO 当在选择要分享的内容的时候，能不能将我们的应用也加入到其中
@@ -135,6 +136,33 @@ public class NewConn extends Activity implements StateCallback {
 		ftpSwitch.setOnClickListener(new StartStopServerListener());
 		apTest.setOnClickListener(new WifiApControlListener());
 		
+		Button testScan = (Button)findViewById(R.id.test_scan);
+		testScan.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				startActivityForResult(new Intent(NewConn.this, ScanActivity.class), 0);
+			}
+		});
+		
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		
+		TextView textView = (TextView)findViewById(R.id.scan_result);
+		
+		// 将data中的数据取出
+		Log.d(TAG, "receive activity : resultCode " + resultCode);
+		if (resultCode == Activity.RESULT_OK && data != null) {
+			textView.setText(data.getStringExtra("result"));
+		} else if (resultCode == Activity.RESULT_CANCELED) {
+			textView.setText("canceled");
+		} else {
+			textView.setText("error");
+		}
+		
+		super.onActivityResult(requestCode, resultCode, data);
 	}
 	
 	@Override
@@ -209,6 +237,9 @@ public class NewConn extends Activity implements StateCallback {
 				Log.v(TAG, "option menu qrcode");
 				Intent startQRCode = new Intent(this, QRCodeConnectActivity.class);
 				
+				// 当不存在服务器时，不能启动二维码扫描，这该怎么办？
+				// 这里暂时使用的是默认的IP地址
+//				FsService.getLocalInetAddress().
 				String host = "192.168.137.1";
 				String port = "2121";
 				String username = "username";

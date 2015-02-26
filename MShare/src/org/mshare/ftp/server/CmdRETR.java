@@ -44,7 +44,7 @@ public class CmdRETR extends FtpCmd implements Runnable {
         String errString = null;
 
         mainblock: {
-        	fileToRetr = sessionThread.getAccount().getSystem().getSharedLink(param).getRealFile();
+        	fileToRetr = sessionThread.getToken().getSystem().getSharedLink(param).getRealFile();
             if (fileToRetr.isDirectory()) {
                 Log.d(TAG, "Ignoring RETR for directory");
                 errString = "550 Can't RETR a directory\r\n";

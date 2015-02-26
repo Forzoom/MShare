@@ -47,25 +47,22 @@ public class CmdPASS extends FtpCmd implements Runnable {
         
         // 输入的内容可能会有错误
         if (attemptPassword != null && !attemptPassword.equals("")) {
-        	if (sessionThread.authAttempt()) {
+        	if (sessionThread.authAttempt(sessionThread.getUsername(), attemptPassword) != null) {
+        		Log.i(TAG, "User " + sessionThread.getUsername() + " password verified");
         		
+        		Token token = sessionThread.getToken();
+        		if (token.isGuest()) {
+            		sessionThread.writeString("230 Guest login ok, read only access.\r\n");
+            	} else {
+                	sessionThread.writeString("230 Access granted\r\n");
+            	}
+        	} else {
+        		Log.i(TAG, "Failed authentication");
+                Util.sleepIgnoreInterupt(1000); // sleep to foil brute force attack
+                sessionThread.writeString("530 Login incorrect.\r\n");
         	}
         } else {
         	Log.e(TAG, "未指定尝试密码");
         }
-        
-        if (account.authAttempt()) { // 尝试登陆
-        	Log.i(TAG, "User " + account.getUsername() + " password verified");
-        	if (account.isGuest()) {
-        		sessionThread.writeString("230 Guest login ok, read only access.\r\n");
-        	} else {
-            	sessionThread.writeString("230 Access granted\r\n");
-        	}
-        } else {
-        	Log.i(TAG, "Failed authentication");
-            Util.sleepIgnoreInterupt(1000); // sleep to foil brute force attack
-            sessionThread.writeString("530 Login incorrect.\r\n");
-        }
-        sessionThread.authAttempt();
     }
 }

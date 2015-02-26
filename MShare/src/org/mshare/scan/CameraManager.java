@@ -163,6 +163,7 @@ public final class CameraManager {
 
   /**
    * Closes the camera driver if still in use.
+   * 关闭正在使用的相机，以便其他应用以及该应用下次仍可使用相机
    */
   public synchronized void closeDriver() {
     if (camera != null) {

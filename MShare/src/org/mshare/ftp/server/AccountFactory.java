@@ -101,12 +101,12 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
     
 	/**
-     * 获得对应的Token
+     * 获得对应的Token，Session为了获得Token，应该调用verifier中的auth方法来获得
      * @param username 登录所使用的用户名
      * @param password
      * @return 返回null表示请求失败，可能是所请求的账户不存在，或者是请求时的密码错误
      */
-	public Token getToken(String username, String password, SessionThread owner) {
+	private Token getToken(String username, String password, SessionThread owner) {
 		Context context = MShareApp.getAppContext();
 		SharedPreferences accountsSp = context.getSharedPreferences(SP_ACCOUNT_INFO, Context.MODE_PRIVATE);
 		// 检测account中的内容
@@ -129,6 +129,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			if (account != null && authAttempt(account, username, password)) {
 				Token token = new Token(username, password, owner);;
 				token.setAccount(account);
+				// 将registerToken放在这里合适吗?
 				account.registerToken();
 				return token;
 			} else {
@@ -432,10 +433,35 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			this.owner = owner;
 		}
 		
+		/**
+		 * 仅用于判断用户是否拥有任意读权限
+		 * @return
+		 */
 		public boolean accessRead() {
 			return Account.canWrite(account.getPermission(), Permission.PERMISSION_READ_ALL);
 		}
 		
+		/**
+		 * 检测当前账户是否拥有读相关权限，{@link Account#canRead(int, int)}
+		 * @param filePermission 文件权限
+		 * @return
+		 */
+		public boolean canRead(int filePermission) {
+			return Account.canRead(account.getPermission(), filePermission);
+		}
+
+		/**
+		 * 拥有写相关权限，{@link Account#canWrite(int, int)}
+		 * @param filePermission 文件的权限
+		 * @return
+		 */
+		public boolean canWrite(int filePermission) {
+			return Account.canWrite(account.getPermission(), filePermission);
+		}
+		/**
+		 * 仅用于判断用户是否拥有任意写权限
+		 * @return
+		 */
 		public boolean accessWrite() {
 			return Account.canWrite(account.getPermission(), Permission.PERMISSION_WRITE_ALL);
 		}
@@ -476,6 +502,10 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			return (account != null && account.getUsername().equals(username) && account.getPassword().equals(password));
 		}
 		
+		/**
+		 * 用于释放Token，从而使Account能够被释放
+		 * TODO 但是Account的释放机制还不完善
+		 */
 		public void release() {
 			this.username = null;
 			this.password = null;

@@ -2,9 +2,13 @@ package org.mshare.scan;
 
 import java.io.IOException;
 
+import org.mshare.main.ConnectInfo;
 import org.mshare.main.R;
 
+import com.google.zxing.Result;
+
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Build;
@@ -26,12 +30,14 @@ import android.widget.Toast;
  * TODO 是否需要使用startActivityForResult?
  * TODO 解析的范围仍可能有问题
  * 在manifest文件中保证是竖屏
+ * 需要设置setResult
  * @author HM
  *
  */
 public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 
 	private static final String TAG = ScanActivity.class.getSimpleName();
+	
 	private SurfaceView surfaceView;
 	private CameraManager cameraManager;
 	private boolean hasSurface;
@@ -56,16 +62,6 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 		
 		viewfinderView = (ViewfinderView)findViewById(R.id.viewfinder_view);
 		viewfinderView.setCameraManager(cameraManager);
-		
-		Button captureButton = (Button)findViewById(R.id.capture_button);
-		captureButton.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				Log.d(TAG, "start request preview frame in Activity");
-				cameraManager.requestPreviewFrame(decodeThread.getHandler(), DecodeHandler.WHAT_DECODE);
-			}
-		});
 		
 		decodeThread = new DecodeThread(this, null, null, new ViewfinderResultPointCallback(viewfinderView));
 		decodeThread.start();
@@ -98,6 +94,7 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 	 */
 	@Override
 	protected void onDestroy() {
+		Log.d(TAG, "onDestroy");
 		super.onDestroy();
 		// 使DecodeThread停止
 		Message quit = Message.obtain(decodeThread.getHandler(), DecodeHandler.WHAT_QUIT);

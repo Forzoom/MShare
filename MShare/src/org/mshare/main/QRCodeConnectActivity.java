@@ -46,6 +46,7 @@ public class QRCodeConnectActivity extends Activity {
 			contents = "default value";
 		}
 		
+		// 选择所显示的二维码的宽和高s
 		WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
 		Display display = manager.getDefaultDisplay();
 		Point displaySize = new Point();
@@ -55,6 +56,7 @@ public class QRCodeConnectActivity extends Activity {
 		int smallerDimension = w < h ? w : h;
 		smallerDimension = smallerDimension * 7 / 8;
 		
+		// 设置所需要编码的内容
 		String contentsToEncode = contents;
 		Map<EncodeHintType,Object> hints = new EnumMap<EncodeHintType,Object>(EncodeHintType.class);  
 		hints.put(EncodeHintType.CHARACTER_SET, "GBK");

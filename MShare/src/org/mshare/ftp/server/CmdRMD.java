@@ -49,7 +49,7 @@ public class CmdRMD extends FtpCmd implements Runnable {
                 errString = "550 Invalid argument\r\n";
                 break mainblock;
             }
-            toRemove = sessionThread.getAccount().getSystem().getSharedLink(param);
+            toRemove = sessionThread.getToken().getSystem().getSharedLink(param);
             if (!(toRemove.isDirectory() || toRemove.isFakeDirectory())) {
                 errString = "550 Can't RMD a non-directory\r\n";
                 break mainblock;

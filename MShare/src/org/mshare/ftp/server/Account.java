@@ -44,6 +44,9 @@ import android.util.Log;
  * 我们有必要对所有的账户进行列表吗？
  * 许多账户可能都是临时的，很有可能，服务器的存在是持久的，但是文件共享因为在手机端，可能更多并不是在一个长时间内容进行使用
  * 将auth转变为使用token
+ * 
+ * 因为Session没有办法获得Account对象，所以canRead和canWrite对于filePermission的判断在Token中执行
+ * 
  * TODO 需要考虑修改用户名的事情
  * TODO 考虑是否将Account作为AccountFactory的内部类，因为Account不应该能够被随便new出来，在内部类中不知道能不能保证其不被new出来
  * TODO 考虑将文件树的修改操作都在Account中复制一份，并且加上notify,只需要对add和delete文件树进行notify,对于persist并不需要notify
@@ -135,14 +138,6 @@ public abstract class Account {
 	}
 	
 	/**
-	 * 检测当前账户是否拥有读相关权限，{@link #canRead(int, int)}
-	 * @param filePermission
-	 * @return
-	 */
-	public boolean canRead(int filePermission) {
-		return canRead(getPermission(), filePermission);
-	}
-	/**
 	 * Account对象并不是可以随意得到的，所以该方法是检测权限的核心方法
 	 * 判断当前用户是否拥有任意的写权限，用于执行写相关的FtpCmd
 	 * @param accountPermission
@@ -153,14 +148,6 @@ public abstract class Account {
 		return (accountPermission & filePermission & Permission.PERMISSION_WRITE_ALL) != Permission.PERMISSION_NONE; 
 	}
 	
-	/**
-	 * 拥有写相关权限，{@link #canWrite(int, int)}
-	 * @param filePermission
-	 * @return
-	 */
-	public boolean canWrite(int filePermission) {
-		return canWrite(getPermission(), filePermission);
-	}
 	/**
 	 * 不可以执行
 	 * TODO 是否以后可以是在线浏览的权限

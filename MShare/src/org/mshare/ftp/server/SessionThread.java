@@ -363,10 +363,11 @@ public class SessionThread extends Thread {
 
     /**
      * 检测当前是否登录成功了
-     * 当每次调用PASS命令的时候
+     * 当每次调用PASS命令的时候，都会调用该方法，调用verifier进行验证并获得Token
      * 同时记录失败的次数，当次数超过限制时，会话退出
+     * @return 失败时返回null,成功时，和{@link #getToken}返回相同的内容
      */
-    public void authAttempt(String username, String password) {
+    public Token authAttempt(String username, String password) {
     	// 当前已经以某个账户登录，获得了Token，将其释放
     	Token currentToken = getToken();
     	if (currentToken != null) {
@@ -385,6 +386,7 @@ public class SessionThread extends Thread {
                 quit();
             }
         }
+        return newToken;
     }
 
     public Socket getDataSocket() {
