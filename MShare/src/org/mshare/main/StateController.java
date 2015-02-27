@@ -23,9 +23,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 /**
- * 需要在其中加入监听器的内容
  * TODO 是否需要将getState和isEnable来使用
- * TODO 要调整disable的颜色
+ * TODO 当wifip2p完成之后再完善该类，当前如果是WIFIp2p等情况下，不知道wifi能不能从using变成enable
+ * TODO 将stateBar使用include引入到xml文件中
  * 将StateController作为NewConn的内部类,可是有静态函数
  * 将receiver移动到这里
  * receiver中不仅仅是state的问题
@@ -95,6 +95,11 @@ public class StateController {
 	private NetworkStateRecevier networkStateReceiver;
 	private ExternalStorageStateReceiver externalStorageStateReceiver;
 	
+	/**
+	 * 状态变化的回调接口
+	 * @author HM
+	 *
+	 */
 	public interface StateCallback {
 		public void onWifiStateChange(int state);
 		public void onWifiApStateChange(int state);
@@ -104,7 +109,10 @@ public class StateController {
 		public void onNfcStateChange(int state);
 	}
 	
-	// 初始化所有的状态内容
+	/**
+	 *  初始化所有的状态内容
+	 * @param container 包含所有图标的View
+	 */
 	public void initial(ViewGroup container) {
 		// 颜色
 		Resources resources = container.getResources();

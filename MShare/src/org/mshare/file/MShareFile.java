@@ -2,10 +2,9 @@ package org.mshare.file;
 
 import java.io.File;
 
-import android.util.Log;
-// TODO 如何在刷新文件子内容和减少IO读取之间进行平衡
 /**
- * TODO 添加对于分享的判定
+ * 
+ * TODO 如何在刷新文件子内容和减少IO读取之间进行平衡
  * @author HM
  * 
  */
@@ -30,7 +29,7 @@ public class MShareFile extends File {
 	
 	/**
 	 * 
-	 * @param path Pass AbsolutePath such as `File.getAbsolutePath()`
+	 * @param path Pass AbsolutePath such as File.getAbsolutePath()
 	 * @param hasParent
 	 */
 	public MShareFile(String path) {
@@ -39,7 +38,7 @@ public class MShareFile extends File {
 	
 	/**
 	 * 获得浏览器中所显示的名字
-	 * @return 文件所显示的名字
+	 * @return 文件所显示的名字，如果设置了{@link #setDisplayName(String)}的话，将显示对应的内容
 	 */
 	public String getDisplayName() {
 		return mDisplayName == null ? getName() : mDisplayName; 
@@ -67,13 +66,17 @@ public class MShareFile extends File {
 		}
 	}
 	
+	/**
+	 * 判断当前文件是否被管理员设置为共享文件
+	 * @return
+	 */
 	public boolean isShared() {
 		return this.shared;
 	}
 	
 	/**
 	 * 获得所有子文件
-	 * @return 一个`MShareFile`的数组, or null if the `list()` == null
+	 * @return 一个MShareFile的数组, or null if the `list()` == null
 	 */
 	public MShareFile[] getFiles() {
 		// default ret
@@ -100,6 +103,10 @@ public class MShareFile extends File {
 		return ret;
 	}
 	
+	/**
+	 * 设置文件是否是共享的
+	 * @param shared
+	 */
 	public void setShared(boolean shared) {
 		this.shared = shared;
 	}

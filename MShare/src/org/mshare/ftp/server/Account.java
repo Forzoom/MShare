@@ -67,6 +67,7 @@ public abstract class Account {
     private String mUserName = null;
     private String mPassword = null;
     
+    // 对应的共享层文件树
     private SharedLinkSystem mSharedLinkSystem;
 
 	// 存放在SharedPreferences中的键值

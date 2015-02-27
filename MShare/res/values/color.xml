@@ -23,8 +23,8 @@
   	<color name="contents_text">#ff000000</color>
   	<color name="encode_view">#ffffffff</color>
   	
-  	<!-- state bar -->
-  	<color name="state_disable">#222222</color>
+  	<!-- 状态栏 -->
+  	<color name="state_disable">#555555</color>
   	<color name="state_enable">#ffffff</color>
   	<color name="state_using">#00ff00</color>
   	

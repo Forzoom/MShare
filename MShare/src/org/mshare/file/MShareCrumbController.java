@@ -17,8 +17,10 @@ import android.widget.LinearLayout.LayoutParams;
 
 /**
  * 面包屑导航
- * @author HM
  * TODO 可以使用button池来减少性能消耗
+ * TODO 使用ArrayList来动态分配栈的容量
+ * @author HM
+ * 
  */
 public class MShareCrumbController {
 
@@ -52,7 +54,7 @@ public class MShareCrumbController {
 	 */
 	private MShareFile[] stack = null;
 	/**
-	 * the capacity of stack
+	 * 栈的容量
 	 */
 	private int maxCount = COUNT_MAX;
 	/**
@@ -62,9 +64,9 @@ public class MShareCrumbController {
 	/**
 	 * 包含在一个HorizontalScrollView中的LinearLayout，用来包含面包屑导航的内容，所有的样式都由自己控制
 	 */
-	private LinearLayout container = null;
+	private LinearLayout container;
 
-	private OnCrumbClickListener listener = null;
+	private OnCrumbClickListener listener;
 	
 	public MShareCrumbController(Context context, MShareFile rootFile, LinearLayout container) {
 		this.context = context;
@@ -191,7 +193,6 @@ public class MShareCrumbController {
 			for (int i = selected + 1; i <= top; i++) {
 				stack[i] = null;
 			}
-			
 			// 将crumb中的内容退出
 			container.removeViews(selected + 1, top - selected);
 			
@@ -258,7 +259,11 @@ public class MShareCrumbController {
 		this.path = TextUtils.join(File.separator, list);
 	}
 	
-	public void setOnItemClickListener(OnCrumbClickListener listener) {
+	/**
+	 * 设置当crumb的button被点击的时候的回调函数
+	 * @param listener 所设置的回调函数，会顶替上一个回调内容
+	 */
+	public void setOnCrumbClickListener(OnCrumbClickListener listener) {
 		this.listener = listener;
 	}
 	/**

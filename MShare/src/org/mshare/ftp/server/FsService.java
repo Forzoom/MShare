@@ -20,6 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -451,6 +452,10 @@ public class FsService extends Service implements Runnable {
     public static void writeMonitor(boolean incoming, String s) {
     }
 
+    public static boolean isFileShared(File file) {
+    	return mAccountFactory.isFileShared(file);
+    }
+    
     /**
      * The FTPServerService must know about all running session threads so they can be
      * terminated on exit. Called when a new session is created.

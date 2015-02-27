@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.mshare.main.*;
 import org.mshare.file.FileAdapter.ItemContainer;
+import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
 
@@ -46,25 +47,25 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	/**
 	 * 面包屑导航的控制器
 	 */
-	private MShareCrumbController crumbController = null;
+	private MShareCrumbController crumbController;
 	/**
 	 * GridView所对应的适配器
 	 */
-	private FileAdapter adapter = null;
+	private FileAdapter adapter;
 	/**
 	 * 主要显示的GridView
 	 */
-	private GridView gridView = null;
+	private GridView gridView;
 	/**
 	 * 后退按钮
 	 */
-	private Button backBtn = null;
+	private Button backBtn;
 	/**
 	 * 根目录路径，即扩展存储路径
 	 */
 	private MShareFile rootFile;
 	
-	private boolean enable = false;
+	private boolean enable;
 	/**
 	 * 当前被长按选择的内容
 	 * 需要保证得到及时的更新
@@ -86,11 +87,12 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backBtn.setOnClickListener(new BackBtnListener(context));
 		
+		// TODO 使用include标签
 		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
 		
 		// 面包屑导航控制器
 		crumbController = new MShareCrumbController(context, rootFile, crumbContainer);
-		crumbController.setOnItemClickListener(this);
+		crumbController.setOnCrumbClickListener(this);
 		
 		// 获得根目录下的文件列表
 		MShareFile[] files = crumbController.getFiles();
@@ -178,10 +180,17 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	}
 	
 	/**
-	 * 刷新GridView，重置适配器 
+	 * 刷新GridView，重置适配器
+	 * 刷新的主要函数 
 	 * @param files
 	 */
 	public void refreshGridView(MShareFile[] files) {
+		// 设置当前正在刷新的是否是共享的文件
+		for (int i = 0; i < files.length; i++) {
+			MShareFile file = files[i];
+//			FsService.isFile
+		}
+		
 		// 新的适配器，用于刷新GridView
 		adapter = new FileAdapter(context, this, files);
 		gridView.setAdapter(adapter);

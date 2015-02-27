@@ -67,6 +67,7 @@ public class FileAdapter extends BaseAdapter {
 	 */
 	private static void initDrawable(Context context) {
 		if (DRAWABLE_PREPARED) {
+			Log.d(TAG, "drawables have already prepared, do nothing");
 			return;
 		}
 		
@@ -90,6 +91,7 @@ public class FileAdapter extends BaseAdapter {
 		// 文件夹
 		DRAWABLES.put("directory", getResourceDrawable(context, R.drawable.folder));
 		
+		Log.d(TAG, "drawables have already prepared");
 		// set the flag to true
 		DRAWABLE_PREPARED = true;
 	}
@@ -134,7 +136,6 @@ public class FileAdapter extends BaseAdapter {
 			convertView = (View)LayoutInflater.from(context).inflate(R.layout.grid_item, null);
 			
 			convertView.setClickable(true);
-			// 为convertView设置LongClick响应
 			convertView.setLongClickable(true);
 			convertView.setOnLongClickListener(new OnItemLongClickListener());
 			

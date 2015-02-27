@@ -22,16 +22,13 @@ import android.util.Log;
 
 /**
  * BUG 当需要上传的文件名因为编码的不同而导致文件名乱码的时候，上传文件将失败
+ * TODO 为管理员文件添加共享的文件夹，其中再分支出来，分为音乐，视频等等
  * TODO 需要考虑更好的方法来保存这些内容，考虑B+树，在树形结构上仍能递归处理
  * TODO 使用AccountFactory来管理Account账户的创建和回收,当用户QUIT的时候，或者是超时（是否需要设置超时？）的时候，会将Account中的sessionThread的register回收
- * 当有持久化内容被更新的时候，将会通知所有的Session
  * TODO 管理员账户并不存在文件树，所有对于管理员账户中所有持久化内容，当一棵文件树被构建的时候，都将在新的文件树中创建
- * TODO 将USER权限暂时改为管理员权限，用来测试管理员权限是否好使？
+ * TODO 测试文件权限系统是否有效
  * TODO 当有文件被更新的时候，服务器必须能够通知客户端
  * TODO 在SharedLink中添加文件是否正在被使用isUsing?
- * TODO 尝试将文件树放在Account中，并且对于每个sessionThread,并不是每个sessionThread都拥有一个Account，而是sessionThread持有account的引用
- * TODO 针对文件权限返回正确的文件权限
- * TODO 尝试使用正常用户、匿名用户对文件进行操作，但没有办法模拟管理员创建内容
  * TODO 客户端应当根据返回的文件权限进行相应的显示处理
  * 在第一次创建账户时可能会比较慢
  * 当前服务器不希望在传递的路径中有..或者.的内容
@@ -66,6 +63,8 @@ import android.util.Log;
  * 文件共享层的存在是为了支持多用户拥有不同的共享权限和内容
  * 上传文件夹并不是共享文件夹
  * 
+ * 当有持久化内容被更新的时候，将会通知所有的Session
+ * 
  * <h3>关于文件权限</h3>
  * 需要区分普通用户和管理员所创建的文件
  * 对于普通用户的文件，对应的用户拥有其读写权限，管理员对文件有读写权限
@@ -80,34 +79,30 @@ public class SharedLinkSystem {
 	private static final String TAG = SharedLinkSystem.class.getSimpleName();
 	public static final String SEPARATOR = "/";
 	public static final char SEPARATOR_CHAR = '/';
+	// 根一旦被确定就无法修改，这样就没有办法使用unprepare方法
 	private final SharedLink root;
-	private SharedLink workingDir = null;
-	// 所有需要持久存储的文件
-	private ArrayList<String> arr = new ArrayList<String>();
+	private SharedLink workingDir;
 	// 上传文件所存放的位置
 	// TODO 即设置在扩展存储org.mshare文件夹下,并在该文件夹下设置账户对应的文件夹
 	private String uploadPath = null;
 	// 只是用来获得Account和SharedPreferences
-//	private SessionThread sessionThread;
 	/**
 	 * 所有上传文件存放的位置，默认为sd卡下的org.mshare文件夹
-	 * TODO 使用static好吗?
+	 * TODO uploadRoot需要上层的设置
 	 */
-	public static String uploadRoot = null;
-	
+	public static String uploadRoot;
 	/**
 	 * SharedLinkSystem所对应的Account
 	 */
 	private Account mAccount;
-	
 	/**
 	 * 用以表明当前文件树是否已经准备完成，可以使用
 	 */
 	private boolean prepared = false;
-	
 	/**
 	 * 因为对于SharedPreferences中返回的realPath可能会是正常的，也可能为""，即fakeDirectory的情况
 	 * 为了表示在SharedPreferences中没有该realPath，所以使用|来表示，因为|不可能出现在文件名
+	 * TODO 当文件上传时，需要判断文件名是否合法
 	 */
 	public static final String REAL_PATH_NONE = "|";
 	/**
@@ -154,9 +149,12 @@ public class SharedLinkSystem {
 		}
 		
 		// TODO 这样不好,需要将这些内容放在哪里加载呢？
+		if (getAccount().isUser() || getAccount().isGuest()) {
+			// 加载管理员文件
+		}
 		if (getAccount() != null) {
 			SharedPreferences privateSp = getAccount().getSharedPreferences();
-			getAccount().getSystem().load(privateSp, SharedLinkSystem.FILE_PERMISSION_USER);
+			load(privateSp, SharedLinkSystem.FILE_PERMISSION_USER);
 		}
 		
 		prepareUpload();
@@ -164,16 +162,9 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * 临时用来为SharedLink对象获得Account所使用的
-	 * @return
-	 */
-	private Account getAccount() {
-		return mAccount;
-	}
-	
-	/**
 	 * 尝试多个持久化内容添加到文件树中
 	 * 需要自己调用
+	 * TODO 需要修正load，不应该使用sp，应该更能够够被改变
 	 * @param sp 将尝试添加其中所有以"/"开头的内容
 	 * @param filePermission 添加的文件的权限 {@link #FILE_PERMISSION_ADMIN}, {@link #FILE_PERMISSION_USER}
 	 */
@@ -233,6 +224,9 @@ public class SharedLinkSystem {
 	 * 当realPath为{@link #REAL_PATH_FAKE_DIRECTORY}时，将其作为SharedFakeDirectory添加
 	 * 如果添加的是一个共享文件夹，那么就要将共享文件夹下的所有内容递归加入文件树
 	 * TODO ?当遇到无法添加到文件树中的Path的时候，也会将其持久化内容删除
+	 * 
+	 * 当所添加的真实文件并不存在的时候，共享层文件不会被显示出来
+	 * 
 	 * @param fakePath 对应的是SharedFileSystem中的文件路径，不能为""或者"/",并且必须是'/'开头
 	 * @param realPath 只有在添加最终的内容的时候才会被使用
 	 * @param filePermission 所添加的文件权限
@@ -556,6 +550,14 @@ public class SharedLinkSystem {
 	public void setWorkingDir(String workingDir) {
 		Log.d(TAG, "set working dir");
     	this.workingDir = getSharedLink(workingDir);
+	}
+	
+	/**
+	 * 用来获得对应的Account对象
+	 * @return
+	 */
+	private Account getAccount() {
+		return mAccount;
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 package org.mshare.ftp.server;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,13 +40,13 @@ import android.util.Log;
  * 如何将FsService中的AccountFactory的adminToken交给文件浏览器呢？
  * 
  * TODO 管理员账户的名字不可使用
- * 如果有AdminAccount的Token由AccountFactory来管理
+ * 有AdminAccount的Token由AccountFactory来管理
  * 
  * 将不再让Account被直接使用，而是使用Token
  * 
  * AccountFactory不使用单例模式，否则其他类可以轻易获取AccountFactory对象
  * 
- * TODO 将所有的Account统一全部加载
+ * Account仅仅在需要的时候才会被加载到allAccounts中
  * 
  * TODO 用户名需要统一进行规范
  * @author HM
@@ -69,9 +70,9 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     private static HashMap<String, Account> allAccounts = new HashMap<String, Account>();
     
     // 匿名账户
-    private Account guestAccount;
+    private GuestAccount guestAccount;
     // 默认的管理员账户
-    private Account adminAccount;
+    private AdminAccount adminAccount;
     // adminAccount所对应的唯一Token
     private Token adminAccountToken;
     // 用于通知其他的Session
@@ -96,8 +97,9 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		
 		// 创建匿名账户信息
 		guestAccount = new GuestAccount(AnonymousUsername, AnonymousPassword);
+		guestAccount.prepare();
 		
-		// prepare
+		// Verifier的创建
 		mVerifier = new Verifier();
 	}
     
@@ -280,12 +282,28 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	
 	/**
 	 * 检测账户信息是否存在,使用MShareApp.getAppContext()
+	 * @see #isAccountExists(Context, String)
 	 * @param username
 	 * @return
 	 */
 	public boolean isAccountExists(String username) {
 		Context context = MShareApp.getAppContext();
 		return isAccountExists(context, username);
+	}
+	
+	/**
+	 * 判断本地文件是否被共享了
+	 * @param file 所要判断的文件
+	 * @return 当文件存在且被共享时，返回true，否则返回false
+	 */
+	public boolean isFileShared(File file) {
+		// 判断文件有效
+		if (file == null || !file.exists()) {
+			Log.d(TAG, "invalid or unexisted file");
+			return false;
+		}
+		
+		return adminAccount.isFileShared(file);
 	}
 	
 	/**
