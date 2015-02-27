@@ -20,7 +20,16 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+/**
+ * 该Activity只负责接受内容和呈现，并不参与服务器相关内容
+ * TODO 用户名应该使用哪个用户名还没有确定把,该如何让用户来选择这些内容呢？目前所使用的都是默认用户
+ * TODO 让客户端保存内容，或者是使用一个UID来保证服务器端的唯一性
+ * @author HM
+ *
+ */
 public class QRCodeConnectActivity extends Activity {
+	private static final String TAG = QRCodeConnectActivity.class.getSimpleName();
+	
 	private String contents = "12211017";
 	
 	private static final int WHITE = 0xFFFFFFFF;
@@ -38,7 +47,7 @@ public class QRCodeConnectActivity extends Activity {
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		
 		// TODO 当没有检测到content的时候，该怎么办
-		// TODO 获得通过Intent发送的内容
+		// 获得通过Intent发送的内容
 		Intent intent = getIntent();
 		contents = intent.getStringExtra(EXTRA_CONTENT);
 		// 并没有接受到需要显示的内容，设置默认内容
@@ -46,6 +55,7 @@ public class QRCodeConnectActivity extends Activity {
 			contents = "default value";
 		}
 		
+		// 选择所显示的二维码的宽和高s
 		WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
 		Display display = manager.getDefaultDisplay();
 		Point displaySize = new Point();
@@ -55,6 +65,7 @@ public class QRCodeConnectActivity extends Activity {
 		int smallerDimension = w < h ? w : h;
 		smallerDimension = smallerDimension * 7 / 8;
 		
+		// 设置所需要编码的内容
 		String contentsToEncode = contents;
 		Map<EncodeHintType,Object> hints = new EnumMap<EncodeHintType,Object>(EncodeHintType.class);  
 		hints.put(EncodeHintType.CHARACTER_SET, "GBK");

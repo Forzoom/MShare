@@ -44,7 +44,7 @@ public class CmdDELE extends FtpCmd implements Runnable {
     public void run() {
         Log.d(TAG, "DELE executing");
         String param = getParameter(input);
-        SharedLink storeFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+        SharedLink storeFile = sessionThread.getToken().getSystem().getSharedLink(param);
         
         String errString = null;
         if (storeFile == null) {

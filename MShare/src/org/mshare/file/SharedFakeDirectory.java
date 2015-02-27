@@ -73,7 +73,7 @@ public class SharedFakeDirectory extends SharedLink {
 	public boolean delete() {
 		// 因为fakeDirectory也是需要持久化的
 		getSystem().unpersist(getFakePath());
-		getSystem().deleteSharedPath(getFakePath());
+		getSystem().deleteSharedLink(getFakePath());
 		// TODO 需要修改
 		return true;
 	}

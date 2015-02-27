@@ -68,13 +68,13 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
             // 获得所需要列出的文件
             SharedLink fileToList = null;
             if (param.equals("")) { // 没有参数
-                fileToList = sessionThread.sharedLinkSystem.getWorkingDir();
+                fileToList = sessionThread.getToken().getSystem().getWorkingDir();
             } else {
                 if (param.contains("*")) {
                     errString = "550 LIST does not support wildcards\r\n";
                     break mainblock;
                 }
-                fileToList = sessionThread.sharedLinkSystem.getSharedLink(param);
+                fileToList = sessionThread.getToken().getSystem().getSharedLink(param);
             }
             // 列表的结果
             String listing;

@@ -25,6 +25,11 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
 
+/**
+ * 和Activity中获得的Context并不相同，这和SharedPreferences有关系吗？
+ * @author HM
+ *
+ */
 public class MShareApp extends Application {
 
     private static final String TAG = MShareApp.class.getSimpleName();

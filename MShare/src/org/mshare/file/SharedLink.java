@@ -106,7 +106,7 @@ public abstract class SharedLink {
 	 * @return
 	 */
 	public boolean canRead() {
-		return Account.canRead(getSystem().getAccount(), getPermission());
+		return Account.canRead(getSystem().getAccountPermission(), getPermission());
 	}
 	
 	/**
@@ -114,7 +114,7 @@ public abstract class SharedLink {
 	 * @return
 	 */
 	public boolean canWrite() {
-		return Account.canWrite(getSystem().getAccount(), getPermission());
+		return Account.canWrite(getSystem().getAccountPermission(), getPermission());
 	}
 	
 	public abstract long lastModified();
@@ -151,23 +151,29 @@ public abstract class SharedLink {
 	}
 	
 	/**
-	 * @return 将会返回File，不保证File一定能够正常使用
+	 * 当FakeDirectory调用getRealFile的时候返回null
+	 * @return 将会返回File，不保证File一定能够正常使用，可能是null
 	 */
 	public File getRealFile() {
-		if (realFile == null || !realFile.getAbsoluteFile().equals(realPath)) {
-			realFile = new File(realPath);
+		if (isFile() || isFakeDirectory()) {
+			if (realFile == null || !realFile.getAbsoluteFile().equals(realPath)) {
+				realFile = new File(realPath);
+			}
+			return realFile;
+		} else {
+			return null;
 		}
-		return realFile;
 	}
 	
 	/**
 	 * 文件的大小
-	 * @return
+	 * @return 对于文件返回0
 	 */
 	public abstract long length();
 	
 	// TODO 可能消耗大量的内存资源,仅仅用于调试
-	void print() {
+	// 而且样式并不是很好看
+	public void print() {
 		String fakeName = getName();
 		if (isDirectory()) {
 			System.out.println("(" + fakeName);
@@ -209,6 +215,10 @@ public abstract class SharedLink {
 		mPermission = permission;
 	}
 	
+	/**
+	 * 获得当前文件的相关内容
+	 * @return
+	 */
 	public int getPermission() {
 		return mPermission;
 	}
@@ -233,8 +243,8 @@ public abstract class SharedLink {
 		lsPermission.append((filePermission & Permission.PERMISSION_READ) != 0 ? "r" : "-");
 		lsPermission.append((filePermission & Permission.PERMISSION_WRITE) != 0 ? "w" : "-");
 		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE) != 0 ? "x" : "-");
-		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "r" : "-");
-		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "w" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_READ_GUEST) != 0 ? "r" : "-");
+		lsPermission.append((filePermission & Permission.PERMISSION_WRITE_GUEST) != 0 ? "w" : "-");
 		lsPermission.append((filePermission & Permission.PERMISSION_EXECUTE_GUEST) != 0 ? "x" : "-");
 		
 		Log.d(TAG, "Ls permission string : " + lsPermission.toString());

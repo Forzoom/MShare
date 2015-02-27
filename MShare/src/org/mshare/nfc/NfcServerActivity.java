@@ -13,8 +13,12 @@ import android.nfc.NfcAdapter.CreateNdefMessageCallback;
 import android.nfc.NfcEvent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.widget.TextView;
+import android.widget.Toast;
 
 /**
+ * TODO 当在该Activity使用后退按钮的时候，可以返回到上一个Activity吗，使用parentActivity可以吗
+ * 
  * TODO 需要设置FTP服务器超时关闭
  * TODO 考虑直接使用Beam来发送文件，而不是创建一个FTP服务器
  * 用来测试所有的和NFC相关的内容
@@ -72,7 +76,11 @@ public class NfcServerActivity extends Activity {
 			// 在传送数据的时候，可以使用com.android.npp协议或者NFC Forum的SNEP协议
 			
 			// 关于dispatching system中还有不明白的
-			
+		} else {
+			// 当NFC失败的时候，暂时提示用户的那个钱NFC不可用，以后如果用户的NFC不可用情况下，不应该有NFC相关的内容显示出来
+			Toast.makeText(this, "NFC无法使用", Toast.LENGTH_SHORT).show();
+			TextView hint = (TextView)findViewById(R.id.nfc_hint);
+			hint.setText("NFC无法使用");
 		}
 	}
 	

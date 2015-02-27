@@ -23,6 +23,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 
 import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.ftp.server.AccountFactory.Token;
 
 import android.util.Log;
 
@@ -126,15 +127,14 @@ public abstract class FtpCmd implements Runnable {
             return;
         }
 
-        Account account = session.getAccount();
+        Token token = session.getToken();
         
         // 对于已经登录的用户，将无条件地执行所发送的命令
-        // TODO 低耦合
-        if (account != null && (session.isUserLoggedIn() || session.isAnonymouslyLoggedIn())) {
+        if (token != null && token.isValid()) {
         	// TODO 在用户的权限上不能够很好地告知客户端,下面的方式不是很好
-        	if (Account.canWrite(account, Permission.PERMISSION_WRITE_ALL)) { // 检测写权限
+        	if (token.accessWrite()) { // 检测写权限
         		cmdInstance.run();
-        	} else if (Account.canRead(account, Permission.PERMISSION_READ_ALL)) { // 检测读权限
+        	} else if (token.accessRead()) { // 检测读权限
         		boolean validCmd = false;
                 for (Class<?> cl : allowedCmdsWhileRead) {
                     if (cmdInstance.getClass().equals(cl)) {
@@ -175,6 +175,7 @@ public abstract class FtpCmd implements Runnable {
      *
      * Some parameters shouldn't be logged or output (e.g. passwords), so the caller can
      * use silent==true in that case.
+     * @return 即便没有内容，也会返回""
      */
     static public String getParameter(String input, boolean silent) {
         if (input == null) {

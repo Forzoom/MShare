@@ -42,14 +42,16 @@ public class CmdUSER extends FtpCmd implements Runnable {
             sessionThread.writeString("530 Invalid username\r\n");
             return;
         }
-        Account account = Account.getInstance(username);
-        if (account == null) {
-        	Log.e(TAG, "username " + username + " is not exist");
-        	sessionThread.writeString("530 username is not exist\r\n");
-            return;
-        }
         
-        sessionThread.setAccount(account);
+        sessionThread.setUsername(username);
+        sessionThread.authFails = 0;
+        // TODO 没有办法判定username不存在，那么不是没用了吗
+//        if (username == null) {
+//        	Log.e(TAG, "username " + username + " is not exist");
+//        	sessionThread.writeString("530 username is not exist\r\n");
+//            return;
+//        }
+
         sessionThread.writeString("331 Send password\r\n");
     }
 

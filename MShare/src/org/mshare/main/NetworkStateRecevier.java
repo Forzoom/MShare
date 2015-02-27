@@ -30,6 +30,10 @@ public class NetworkStateRecevier extends BroadcastReceiver {
 	
 	public StateController mState;
 	
+	public NetworkStateRecevier(StateController stateController) {
+		this.mState = stateController;
+	}
+	
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// TODO Auto-generated method stub

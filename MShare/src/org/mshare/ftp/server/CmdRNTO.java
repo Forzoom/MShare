@@ -53,12 +53,12 @@ public class CmdRNTO extends FtpCmd implements Runnable {
             // 需要能够响应相对路径和文件名两种情况
             
             // 写权限检测
-            if (!Account.canWrite(sessionThread.getAccount(), sessionThread.getRenameFrom().getPermission())) {
+            if (!sessionThread.getToken().canWrite(sessionThread.getRenameFrom().getPermission())) {
             	errString = "550 permission denied\r\n";
             	break mainblock;
             }
             
-            toFile = sessionThread.sharedLinkSystem.getSharedLink(param);
+            toFile = sessionThread.getToken().getSystem().getSharedLink(param);
             // TODO 可能存在真实文件被删除的情况
             if (toFile != null && toFile.exists()) {
             	errString = "550 already exist\r\n";
@@ -82,14 +82,14 @@ public class CmdRNTO extends FtpCmd implements Runnable {
             		fakePath = fromFileParentPath + SharedLinkSystem.SEPARATOR + param;
             	}
             	realPath = fromFile.getRealFile().getParent() + File.separator + MShareUtil.guessName(param);
-            	toFile = SharedLink.newFile(sessionThread.sharedLinkSystem, fakePath, realPath, fromFile.getPermission());
+            	toFile = SharedLink.newFile(sessionThread.getToken().getSystem(), fakePath, realPath, fromFile.getPermission());
             } else if (fromFile.isFakeDirectory()) {
             	if (fromFileParentPath.equals(SharedLinkSystem.SEPARATOR)) {
             		fakePath = fromFileParentPath + param;
             	} else {
             		fakePath = fromFileParentPath + SharedLinkSystem.SEPARATOR + param;
             	}
-            	toFile = SharedLink.newFakeDirectory(sessionThread.sharedLinkSystem, fakePath, fromFile.getPermission());
+            	toFile = SharedLink.newFakeDirectory(sessionThread.getToken().getSystem(), fakePath, fromFile.getPermission());
             } else if (fromFile.isDirectory()) {
             	// 暂时没有
             	toFile = null;

@@ -25,6 +25,7 @@ import android.widget.TextView;
 /**
  * 需要在其中加入监听器的内容
  * TODO 是否需要将getState和isEnable来使用
+ * TODO 要调整disable的颜色
  * 将StateController作为NewConn的内部类,可是有静态函数
  * 将receiver移动到这里
  * receiver中不仅仅是state的问题
@@ -92,7 +93,6 @@ public class StateController {
 	
 	// 监听状态对UI界面进行控制
 	private NetworkStateRecevier networkStateReceiver;
-	private ServerStateRecevier serverStateReceiver;
 	private ExternalStorageStateReceiver externalStorageStateReceiver;
 	
 	public interface StateCallback {
@@ -124,9 +124,9 @@ public class StateController {
 		sdStateView = (TextView)container.findViewById(R.id.sd_state);
 		
 		// 设置颜色默认为disable
-		setWifiState(STATE_WIFI_DISABLE);
+		setWifiState(getWifiState());
 		setWifiApState(getWifiApState());
-		setWifiP2pState(STATE_WIFI_P2P_DISABLE);
+		setWifiP2pState(getWifiP2pState());
 		setNfcState(getNfcState());
 		setExternalStorageState(getExternalStorageState());
 	}
@@ -140,7 +140,7 @@ public class StateController {
 		/* 注册监听器 */
 		
 		// 注册简单的BroadcastReceiver用来监听设备的网络状况变化，可能存在安全风险
-		networkStateReceiver = new NetworkStateRecevier();
+		networkStateReceiver = new NetworkStateRecevier(this);
 		
 		// 设置IntentFilter
 		IntentFilter wifiConnectFilter = new IntentFilter();
@@ -152,18 +152,6 @@ public class StateController {
 		wifiConnectFilter.addAction(WIFI_AP_STATE_CHANGED_ACTION);
 		
 		context.registerReceiver(networkStateReceiver, wifiConnectFilter);
-		
-		/*
-		 * 服务器状态监听器
-		 */
-		serverStateReceiver = new ServerStateRecevier();
-		
-		IntentFilter serverStateFilter = new IntentFilter();
-		serverStateFilter.addAction(FsService.ACTION_STARTED);
-		serverStateFilter.addAction(FsService.ACTION_FAILEDTOSTART);
-		serverStateFilter.addAction(FsService.ACTION_STOPPED);
-		
-		context.registerReceiver(serverStateReceiver, serverStateFilter);
 		
 		/*
 		 * 扩展存储监听器
@@ -183,11 +171,7 @@ public class StateController {
 		if (networkStateReceiver != null) {
 			context.unregisterReceiver(networkStateReceiver);
 		}
-		
-		if (serverStateReceiver != null) {
-			context.unregisterReceiver(serverStateReceiver);
-		}
-		
+
 		if (externalStorageStateReceiver != null) {
 			context.unregisterReceiver(externalStorageStateReceiver);
 		}
@@ -228,15 +212,18 @@ public class StateController {
 				break;
 			}
 		}
+		if (callback != null) {
+			callback.onWifiStateChange(state);
+		}
 	}
 	
 	// 需要在其他地方设置
 	// TODO 关键是现在的WifiP2p不好查看是否正在启用，只能够等待监听尝试过后的结果
-	public static boolean getWifiP2pState() {
+	public static int getWifiP2pState() {
 //		Context context = MShareApp.getAppContext();
 //		WifiP2pManager wpm = (WifiP2pManager)context.getSystemService(Service.WIFI_P2P_SERVICE);
 //		wpm.initialize(srcContext, srcLooper, listener)
-		return false;
+		return STATE_WIFI_P2P_DISABLE;
 	}
 	
 	public void setWifiP2pState(int state) {
@@ -251,6 +238,9 @@ public class StateController {
 		case STATE_WIFI_P2P_USING:
 			p2pStateView.setTextColor(colorUsing);
 			break;
+		}
+		if (callback != null) {
+			callback.onWifiP2pStateChange(state);
 		}
 	}
 	
@@ -280,6 +270,9 @@ public class StateController {
 		case STATE_EXTERNAL_STORAGE_USING:
 			sdStateView.setTextColor(colorUsing);
 			break;
+		}
+		if (callback != null) {
+			callback.onExternalStorageChange(state);
 		}
 	}
 	
@@ -371,6 +364,9 @@ public class StateController {
 		case STATE_NFC_USING:
 			nfcStateView.setTextColor(colorUsing);
 			break;
+		}
+		if (callback != null) {
+			callback.onNfcStateChange(state);
 		}
 	}
 	

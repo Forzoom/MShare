@@ -44,8 +44,8 @@ public class CmdCDUP extends FtpCmd implements Runnable {
         SharedLink newDir;
         String errString = null;
         mainBlock: {
-            SharedLink workingDir = sessionThread.sharedLinkSystem.getWorkingDir();
-            newDir = sessionThread.sharedLinkSystem.getSharedLink(workingDir.getParent());
+            SharedLink workingDir = sessionThread.getToken().getSystem().getWorkingDir();
+            newDir = sessionThread.getToken().getSystem().getSharedLink(workingDir.getParent());
             if (newDir == null) {
                 errString = "550 Current dir cannot find parent\r\n";
                 break mainBlock;
@@ -56,7 +56,7 @@ public class CmdCDUP extends FtpCmd implements Runnable {
                 errString = "550 Can't CWD to invalid directory\r\n";
                 break mainBlock;
             } else if (newDir.canRead()) {
-                sessionThread.sharedLinkSystem.setWorkingDir(newDir.getFakePath());
+                sessionThread.getToken().getSystem().setWorkingDir(newDir.getFakePath());
             } else {
                 errString = "550 That path is inaccessible\r\n";
                 break mainBlock;

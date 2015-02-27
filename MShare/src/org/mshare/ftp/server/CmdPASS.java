@@ -19,6 +19,8 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
+import org.mshare.ftp.server.AccountFactory.Token;
+
 import android.util.Log;
 
 public class CmdPASS extends FtpCmd implements Runnable {
@@ -36,39 +38,31 @@ public class CmdPASS extends FtpCmd implements Runnable {
         Log.d(TAG, "Executing PASS");
         String attemptPassword = getParameter(input); // silent
         
-        Account account = sessionThread.getAccount();
-        if (account == null) {
+        if (sessionThread.getUsername() == null) {
         	// TODO 可能使用ACCT来创建Account
         	Log.e(TAG, "必须先调用USER");
         	sessionThread.writeString("503 Must send USER first\r\n");
         	return;
         }
-        if (account.getUsername() == null || account.getPassword() == null) {
-        	Log.e(TAG, "Account对象中的username或password为null");
-        	sessionThread.writeString("500 Internal error during authentication");
-        	return;
-        }
         
         // 输入的内容可能会有错误
         if (attemptPassword != null && !attemptPassword.equals("")) {
-        	Log.d(TAG, "使用密码:" + attemptPassword + " 尝试登录");
-        	account.setAttemptPassword(attemptPassword);
-        } else {
-        	Log.e(TAG, "未指定尝试使用的密码");
-        }
-        
-        if (account.authAttempt()) { // 尝试登陆
-        	Log.i(TAG, "User " + account.getUsername() + " password verified");
-        	if (account.isAnonymous()) {
-        		sessionThread.writeString("230 Guest login ok, read only access.\r\n");
+        	if (sessionThread.authAttempt(sessionThread.getUsername(), attemptPassword) != null) {
+        		Log.i(TAG, "User " + sessionThread.getUsername() + " password verified");
+        		
+        		Token token = sessionThread.getToken();
+        		if (token.isGuest()) {
+            		sessionThread.writeString("230 Guest login ok, read only access.\r\n");
+            	} else {
+                	sessionThread.writeString("230 Access granted\r\n");
+            	}
         	} else {
-            	sessionThread.writeString("230 Access granted\r\n");
+        		Log.i(TAG, "Failed authentication");
+                Util.sleepIgnoreInterupt(1000); // sleep to foil brute force attack
+                sessionThread.writeString("530 Login incorrect.\r\n");
         	}
         } else {
-        	Log.i(TAG, "Failed authentication");
-            Util.sleepIgnoreInterupt(1000); // sleep to foil brute force attack
-            sessionThread.writeString("530 Login incorrect.\r\n");
+        	Log.e(TAG, "未指定尝试密码");
         }
-        sessionThread.authCheck();
     }
 }

@@ -3,9 +3,13 @@ package org.mshare.main;
 import java.io.File;
 
 import org.mshare.file.FileAdapter.ItemContainer;
+import org.mshare.file.MShareFile;
 import org.mshare.file.MShareFileBrowser;
 import org.mshare.file.SharedLinkSystem;
 import org.mshare.ftp.server.Account;
+import org.mshare.ftp.server.AccountFactory;
+import org.mshare.ftp.server.AccountFactory.Token;
+import org.mshare.ftp.server.FsService;
 import org.mshare.main.R;
 
 import android.app.ActionBar;
@@ -38,16 +42,18 @@ import android.widget.Toast;
  * @author 
  * @version 
  */
-public class MainActivity extends FragmentActivity
-	implements ActionBar.TabListener
-{
+public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+	
 	private static final String TAG = MainActivity.class.getSimpleName();
 	private static final int GROUP_FILE_BROWSER = 1;
 	ViewPager viewPager;
 	ActionBar actionBar;
 	Button newconn,joinconn;
 	
-	private File shareActionFile = null;
+	/**
+	 * 
+	 */
+	DummyFragment fragment;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -60,31 +66,22 @@ public class MainActivity extends FragmentActivity
 		viewPager = (ViewPager) findViewById(R.id.pager);
 		// 创建一个FragmentPagerAdapter对象，该对象负责为ViewPager提供多个Fragment
 		newconn = (Button)findViewById(R.id.newconn);
-//		newconn.setOnClickListener(new android.view.View.OnClickListener() {
-//			
-//			public void onClick(View v) {
-//				// TODO Auto-generated method stub
-//				Intent intent = new Intent(MainActivity.this
-//						,NewConn.class);
-//				startActivity(intent);
-//			}
-//		});
 		FragmentPagerAdapter pagerAdapter = new FragmentPagerAdapter(getSupportFragmentManager())
 		{
 			// 获取第position位置的Fragment
 			@Override
-			public Fragment getItem(int position)
-			{
-				Fragment fragment = new DummyFragment();
+			public Fragment getItem(int position) {
+				fragment = new DummyFragment();
 				Bundle args = new Bundle();
 				args.putInt(DummyFragment.ARG_SECTION_NUMBER, position + 1);
 				fragment.setArguments(args);
 				return fragment;
 			}
-			// 该方法的返回值i表明该Adapter总共包括多少个Fragment
+			/**
+			 * 该方法的返回值i表明该Adapter总共包括多少个Fragment
+			 */
 			@Override
-			public int getCount()
-			{
+			public int getCount() {
 				return 2;
 			}
 			// 该方法的返回值决定每个Fragment的标题
@@ -130,28 +127,15 @@ public class MainActivity extends FragmentActivity
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
 		
-		// TODO 无法判断当前所长按的是否是gridView中的内容
-		// 好像每次生成ContextMenu的时候，都会调用这个方法，那么就可以通过
-		// ItemContainer来获得当前所选择的文件是什么
-		
-		Object tag = v.getTag();
-		ItemContainer item = null;
-		
-		if (tag != null) {
-			item = (ItemContainer)tag;
-			menu.setHeaderTitle(item.file.getName());
-		}
-		
-		shareActionFile = item.file;
-		
+		// v所代表的是GridView
 		menu.add(GROUP_FILE_BROWSER, 0, 0, "剪切");
 		menu.add(GROUP_FILE_BROWSER, 1, 1, "复制");
 		menu.add(GROUP_FILE_BROWSER, 2, 2, "粘贴");
 		menu.add(GROUP_FILE_BROWSER, 3, 3, "删除");
 		
 		// TODO 判断当前文件是否是共享文件，需要在文件浏览器内容创建的过程中设置文件是否是共享的
-		// 暂时使用这种方式来判定文件是否是共享的
-		if (!item.file.isShared()) {
+		
+		if (fragment.getFileBrowser().getSelectFile().isShared()) {
 			// 对于非共享的文件，需要将文件设置为共享状态
 			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE, 4, "共享");
 		} else {
@@ -165,6 +149,15 @@ public class MainActivity extends FragmentActivity
 	public boolean onContextItemSelected(MenuItem item) {
 		
 		int itemId = item.getItemId();
+
+		// 获得管理员账户相关内容
+		SharedLinkSystem system = null;
+		String fakePath = null, realPath = null;
+		Token token = FsService.getAdminToken();
+
+		// 被选中的文件
+		MShareFile selectFile = fragment.getFileBrowser().getSelectFile();
+
 		
 		switch (itemId) {
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE: // 当点击的是共享
@@ -172,24 +165,34 @@ public class MainActivity extends FragmentActivity
 				// 获得当前被点击的对象
 				// 所有被共享的文件都将保存在SharedLink的根目录下,这需要对所有的SharedLink都动作？当前仅仅是对于默认账户进行操作
 				// TODO 当前仅仅对默认账户的SharedPreferences进行操作,但是这样的操作需要和FTP服务器进行交互
-				// 所以对于Account中的内容可能需要修改部分内容为静态
-				
-				if (!shareActionFile.exists()) {
+
+				if (!selectFile.exists()) {
 					// TODO 文件不存在的时候，需要能够刷新内容
 					Toast.makeText(this, "文件名不存在", Toast.LENGTH_SHORT).show();
 				}
-				// 共享文件将放置在根目录下
-				String fakePath = SharedLinkSystem.SEPARATOR + shareActionFile.getName();
-				String realPath = shareActionFile.getAbsolutePath();
-				SharedLinkSystem.commonPersist(Account.adminAccount.getSharedPreferences(), fakePath, realPath);
-				// 需要操作所有sessionThread文件树
+				//共享文件将放置在根目录下
+				fakePath = SharedLinkSystem.SEPARATOR + selectFile.getName();
+				realPath = selectFile.getAbsolutePath();
+				if (token.isValid()) {
+					system = token.getSystem();
+					// 添加内容
+					system.persist(fakePath, realPath);
+					system.addSharedLink(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_ADMIN);
+				}
 				
 				break;
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE: // 点击的是不共享
 
 				// TODO 所有的文件都假设在根目录下，但这样可能会出错
-				SharedLinkSystem.commonUnpersist(Account.adminAccount.getSharedPreferences(), SharedLinkSystem.SEPARATOR + shareActionFile.getName());
-				
+				// TODO 需要将文件树中的内容删除
+				// TODO 如何才能在文件浏览器中
+				if (token.isValid()) {
+					system = token.getSystem();
+					fakePath = SharedLinkSystem.SEPARATOR + selectFile.getName();
+					system.unpersist(fakePath);
+					system.deleteSharedLink(fakePath);
+				}
+
 				break;
 		}
 		
@@ -197,22 +200,16 @@ public class MainActivity extends FragmentActivity
 	}
 	
 	@Override
-	public void onTabUnselected(ActionBar.Tab tab,
-			FragmentTransaction fragmentTransaction)
-	{
-	}
+	public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {}
 
-	// 当指定Tab被选中时激发该方法
+	/**
+	 *  当指定Tab被选中时激发该方法
+	 */
 	@Override
-	public void onTabSelected(ActionBar.Tab tab,
-			FragmentTransaction fragmentTransaction)
-	{
-		viewPager.setCurrentItem(tab.getPosition());  //②
+	public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+		viewPager.setCurrentItem(tab.getPosition());
 	}
 
 	@Override
-	public void onTabReselected(ActionBar.Tab tab,
-			FragmentTransaction fragmentTransaction)
-	{
-	}
+	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {}
 }

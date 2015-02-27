@@ -69,7 +69,7 @@ public class CmdMFMT extends FtpCmd implements Runnable {
 
         String pathName = params[1];
         // 文件名或者是相对路径
-        SharedLink file = sessionThread.sharedLinkSystem.getSharedLink(pathName);
+        SharedLink file = sessionThread.getToken().getSystem().getSharedLink(pathName);
         
         if (file.exists() == false) {
             sessionThread.writeString("550 file does not exist on server\r\n");
