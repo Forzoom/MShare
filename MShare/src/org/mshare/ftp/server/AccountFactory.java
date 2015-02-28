@@ -111,8 +111,8 @@ public class AccountFactory implements SharedLinkSystem.Callback {
      */
 	private Token getToken(String username, String password, SessionThread owner) {
 		Context context = MShareApp.getAppContext();
-		// 检测accountSp中的内容
-		if (!isAccountExists(context, username)) {
+		// 检测allAccounts和accountSp中的内容，只有当两者都不存在的时候才判定不存在
+		if (allAccounts.get(username) == null && !isAccountExists(context, username)) {
 			Log.e(TAG, "帐号 " + username + " 不存在");
 			return null;
 		}

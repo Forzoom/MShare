@@ -2,7 +2,7 @@ package org.mshare.main;
 
 import java.io.File;
 
-import org.mshare.file.FileAdapter.ItemContainer;
+import org.mshare.file.MShareFileAdapter.ItemContainer;
 import org.mshare.file.MShareFile;
 import org.mshare.file.MShareFileBrowser;
 import org.mshare.file.SharedLinkSystem;

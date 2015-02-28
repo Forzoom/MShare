@@ -20,6 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.ftp.server;
 
 import java.io.File;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -91,11 +92,27 @@ public abstract class Account {
     }
     
     /**
+     * 在准备文件树SharedLinkSystem的同时，向文件树中添加已有的内容
+     * @see #prepare()
+     * @param map 对于Map<String, String>将会被添加到文件树中
+     */
+    public void prepare(Map<String, ?> map) {
+    	prepare();
+//    	getSystem().load(sp, filePermission);
+    }
+    
+    /**
      * 创建Account对应的文件树
      */
     public void prepare() {
-    	mSharedLinkSystem = new SharedLinkSystem(this);
-    	mSharedLinkSystem.prepare();
+    	if (mSharedLinkSystem == null) {
+    		Log.d(TAG, "create SharedLinkSystem!");
+    		mSharedLinkSystem = new SharedLinkSystem(this);
+    	}
+    	if (!mSharedLinkSystem.isPrepared()) {
+    		Log.d(TAG, "make SharedLinkSystem prepared!");
+    		mSharedLinkSystem.prepare();
+    	}
     }
     
     /**

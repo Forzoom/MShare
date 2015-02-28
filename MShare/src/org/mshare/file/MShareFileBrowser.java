@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Map;
 
 import org.mshare.main.*;
-import org.mshare.file.FileAdapter.ItemContainer;
+import org.mshare.file.MShareFileAdapter.ItemContainer;
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
@@ -17,10 +17,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Environment;
+import android.provider.MediaStore.Files;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.LinearLayout;
@@ -51,7 +55,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	/**
 	 * GridView所对应的适配器
 	 */
-	private FileAdapter adapter;
+	private MShareFileAdapter adapter;
 	/**
 	 * 主要显示的GridView
 	 */
@@ -64,6 +68,13 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * 根目录路径，即扩展存储路径
 	 */
 	private MShareFile rootFile;
+	
+	/**
+	 * 正在显示的内容
+	 */
+	private MShareFile[] files;
+	
+	private boolean isLongClicked = true;
 	
 	private boolean enable;
 	/**
@@ -82,7 +93,15 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	public View getView() {
 		// 文件浏览器布局
 		View fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
-
+		
+		fileBrowserLayout.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Log.d(TAG, "file browser is clicked");
+			}
+		});
+		
 		// 设置后退按钮
 		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backBtn.setOnClickListener(new BackBtnListener(context));
@@ -98,12 +117,14 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		MShareFile[] files = crumbController.getFiles();
 		// create grid view
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
-		Log.d(TAG, "register click listener");
+		gridView.setOnItemLongClickListener(new LongListener());
 		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
+		
+		
 		// 有setOnContextMenuCreateListener
 		
 		// TODO 可能并不是很好的注册ContextMenu的方法，因为需要将context作为Activity来使用
-		 ((Activity)context).registerForContextMenu(gridView);
+		((Activity)context).registerForContextMenu(gridView);
 		
 		// 检测扩展存储是否可用
 		setEnabled(StateController.getExternalStorageState() == StateController.STATE_EXTERNAL_STORAGE_ENABLE);
@@ -112,7 +133,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			return null;
 		} else {
 			// set adapter
-			adapter = new FileAdapter(context, this, files); 
+			adapter = new MShareFileAdapter(context, this, files); 
 			gridView.setAdapter(adapter);
 			return fileBrowserLayout;
 		}
@@ -185,6 +206,9 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * @param files
 	 */
 	public void refreshGridView(MShareFile[] files) {
+		// 设置当前正在文件浏览器中的内容
+		this.files = files;
+		
 		// 设置当前正在刷新的是否是共享的文件
 		for (int i = 0; i < files.length; i++) {
 			MShareFile file = files[i];
@@ -192,7 +216,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		}
 		
 		// 新的适配器，用于刷新GridView
-		adapter = new FileAdapter(context, this, files);
+		adapter = new MShareFileAdapter(context, this, files);
 		gridView.setAdapter(adapter);
 		
 		// 设置导航后退按钮的样式，即是否可以被按下
@@ -209,6 +233,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 */
 	public void pushCrumb(MShareFile file) {
 		int index = crumbController.push(file);
+		crumbController.unselect();
 		crumbController.select(index);
 	}
 	/**
@@ -269,6 +294,11 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			if (isLongClicked) {
+				Log.d(TAG, "is LongClick!");
+				isLongClicked = false;
+				return;
+			}
 			Log.d(TAG, "item click!");
 			Object tag = view.getTag();
 			
@@ -278,7 +308,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 				if (file.isDirectory()) { // whether is a directory
 					
 					if (file != null && file.canRead()) { // 文件夹可以打开
-						Log.d(TAG, "成功打开");
 						pushCrumb(file);
 						refreshGridView(file);
 					} else {
@@ -294,6 +323,26 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 				// error
 			}
 		}
+	}
+	
+	private class LongListener implements AdapterView.OnItemLongClickListener {
+
+		@Override
+		public boolean onItemLongClick(AdapterView<?> parent, View view,
+				int position, long id) {
+
+			// 设置所
+			MShareFile file = files[position];
+			setSelectFile(file);
+			Log.d(TAG, "set select file : " + file.getAbsolutePath());
+			
+			// 设置longclick，让click不被触发
+			isLongClicked = true;
+			
+			// TODO 设置成false，是这样?
+			return false;
+		}
+		
 	}
 	
 	/**

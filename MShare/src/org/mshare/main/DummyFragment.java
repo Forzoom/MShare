@@ -3,7 +3,7 @@ package org.mshare.main;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.mshare.file.FileAdapter;
+import org.mshare.file.MShareFileAdapter;
 import org.mshare.file.MShareCrumbController;
 import org.mshare.file.MShareFileBrowser;
 import org.mshare.ftp.server.FsSettings;

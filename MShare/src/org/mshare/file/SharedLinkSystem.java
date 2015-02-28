@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.mshare.ftp.server.Account;
@@ -165,6 +166,9 @@ public class SharedLinkSystem {
 	 * 尝试多个持久化内容添加到文件树中
 	 * 需要自己调用
 	 * TODO 需要修正load，不应该使用sp，应该更能够够被改变
+	 * TODO 需要了解instanceof是否拥有足够高的效率，对于内存和效率是否有很大的影响
+	 * TODO 了解SharedPreferences的效率问题
+	 * TODO 需要考虑更好的方法来存储数据
 	 * @param sp 将尝试添加其中所有以"/"开头的内容
 	 * @param filePermission 添加的文件的权限 {@link #FILE_PERMISSION_ADMIN}, {@link #FILE_PERMISSION_USER}
 	 */
