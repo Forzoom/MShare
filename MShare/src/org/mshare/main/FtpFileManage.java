@@ -58,6 +58,7 @@ public class FtpFileManage extends Activity{
 	private ExecutorService mThreadPool;
 
 	private static String mAtSDCardPath;
+	private String cachePath;
 
 	private ProgressBar mPbLoad = null;
 
@@ -351,6 +352,13 @@ public class FtpFileManage extends Activity{
 	@Override
 	protected void onResume() {
 		super.onResume();
+		if(cachePath != null){
+			File cacheFile = new File(cachePath);
+			if(cacheFile.exists()){
+				cacheFile.delete();
+				cachePath = null;
+			}
+		}
 	}
 	
 	@Override
@@ -716,7 +724,7 @@ public class FtpFileManage extends Activity{
 		File cacheFile = new File(localPath);
 		
 		public CmdOPEN() {
-			
+			cachePath = localPath;
 		}
 
 		@Override
@@ -740,7 +748,7 @@ public class FtpFileManage extends Activity{
 		}
 
 		protected void onPostExecute(Boolean result) {
-			
+			cacheFile.deleteOnExit();
 			toast(result ? "打开成功" : "打开失败");
 			progressDialog.dismiss();
 		}
@@ -1038,7 +1046,6 @@ public class FtpFileManage extends Activity{
 		String type = getMIMEType(file);
 		//设置intent的data和Type属性。 
 		intent.setDataAndType(/*uri*/Uri.fromFile(file), type);
-		file.deleteOnExit();
 		//跳转 
 		startActivity(intent);
 	}
