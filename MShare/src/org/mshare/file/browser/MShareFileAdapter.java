@@ -1,4 +1,4 @@
-package org.mshare.file;
+package org.mshare.file.browser;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -33,8 +33,8 @@ import java.io.RandomAccessFile;
 
 import android.util.Log;
 
-import org.mshare.file.SharedLink;
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.ftp.server.*;
 import org.mshare.main.MShareUtil;
 

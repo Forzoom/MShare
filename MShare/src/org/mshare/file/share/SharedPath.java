@@ -1,4 +1,4 @@
-package org.mshare.file;
+package org.mshare.file.share;
 
 /**
  * 作为realPath的代替品，以便保存更多的内容，而不仅仅是realPath

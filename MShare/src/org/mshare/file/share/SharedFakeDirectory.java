@@ -1,4 +1,4 @@
-package org.mshare.file;
+package org.mshare.file.share;
 
 import java.util.Iterator;
 import java.util.Map;

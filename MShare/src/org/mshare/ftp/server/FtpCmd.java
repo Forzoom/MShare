@@ -22,7 +22,7 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.lang.reflect.Constructor;
 
-import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.ftp.server.AccountFactory.Token;
 
 import android.util.Log;

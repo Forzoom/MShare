@@ -72,10 +72,6 @@ public class NewConn extends Activity implements StateCallback {
 	
 	private ToggleButton apTest;
 	private TextView ftpApIp;
-	// TODO 服务器当前有多少用户连接，需要监听器?
-	private TextView ftpCurrentSessionsView;
-	// 显示服务器允许多少用户连接
-	private TextView ftpMaxSessionsView;
 	
 	// 总共是6种状态
 	private static final int SERVER_STATE_STARTING = 0x1;

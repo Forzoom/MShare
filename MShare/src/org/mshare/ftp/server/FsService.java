@@ -85,15 +85,19 @@ public class FsService extends Service implements Runnable {
     // to receive an exit signal and cleanly exit.
     public static final int WAKE_INTERVAL_MS = 1000; // milliseconds
 
+    /**
+     * TODO 为什么名字叫这个?
+     */
     private TcpListener wifiListener = null;
-    // 所有客户连接，每个客户都不应该知道其他的客户是如何工作的
-    private final List<SessionThread> sessionThreads = new ArrayList<SessionThread>();
     
     // wifi和wake锁
     private WakeLock wakeLock;
     private WifiLock wifiLock = null;
     
     private static AccountFactory mAccountFactory;
+    
+    // 管理Session的控制器
+    private SessionController sessionController;
     
     /**
      * 当start被调用的时候，即尝试启动一个新的服务器线程
@@ -114,9 +118,11 @@ public class FsService extends Service implements Runnable {
                 return START_STICKY;
             }
         }
+
+        // 创建SessionController
+        sessionController = new SessionController();
         
-        // 用于检测账户是否存在
-        // TODO 向AccountFactory中传递SessionNotifier
+        // 向AccountFactory中传递SessionNotifier
         SessionNotifier notifier = new SessionNotifier();
         // 创建AccountFactory
         mAccountFactory = new AccountFactory();
@@ -267,7 +273,7 @@ public class FsService extends Service implements Runnable {
             }
         }
 
-        terminateAllSessions();
+        sessionController.terminateAllSessions();
 
         if (wifiListener != null) {
             wifiListener.quit();
@@ -278,30 +284,6 @@ public class FsService extends Service implements Runnable {
 
         stopSelf();
         sendBroadcast(new Intent(ACTION_STOPPED));
-    }
-    /**
-     * 停止所有会话
-     */
-    private void terminateAllSessions() {
-        Log.i(TAG, "Terminating " + sessionThreads.size() + " session thread(s)");
-        synchronized (this) {
-            for (SessionThread sessionThread : sessionThreads) {
-                if (sessionThread != null) {
-                    sessionThread.closeDataSocket();
-                    sessionThread.closeSocket();
-                }
-            }
-        }
-    }
-
-    /**
-     * 提醒所有的普通用户，有新的共享内容
-     * TODO 使用该方法来通知，可能会有安全方面的问题，该方法可能被人调用
-     */
-    public static void notifyAllSession() {
-//    	for (SessionThread sessionThread : sessionThreads) {
-//    		
-//    	}
     }
     
     /**
@@ -455,49 +437,6 @@ public class FsService extends Service implements Runnable {
     public static boolean isFileShared(File file) {
     	return mAccountFactory.isFileShared(file);
     }
-    
-    /**
-     * The FTPServerService must know about all running session threads so they can be
-     * terminated on exit. Called when a new session is created.
-     * 注册会话线程？
-     */
-    public void registerSessionThread(SessionThread newSession) {
-        // Before adding the new session thread, clean up any finished session
-        // threads that are present in the list.
-
-        // Since we're not allowed to modify the list while iterating over
-        // it, we construct a list in toBeRemoved of threads to remove
-        // later from the sessionThreads list.
-        synchronized (this) {
-        	// 获得所有"失效"的连接线程？调用join让其能够正确退出
-            List<SessionThread> toBeRemoved = new ArrayList<SessionThread>();
-            for (SessionThread sessionThread : sessionThreads) {
-                if (!sessionThread.isAlive()) {
-                    Log.d(TAG, "Cleaning up finished session...");
-                    try {
-                    	// 如果线程失效，那么终止线程，调用join
-                        sessionThread.join();
-                        Log.d(TAG, "Thread joined");
-                        toBeRemoved.add(sessionThread);
-                        sessionThread.closeSocket(); // make sure socket closed
-                    } catch (InterruptedException e) {
-                        Log.d(TAG, "Interrupted while joining");
-                        // We will try again in the next loop iteration
-                    }
-                }
-            }
-            
-            // 所有失效线程都调用了join，所以现在可以将其移出
-            for (SessionThread removeThread : toBeRemoved) {
-                sessionThreads.remove(removeThread);
-            }
-
-            // Cleanup is complete. Now actually add the new thread to the list.
-            newSession.verifier = mAccountFactory.getVerifier();
-            sessionThreads.add(newSession);
-        }
-        Log.d(TAG, "Registered session thread");
-    }
 
     // TODO 可能需要监听器来监听当前的sessionThread的数量变化
 //    public static int getCurrentLink
@@ -531,6 +470,14 @@ public class FsService extends Service implements Runnable {
     }
     
     /**
+     * 临时所使用的用于注册session的函数，不知道以后还需不需要
+     * @param newSession
+     */
+    public void registerSessionThread(SessionThread newSession) {
+    	sessionController.registerSessionThread(newSession);
+    }
+    
+    /**
      * 用于向多个Session发送消息，消息的内容已经包装好了
      * TODO 在客户端有小红点
      * 不应该让所有人都可以使用Notifier，因为Notifier将会向用户发送消息
@@ -538,6 +485,8 @@ public class FsService extends Service implements Runnable {
      * TODO 对于发送这个提醒的Session，不应该被提醒
      * TODO SessionThread可能现在正在发送消息，需要用什么样的方式来发送消息提醒呢？使用消息队列？
      * TODO 将发送消息处理成一个函数
+     * 
+     * TODO 因为Session被sessionController所控制
      * @author HM
      *
      */
@@ -549,12 +498,12 @@ public class FsService extends Service implements Runnable {
     	 * @param sender 可以是null
     	 */
     	public void notifyAddFile(Token token, SessionThread sender) {
-    		int sessionCount = sessionThreads.size();
+    		int sessionCount = sessionController.getCount();
     		
     		// 对于管理员账户来说
     		if (token.isAdministrator()) {
     			for (int index = 0; index < sessionCount; index++) {
-        			SessionThread receiveSession = sessionThreads.get(index);
+        			SessionThread receiveSession = sessionController.getSessionThread(index);
     				// 发送消息通知所有的Session
 //        			receiveSession.
         		}
@@ -562,7 +511,7 @@ public class FsService extends Service implements Runnable {
     			// 普通账户
     			for (int index = 0; index < sessionCount; index++) {
         			// 在所有的session中寻找拥有相同的Accoount的SessionThread,但不包括sender
-        			SessionThread receiveSession = sessionThreads.get(index);
+        			SessionThread receiveSession = sessionController.getSessionThread(index);
         			// session和sender不相等如何判断
         			if (receiveSession.getToken().equals(token) && receiveSession != sender) {
         				// 发送消息通知

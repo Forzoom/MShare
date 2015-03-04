@@ -1,10 +1,10 @@
-package org.mshare.file;
+package org.mshare.file.browser;
 
 import java.io.File;
 import java.util.Map;
 
 import org.mshare.main.*;
-import org.mshare.file.MShareFileAdapter.ItemContainer;
+import org.mshare.file.browser.MShareFileAdapter.ItemContainer;
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;

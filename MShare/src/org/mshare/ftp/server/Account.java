@@ -26,8 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.mshare.file.SharedLinkSystem;
-import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.file.share.SharedLinkSystem;
+import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.ftp.server.AccountFactory.Token;
 import org.mshare.ftp.server.FsService.SessionNotifier;
 import org.mshare.main.MShareApp;

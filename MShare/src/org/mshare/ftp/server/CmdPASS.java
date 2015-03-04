@@ -38,7 +38,7 @@ public class CmdPASS extends FtpCmd implements Runnable {
         Log.d(TAG, "Executing PASS");
         String attemptPassword = getParameter(input); // silent
         
-        if (sessionThread.getUsername() == null) {
+        if (sessionThread.sessionInfo.getUsername() == null) {
         	// TODO 可能使用ACCT来创建Account
         	Log.e(TAG, "必须先调用USER");
         	sessionThread.writeString("503 Must send USER first\r\n");
@@ -47,8 +47,8 @@ public class CmdPASS extends FtpCmd implements Runnable {
         
         // 输入的内容可能会有错误
         if (attemptPassword != null && !attemptPassword.equals("")) {
-        	if (sessionThread.authAttempt(sessionThread.getUsername(), attemptPassword) != null) {
-        		Log.i(TAG, "User " + sessionThread.getUsername() + " password verified");
+        	if (sessionThread.authAttempt(sessionThread.sessionInfo.getUsername(), attemptPassword) != null) {
+        		Log.i(TAG, "User " + sessionThread.sessionInfo.getUsername() + " password verified");
         		
         		Token token = sessionThread.getToken();
         		if (token.isGuest()) {
