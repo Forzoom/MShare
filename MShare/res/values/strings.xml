@@ -166,6 +166,9 @@
     <string name="video">Video</string>
     <string name="picture">Image</string>
     
+    <!-- Activity Label -->
+    <string name="activity_label_play_video">播放视频</string>
+    
     <!-- NewConn Activity Label -->
     <string name="activity_label_server_setting">修改配置</string>
     <string name="activity_label_qrcode_connect">二维码</string>

@@ -129,9 +129,6 @@ public class NewConn extends Activity implements StateCallback {
 		ftpPasswordView.setText(FsSettings.getPassword());
 		ftpPortView.setText(String.valueOf(FsSettings.getPort()));
 		
-		// 打印context，尝试查看和MShareApp中的context是否相同
-		Log.v(TAG, ((Context)this).toString());
-		
 		// 设置启动和关闭的监听器
 		ftpSwitch.setOnClickListener(new StartStopServerListener());
 		apTest.setOnClickListener(new WifiApControlListener());
