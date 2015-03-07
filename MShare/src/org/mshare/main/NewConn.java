@@ -45,6 +45,7 @@ import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
 import org.mshare.main.StateController.StateCallback;
 import org.mshare.nfc.NfcServerActivity;
 import org.mshare.scan.ScanActivity;
+import org.mshare.p2p.P2pActivity;
 
 /**
  * TODO 当在选择要分享的内容的时候，能不能将我们的应用也加入到其中
@@ -56,7 +57,7 @@ public class NewConn extends Activity implements StateCallback {
 	
 	private static final String TAG = NewConn.class.getSimpleName();
 	
-	// 所有和配置有关的空间
+	// 所有和配置有关的控件
 	private ToggleButton ftpSwitch;
 	private TextView ftpUsernameView;
 	private TextView ftpPasswordView;
@@ -229,6 +230,12 @@ public class NewConn extends Activity implements StateCallback {
 				Log.v(TAG, "option menu nfc");
 				Intent startNfc = new Intent(this, NfcServerActivity.class);
 				startActivity(startNfc);
+				break;
+			case R.id.menu_set_ftp_p2p:
+				Log.v(TAG, "P2P");
+				Intent startP2p = new Intent();
+				startP2p.setClass(this, P2pActivity.class);
+				startActivity(startP2p);
 				break;
 			case R.id.menu_set_ftp_server_qrcode:
 				Log.v(TAG, "option menu qrcode");
