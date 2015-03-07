@@ -74,7 +74,12 @@ public class P2pReceiver extends BroadcastReceiver {
 			Log.d(TAG, "the discover state change : " + intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, -11));
 			wpm.requestPeers(channel, new OnPeerListListener());
 		}
-
+		
+		// 判断Connect改变
+		if (action.equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
+			// 可以获得什么内容呢？
+			Log.d(TAG, "");
+		}
 	}
 	
 	/**

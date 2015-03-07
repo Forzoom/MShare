@@ -134,33 +134,6 @@ public class NewConn extends Activity implements StateCallback {
 		ftpSwitch.setOnClickListener(new StartStopServerListener());
 		apTest.setOnClickListener(new WifiApControlListener());
 		
-		Button testScan = (Button)findViewById(R.id.test_scan);
-		testScan.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				startActivityForResult(new Intent(NewConn.this, ScanActivity.class), 0);
-			}
-		});
-		
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		
-		TextView textView = (TextView)findViewById(R.id.scan_result);
-		
-		// 将data中的数据取出
-		Log.d(TAG, "receive activity : resultCode " + resultCode);
-		if (resultCode == Activity.RESULT_OK && data != null) {
-			textView.setText(data.getStringExtra("result"));
-		} else if (resultCode == Activity.RESULT_CANCELED) {
-			textView.setText("canceled");
-		} else {
-			textView.setText("error");
-		}
-		
-		super.onActivityResult(requestCode, resultCode, data);
 	}
 	
 	@Override
