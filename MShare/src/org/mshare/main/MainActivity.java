@@ -5,6 +5,7 @@ import java.io.File;
 import org.mshare.file.MShareFileAdapter.ItemContainer;
 import org.mshare.file.MShareFile;
 import org.mshare.file.MShareFileBrowser;
+import org.mshare.file.MshareFileManage;
 import org.mshare.file.SharedLinkSystem;
 import org.mshare.ftp.server.Account;
 import org.mshare.ftp.server.AccountFactory;
@@ -28,6 +29,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -46,6 +48,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	
 	private static final String TAG = MainActivity.class.getSimpleName();
 	private static final int GROUP_FILE_BROWSER = 1;
+	MshareFileManage mshareFileManage;
 	ViewPager viewPager;
 	ActionBar actionBar;
 	Button newconn,joinconn;
@@ -60,6 +63,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		mshareFileManage = new MshareFileManage();
+		mshareFileManage.setContext(this);
 		// 获取ActionBar对象
 		actionBar = getActionBar();
 		// 获取ViewPager
@@ -126,12 +131,20 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
-		
+		//被选中的文件
+		MShareFile selectFile = fragment.getFileBrowser().getSelectFile();
 		// v所代表的是GridView
-		menu.add(GROUP_FILE_BROWSER, 0, 0, "剪切");
-		menu.add(GROUP_FILE_BROWSER, 1, 1, "复制");
-		menu.add(GROUP_FILE_BROWSER, 2, 2, "粘贴");
-		menu.add(GROUP_FILE_BROWSER, 3, 3, "删除");
+		if(mshareFileManage.getSelected() && !selectFile.isFile()) {
+			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+4, 3, "粘贴");
+			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+5, 4, "取消");
+		}
+		else {
+			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+1, 0, "剪切");
+			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+2, 1, "复制");
+			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+3, 2, "删除");
+		}
+		
+		
 		
 		// TODO 判断当前文件是否是共享文件，需要在文件浏览器内容创建的过程中设置文件是否是共享的
 		
@@ -142,7 +155,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CONTEXT_MENU_ITEM_ID_UNSHARE, 4, "不共享");
 		}
 		
-		super.onCreateContextMenu(menu, v, menuInfo);
+		//super.onCreateContextMenu(menu, v, menuInfo);
 	}
 	
 	@Override
@@ -151,15 +164,19 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		int itemId = item.getItemId();
 
 		// 获得管理员账户相关内容
-		SharedLinkSystem system = null;
-		String fakePath = null, realPath = null;
-		Token token = FsService.getAdminToken();
+		//SharedLinkSystem system = null;
+		//String fakePath = null, realPath = null;
+		//Token token = FsService.getAdminToken();
 
 		// 被选中的文件
 		MShareFile selectFile = fragment.getFileBrowser().getSelectFile();
+		//被选中文件的路径,文件名
+		String path = selectFile.getPath();
+		String name = selectFile.getName();
 
 		
 		switch (itemId) {
+			/**
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE: // 当点击的是共享
 				
 				// 获得当前被点击的对象
@@ -193,6 +210,26 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 					system.deleteSharedLink(fakePath);
 				}
 
+				break;
+			*/
+			case Menu.FIRST+1:
+				mshareFileManage.copySelect(path, name, true);
+				break;
+			case Menu.FIRST+2:
+				mshareFileManage.copySelect(path, name, false);
+				break;
+			case Menu.FIRST+3:
+				mshareFileManage.deleteAll(path);
+				fragment.getFileBrowser().refresh();
+				break;
+			case Menu.FIRST+4:
+				mshareFileManage.paste(path);
+				fragment.getFileBrowser().refresh();
+				break;
+			case Menu.FIRST+5:
+				mshareFileManage.copyCancel();
+				break;
+			default:
 				break;
 		}
 		
