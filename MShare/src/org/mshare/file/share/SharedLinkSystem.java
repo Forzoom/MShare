@@ -9,9 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mshare.ftp.server.Account;
-import org.mshare.ftp.server.AccountFactory;
-import org.mshare.ftp.server.FsSettings;
-import org.mshare.ftp.server.SessionThread;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;

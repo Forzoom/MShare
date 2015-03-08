@@ -29,7 +29,6 @@ import java.util.Map;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.ftp.server.AccountFactory.Token;
-import org.mshare.ftp.server.FsService.SessionNotifier;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -78,7 +77,7 @@ public abstract class Account {
     public static final String KEY_UPLOAD = "upload";
     
     /**
-     * 总共有多少个Session在使用当前的Account
+     * 使用当前Account的Session数量
      */
     public int tokenCount;
     

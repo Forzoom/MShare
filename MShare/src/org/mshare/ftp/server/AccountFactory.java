@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.ftp.server.FsService.SessionNotifier;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -17,7 +16,7 @@ import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 /**
- * TODO 除了管理员账户，还需要匿名账户一同进行管理
+ * 维护管理员账户、匿名账户
  * 管理所有的账户，包括管理员账户，当对管理员账户中的内容进行操作的时候，同时也需要对其他的不同账户进行操作
  * TODO AccountFactory是否需要都是静态方法,因为连allAccounts都是static的
  * TODO 客户端那边会发送QUIT消息吗，如果发送的话，就可以判断Session数量，可是如果客户意外断线了呢？
@@ -77,7 +76,8 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     private Token adminAccountToken;
     // 用于通知其他的Session
     // TODO 使用static是否好，在多个线程中，将会使用同一个Notifier,这样会不会有什么错误,两个线程同时调用一个方法会不会有问题
-    private static SessionNotifier mNotifier;
+    private SessionNotifier mNotifier;
+    // 用于验证
     private Verifier mVerifier;
     
     public static final int PERMISSION_ADMIN = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
@@ -206,7 +206,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			Log.d(TAG, "+结果:success");
 			return true;
 		} else {
-			Log.e(TAG, "+结果:Fail");
+			Log.e(TAG, "+结果:fail");
 			return false;
 		}			
 	}
@@ -308,12 +308,27 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	
 	/**
 	 * 设置notifier，如果没有设置，那么当管理员账户中的内容发生变化时，不会通知其他的Session
-	 * @param notifier
+	 * @param notifier 
 	 */
-	public void setSessionNotifier(SessionNotifier notifier) {
+	public void bindSessionNotifier(SessionNotifier notifier) {
 		mNotifier = notifier;
 	}
 
+	/**
+	 * 为了尽量保证SessionNotifier能够被正常的释放
+	 */
+	public void releaseSessionNotifier() {
+		mNotifier = null;
+	}
+	
+	/**
+	 * 
+	 * @return may be null
+	 */
+	public SessionNotifier getSessionNotifier() {
+		return mNotifier;
+	}
+	
 	/**
 	 * 需要保证不会为null
 	 * @return 返回值不会为null
@@ -427,10 +442,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	/**
 	 * 允许对Account中的文件树进行操作，包括添加，删除，持久化和非持久化
 	 * Token由AccountFactory保管和发放，交由AccountFactory来对Account进行操作
-	 * TODO 需要release函数来释放？
+	 * 
 	 * TODO 需要当所有的用户都结束的时候，token才有可能是无效的，不能在用户仍在使用的时候，token变为无效的了，为了防止意外发生，还是需要调用isValid
+	 * 
 	 * 需要类似Lock的机制，Token就是Lock，所以需要release
-	 * 如何记录Account总共有多少个Token
+	 * 
+	 * 作为private构造函数的内部类，是为了Token不能被随意地new出来
+	 * 
 	 * @author HM
 	 *
 	 */
