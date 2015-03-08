@@ -78,12 +78,14 @@ public class SessionThread extends Thread {
     public int authFails = 0;
     public static int MAX_AUTH_FAILS = 3;
 
+    // 需要保证verifier能够被正常的初始化?
     public Verifier verifier;
     
     public SessionThread(Socket socket, LocalDataSocket dataSocket) {
         this.cmdSocket = socket;
         this.localDataSocket = dataSocket;
         this.sendWelcomeBanner = true;
+        this.sessionInfo = new SessionInfo();
     }
 
     /**
@@ -375,6 +377,10 @@ public class SessionThread extends Thread {
     	}
     	// 获得新的Token
     	Token newToken = null;
+    	
+    	if (verifier == null) {
+    		Log.e(TAG, "verifier is null");
+    	}
         if ((newToken = verifier.auth(username, password, this)) != null) {
         	setToken(newToken);
             Log.i(TAG, "Authentication complete");

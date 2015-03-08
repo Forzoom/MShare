@@ -131,6 +131,8 @@ public class FsService extends Service implements Runnable {
         	prepareAdminAccount();
         }
         mAccountFactory.bindSessionNotifier(sessionNotifier);
+        // …Ë÷√—È÷§∆˜
+        sessionController.setVerifier(mAccountFactory.getVerifier());
         
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);

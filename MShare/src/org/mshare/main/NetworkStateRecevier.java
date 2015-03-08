@@ -28,9 +28,9 @@ public class NetworkStateRecevier extends BroadcastReceiver {
 	// 为没有连接时设置的状态
 	public static final int TYPE_NONE = -1;
 	
-	public StateController mState;
+	public StatusController mState;
 	
-	public NetworkStateRecevier(StateController stateController) {
+	public NetworkStateRecevier(StatusController stateController) {
 		this.mState = stateController;
 	}
 	
@@ -47,7 +47,7 @@ public class NetworkStateRecevier extends BroadcastReceiver {
 		// WIFI状态
 		if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
 			if (mState != null) {
-				mState.setWifiState(StateController.getWifiState());
+				mState.setWifiState(StatusController.getWifiState());
 			}
 		}
 		
@@ -79,7 +79,7 @@ public class NetworkStateRecevier extends BroadcastReceiver {
 		
 		// AP状态
 		if (!wifiApStateChangeAction.equals("") && action.equals(wifiApStateChangeAction)) {
-			mState.setWifiApState(StateController.getWifiApState());
+			mState.setWifiApState(StatusController.getWifiApState());
 		}
 	}
 

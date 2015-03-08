@@ -12,9 +12,9 @@ import android.content.Intent;
  */
 public class ExternalStorageStateReceiver extends BroadcastReceiver {
 
-	private StateController mState;
+	private StatusController mState;
 	
-	public ExternalStorageStateReceiver(StateController state) {
+	public ExternalStorageStateReceiver(StatusController state) {
 		this.mState = state;
 	}
 	
@@ -24,9 +24,9 @@ public class ExternalStorageStateReceiver extends BroadcastReceiver {
 			String action = intent.getAction();
 			// 无法对using进行处理
 			if (action.equals(Intent.ACTION_MEDIA_REMOVED)) { // 扩展卡被拔出
-				mState.setExternalStorageState(StateController.STATE_EXTERNAL_STORAGE_DISABLE);
+				mState.setExternalStorageState(StatusController.STATE_EXTERNAL_STORAGE_DISABLE);
 			} else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) { // 扩展卡可以使用
-				mState.setExternalStorageState(StateController.STATE_EXTERNAL_STORAGE_ENABLE);
+				mState.setExternalStorageState(StatusController.STATE_EXTERNAL_STORAGE_ENABLE);
 			}
 		}
 	}

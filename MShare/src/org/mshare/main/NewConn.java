@@ -42,7 +42,7 @@ import android.widget.ToggleButton;
 import android.widget.TextView;
 
 import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
-import org.mshare.main.StateController.StateCallback;
+import org.mshare.main.StatusController.StateCallback;
 import org.mshare.nfc.NfcServerActivity;
 import org.mshare.scan.ScanActivity;
 import org.mshare.p2p.P2pActivity;
@@ -85,7 +85,7 @@ public class NewConn extends Activity implements StateCallback {
 	private static final int SERVER_STATE_MASK = 0xf;
 	private static final int WIFI_STATE_MASK = 0x30;
 	
-	private StateController mState;
+	private StatusController mState;
 	
 	// 没有任何状态
 	private int state = 0;
@@ -138,7 +138,7 @@ public class NewConn extends Activity implements StateCallback {
 		super.onStart();
 		
 		// 设置和初始化状态内容
-		mState = new StateController();
+		mState = new StatusController();
 		mState.setCallback(this);
 		mState.initial((ViewGroup)findViewById(R.id.state_bar));
 		
@@ -219,7 +219,7 @@ public class NewConn extends Activity implements StateCallback {
 				String password = "password";
 				ConnectInfo connectInfo = new ConnectInfo(host, port, username, password);
 				
-				startQRCode.putExtra(QRCodeConnectActivity.EXTRA_CONTENT, connectInfo.toString());
+				startQRCode.putExtra(QRCodeConnectActivity.EXTRA_CONTENT, connectInfo);
 				startActivity(startQRCode);
 				break;
 			case R.id.menu_set_ftp_server_setting:
@@ -438,8 +438,8 @@ public class NewConn extends Activity implements StateCallback {
 		Log.d(TAG, "on wifi state change");
 		switch (state) {
 		// 表示的是手机不支持WIFI
-		case StateController.STATE_WIFI_DISABLE:
-		case StateController.STATE_WIFI_ENABLE:
+		case StatusController.STATE_WIFI_DISABLE:
+		case StatusController.STATE_WIFI_ENABLE:
 			changeState(WIFI_STATE_DISCONNECTED);
 			if (FsService.isRunning()) {
 				// 尝试关闭服务器
@@ -447,7 +447,7 @@ public class NewConn extends Activity implements StateCallback {
 			}
 			ftpAddrView.setText("未知");
 			break;
-		case StateController.STATE_WIFI_USING:
+		case StatusController.STATE_WIFI_USING:
 			changeState(WIFI_STATE_CONNECTED);
 			// 设置显示的IP地址
 			ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
@@ -462,21 +462,21 @@ public class NewConn extends Activity implements StateCallback {
 	public void onWifiApStateChange(int state) {
 		Log.d(TAG, "on wifi ap state change");
 		switch (state) {
-		case StateController.STATE_WIFI_AP_UNSUPPORT:
+		case StatusController.STATE_WIFI_AP_UNSUPPORT:
 			apTest.setEnabled(false);
 			apTest.setChecked(false);
 			break;
 			// 下面三种情况下有什么需要处理的吗?
 			// 下面的不处理apTest的checkd?
-		case StateController.STATE_WIFI_AP_ENABLE:
+		case StatusController.STATE_WIFI_AP_ENABLE:
 			apTest.setEnabled(true);
 			apTest.setChecked(true);
 			break;
-		case StateController.STATE_WIFI_AP_DISABLE:
+		case StatusController.STATE_WIFI_AP_DISABLE:
 			apTest.setEnabled(true);
 			apTest.setChecked(false);
 			break;
-		case StateController.STATE_WIFI_AP_USING:
+		case StatusController.STATE_WIFI_AP_USING:
 			apTest.setEnabled(true);
 			apTest.setChecked(true);
 			break;

@@ -127,7 +127,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		((Activity)context).registerForContextMenu(gridView);
 		
 		// 检测扩展存储是否可用
-		setEnabled(StateController.getExternalStorageState() == StateController.STATE_EXTERNAL_STORAGE_ENABLE);
+		setEnabled(StatusController.getExternalStorageState() == StatusController.STATE_EXTERNAL_STORAGE_ENABLE);
 		if (!isEnabled()) {
 			Toast.makeText(context, R.string.external_storage_removed, Toast.LENGTH_SHORT).show();
 			return null;

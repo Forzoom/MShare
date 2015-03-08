@@ -32,9 +32,8 @@ import android.widget.TextView;
  * @author HM
  *
  */
-public class StateController {
-
-	private static final String TAG = StateController.class.getSimpleName();
+public class StatusController {
+	private static final String TAG = StatusController.class.getSimpleName();
 	
 	// 所有的颜色
 	private int colorDisable = -1;

@@ -22,7 +22,7 @@ public class SessionController {
 	private static final String TAG = SessionController.class.getSimpleName();
 	// 保存的所有Session
 	private ArrayList<SessionThread> sessionThreads = new ArrayList<SessionThread>();
-	// 用于验证用户身份信息
+	// 用于验证用户身份信息，所有注册在SessionController中的SessionThread都将使用该验证器
 	private Verifier verifier;
 	
 	// 最大可以拥有的Session数量,Session的数量不能超过该数值，当Session数量到达该数值的时候，将不再接受客户端的连接，或者接受客户端的连接后，告知
@@ -68,7 +68,10 @@ public class SessionController {
 
             // Cleanup is complete. Now actually add the new thread to the list.
             // 可能verifier是null
+            
+            
             newSession.verifier = verifier;
+            Log.d(TAG, "bind Verifier");
             sessionThreads.add(newSession);
             if (sessionCallback != null) {
             	sessionCallback.onRegister(newSession.sessionInfo);

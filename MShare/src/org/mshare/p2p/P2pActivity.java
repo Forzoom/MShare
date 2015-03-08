@@ -3,7 +3,9 @@ package org.mshare.p2p;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.mshare.main.ConnectInfo;
 import org.mshare.main.R;
+import org.mshare.nfc.NfcServerActivity;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -21,6 +23,8 @@ import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
@@ -43,7 +47,6 @@ import android.widget.Button;
  */
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class P2pActivity extends Activity {
-
 	private static final String TAG = P2pActivity.class.getSimpleName();
 	
 	private WifiP2pManager wpm;
@@ -124,6 +127,30 @@ public class P2pActivity extends Activity {
 		unregisterReceiver(pr);
 	}
 	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.add(0, 0, 0, "NFC");
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case 0:
+			// 启动NFC
+			Intent startNfc = new Intent(P2pActivity.this, NfcServerActivity.class);
+			// 表示所发送内容为服务器信息
+			startNfc.putExtra(NfcServerActivity.EXTRA_MESSAGE_TYPE, NfcServerActivity.MESSAGE_SERVER_INFO);
+			// TODO 获得当前的ConnectInfo
+			ConnectInfo connectInfo = new ConnectInfo("192.168.0.1", "2121", "username", "password");
+			startNfc.putExtra(NfcServerActivity.EXTRA_SERVER_INFO, connectInfo);
+			
+			startActivity(startNfc);
+			break;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+	
 	// 不知道使用TargetApi是否好
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public void showPeers(WifiP2pDeviceList peers) {
@@ -134,8 +161,6 @@ public class P2pActivity extends Activity {
 		while (iterator.hasNext()) {
 			count++;
 			WifiP2pDevice device = iterator.next();
-			
-//			device.
 			
 			String address = device.deviceAddress;
 			String name = device.deviceName;

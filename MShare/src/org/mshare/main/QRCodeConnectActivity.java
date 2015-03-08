@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -30,8 +31,7 @@ import android.widget.TextView;
 public class QRCodeConnectActivity extends Activity {
 	private static final String TAG = QRCodeConnectActivity.class.getSimpleName();
 	
-	private String contents = "12211017";
-	
+	// 所用来显示二维码的颜色
 	private static final int WHITE = 0xFFFFFFFF;
 	private static final int BLACK = 0xFF000000;
 	
@@ -49,11 +49,7 @@ public class QRCodeConnectActivity extends Activity {
 		// TODO 当没有检测到content的时候，该怎么办
 		// 获得通过Intent发送的内容
 		Intent intent = getIntent();
-		contents = intent.getStringExtra(EXTRA_CONTENT);
-		// 并没有接受到需要显示的内容，设置默认内容
-		if (contents == null) {
-			contents = "default value";
-		}
+		ConnectInfo contents = (ConnectInfo)intent.getParcelableExtra(EXTRA_CONTENT);
 		
 		// 选择所显示的二维码的宽和高s
 		WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
@@ -66,7 +62,7 @@ public class QRCodeConnectActivity extends Activity {
 		smallerDimension = smallerDimension * 7 / 8;
 		
 		// 设置所需要编码的内容
-		String contentsToEncode = contents;
+		String contentsToEncode = contents.toString();
 		Map<EncodeHintType,Object> hints = new EnumMap<EncodeHintType,Object>(EncodeHintType.class);  
 		hints.put(EncodeHintType.CHARACTER_SET, "GBK");
 		BitMatrix result = null;

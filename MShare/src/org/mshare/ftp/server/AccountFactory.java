@@ -101,6 +101,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		
 		// VerifierµÄ´´½¨
 		mVerifier = new Verifier();
+		Log.d(TAG, "create verifier");
 	}
     
 	/**

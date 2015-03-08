@@ -135,7 +135,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		
 		// TODO 判断当前文件是否是共享文件，需要在文件浏览器内容创建的过程中设置文件是否是共享的
 		
-		if (fragment.getFileBrowser().getSelectFile().isShared()) {
+		if (!fragment.getFileBrowser().getSelectFile().isShared()) {
 			// 对于非共享的文件，需要将文件设置为共享状态
 			menu.add(GROUP_FILE_BROWSER, MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE, 4, "共享");
 		} else {
