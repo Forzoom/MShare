@@ -171,16 +171,6 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content" />
 		
-		<Button 
-		    android:id="@+id/test_scan"
-		    android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:text="testScan"/>
-		<TextView 
-			android:id="@+id/scan_result"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:text="scanResult" />
 		<!-- 暂时不尝试显示AP对应的ssid -->
 		<!-- 
 		<TextView 

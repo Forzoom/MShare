@@ -32,9 +32,16 @@ import android.widget.Button;
  * 需要尝试在二维码扫描中，连接对于的AP或者的wifip2p peer
  * 使用wifip2p已经大致掌握了，但无法测试
  * wifip2p将如何尝试启动
+ * 
+ * Attention:
+ * 在API版本没有到16(4.1)的情况下，stopDiscoverPeer是不可使用的，API14-15的情况下，使用discover可能会造成电量的损耗？不知道在API14-15的情况下该怎么办？
+ * 所以暂时将版本限定到API16
+ * 
+ * TODO 将要尝试wifip2p的传输速度
  * @author HM
  *
  */
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class P2pActivity extends Activity {
 
 	private static final String TAG = P2pActivity.class.getSimpleName();
@@ -59,8 +66,9 @@ public class P2pActivity extends Activity {
 
 		Log.d(TAG, "get channel : " + channel);
 		
-		Button discoverButton = (Button)findViewById(R.id.discover);
-		discoverButton.setOnClickListener(new View.OnClickListener() {
+		// 启动和停止p2p发现
+		Button startButton = (Button)findViewById(R.id.start_discover);
+		startButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -69,12 +77,26 @@ public class P2pActivity extends Activity {
 			}
 		});
 		
-		Button wakeButton = (Button)findViewById(R.id.wake);
-		wakeButton.setOnClickListener(new View.OnClickListener() {
+		// API版本是有问题的
+		Button stopButton = (Button)findViewById(R.id.stop_discover);
+		stopButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				Log.d(TAG, "wake start");
+				Log.d(TAG, "discover stop");
+				wpm.stopPeerDiscovery(channel, new OnStopDiscoverPeerListener());
+			}
+		});
+		
+		// 尝试连接和断开的速度
+		// 需要对CONNECT_CHANGE事件监听来判断连接是否改变
+		Button connectButton = (Button)findViewById(R.id.connect);
+		connectButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Log.d(TAG, "try connect");
+//				wpm.connect(channel, config, listener)
 			}
 		});
 	}
@@ -112,27 +134,28 @@ public class P2pActivity extends Activity {
 		while (iterator.hasNext()) {
 			count++;
 			WifiP2pDevice device = iterator.next();
+			
+//			device.
+			
 			String address = device.deviceAddress;
 			String name = device.deviceName;
 			Log.v(TAG, "address " + address);
 			Log.v(TAG, "name " + name);
 		}
-		
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			Log.d(TAG, "will show " + count + " peers");
-			wpm.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
-				
-				@Override
-				public void onSuccess() {
-					Log.d(TAG, "stop discover success");
-				}
-				
-				@Override
-				public void onFailure(int reason) {
-					Log.e(TAG, "stop discover fail");
-				}
-			});
-		}
+
+		Log.d(TAG, "will show " + count + " peers");
+		wpm.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
+			
+			@Override
+			public void onSuccess() {
+				Log.d(TAG, "stop discover success");
+			}
+			
+			@Override
+			public void onFailure(int reason) {
+				Log.e(TAG, "stop discover fail");
+			}
+		});
 	}
 	
 }
