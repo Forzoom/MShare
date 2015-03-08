@@ -2,7 +2,7 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
-import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.file.share.SharedLinkSystem.Permission;
 
 /**
  * {@link Account}

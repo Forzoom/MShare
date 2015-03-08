@@ -110,7 +110,7 @@
             </intent-filter>
         </activity>
         
-        <receiver android:name="org.mshare.file.MShareFileBrowser">
+        <receiver android:name="org.mshare.file.browser.MShareFileBrowser">
             <intent-filter>
                 <!-- TODO 新添加了remounted的内容需要测试 -->
                 <action android:name="android.intent.action.MEDIA_REMOUNTED"/>

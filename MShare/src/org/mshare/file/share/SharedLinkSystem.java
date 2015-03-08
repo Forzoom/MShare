@@ -1,4 +1,4 @@
-package org.mshare.file;
+package org.mshare.file.share;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,10 +23,16 @@ import android.util.Log;
 
 /**
  * BUG 当需要上传的文件名因为编码的不同而导致文件名乱码的时候，上传文件将失败
- * TODO 为管理员文件添加共享的文件夹，其中再分支出来，分为音乐，视频等等
+ * 
+ * TODO 为管理员文件添加共享的文件夹，其中再分支出来，分为音乐，视频等等，这个好像Android系统本身就提供了这个功能,但是这些功能一般应用于private的数据，但是共享文件可能不是private的数据
+ * 所以可能需要自己的来处理这些内容，就是创建对应的文件夹
+ * 
  * TODO 需要考虑更好的方法来保存这些内容，考虑B+树，在树形结构上仍能递归处理
+ * 
  * TODO 使用AccountFactory来管理Account账户的创建和回收,当用户QUIT的时候，或者是超时（是否需要设置超时？）的时候，会将Account中的sessionThread的register回收
+ * 
  * TODO 管理员账户并不存在文件树，所有对于管理员账户中所有持久化内容，当一棵文件树被构建的时候，都将在新的文件树中创建
+ * 
  * TODO 测试文件权限系统是否有效
  * TODO 当有文件被更新的时候，服务器必须能够通知客户端
  * TODO 在SharedLink中添加文件是否正在被使用isUsing?

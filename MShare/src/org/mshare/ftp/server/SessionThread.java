@@ -31,8 +31,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
-import org.mshare.file.SharedLink;
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.ftp.server.AccountFactory.Token;
 import org.mshare.ftp.server.AccountFactory.Verifier;
 
@@ -52,8 +52,8 @@ public class SessionThread extends Thread {
     protected boolean pasvMode = false;
     protected boolean binaryMode = false;
     private Token token;
-    protected String username;
-    // TODO 从数据存储中将原本的文件数据取出
+    // 保存SessionInfo,暂时设置为public
+    public SessionInfo sessionInfo;
     /**
      * 数据传送所使用的Socket
      */
@@ -420,13 +420,5 @@ public class SessionThread extends Thread {
     
     public void setToken(Token token) {
     	this.token = token;
-    }
-    
-    public String getUsername() {
-    	return username;
-    }
-    
-    public void setUsername(String username) {
-    	this.username = username;
     }
 }

@@ -1,41 +1,68 @@
-package org.mshare.file;
+package org.mshare.file.share;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import org.mshare.ftp.server.Account;
 
 import android.util.Log;
 
-// 所需要的内容 realPath和fakePath
-public class SharedFile extends SharedLink {
-	private static final String TAG = SharedFile.class.getSimpleName();
-	
-	private int type = TYPE_FILE;
-	public SharedFile(SharedLinkSystem system) {
+/**
+ * 对于文件树中的内容，对于SharedDirectory中的内容，文件树中都有，但是并没有被持久化
+ * @author HM
+ *
+ */
+public class SharedDirectory extends SharedLink {
+	private static final String TAG = SharedDirectory.class.getSimpleName();
+	private int mType = TYPE_DIRECTORY;
+
+	public SharedDirectory(SharedLinkSystem system) {
 		super(system);
 	}
 	
 	@Override
 	public boolean isFile() {
-		return true;
-	}
-	@Override
-	public boolean isDirectory() {
 		return false;
 	}
+
+	@Override
+	public boolean isDirectory() {
+		return true;
+	}
+
 	@Override
 	public boolean isFakeDirectory() {
 		return false;
 	}
 
+	/**
+	 * 获得并返回所有子文件
+	 * 所有的文件内容都将通过system来获得
+	 * @return 如果没有对应的system，那么就会返回null
+	 */
 	@Override
 	public SharedLink[] listFiles() {
-		return null;
+		Map<String, SharedLink> map = this.map;
+		int index = 0;
+		int size = map.size();
+		Log.d(TAG, "map size :" + size + ", will list out");
+		SharedLink[] files = new SharedLink[size];
+		
+    	Set<String> keySet = map.keySet();
+    	Iterator<String> iterator = keySet.iterator();
+    	while (iterator.hasNext()) {
+    		String key = iterator.next();
+    		files[index++] = map.get(key);
+    	}
+    	
+		return files;
 	}
 
 	@Override
 	public long length() {
-		return getRealFile().length();
+		return 0;
 	}
 
 	@Override
@@ -47,35 +74,28 @@ public class SharedFile extends SharedLink {
 	public boolean canWrite() {
 		return super.canWrite() && getRealFile().canWrite();
 	}
-	
+
 	@Override
 	public long lastModified() {
 		return getRealFile().lastModified();
 	}
 
-	/**
-	 * 删除一个文件，需要对存储文件的内容进行处理
-	 * 并不是真正地删除一个文件
-	 * 是否有必要:实现异步的删除
-	 * 删除文件 删除持久化 删除文件树  
-	 */
+	@Override
+	public boolean exists() {
+		return getRealFile().exists();
+	}
+
 	@Override
 	public boolean delete() {
-		
-		// 这里需要判断用户的权限吗
+
 		if (!canWrite()) {
-			Log.e(TAG, "用户没有权限执行删除操作");
+			Log.e(TAG, "permission denied");
 			return false;
 		}
 		
 		File file = getRealFile();
 		if (!file.exists()) {
 			Log.e(TAG, "需要删除的原文件不存在");
-			return false;
-		}
-		if (file.isDirectory()) {
-			Log.e(TAG, "不能删除一个文件夹");
-			// TODO 需要修正现在的显示内容，还是将该持久化路径删除？
 			return false;
 		}
 		// 目前所有用户都有权限在删除默认账户中所共享的内容
@@ -91,11 +111,6 @@ public class SharedFile extends SharedLink {
 		}
 		// 对于没有写权限的内容，或者对于defaultSp的内容该怎么处理呢？如果没有权限的情况下，需要使用哪个命令来回复呢？
 		// 使用等待的方式来触发,将persist的内容删除后就好
-	}
-
-	@Override
-	public boolean exists() {
-		return getRealFile().exists();
 	}
 
 	@Override
@@ -119,8 +134,8 @@ public class SharedFile extends SharedLink {
 			return false;
 		}
 		// TODO 减少检查
-		if (!realFile.isFile()) {
-			Log.e(TAG, "is not file");
+		if (!realFile.isDirectory()) {
+			Log.e(TAG, "is not directory");
 			return false;
 		}
 		File toFile = newPath.getRealFile();
@@ -129,7 +144,7 @@ public class SharedFile extends SharedLink {
 			Log.e(TAG, "尝试重命名文件失败");
 			return false;
 		}
-		Log.d(TAG, "真实文件重命名成功:" + realFile.getAbsolutePath());
+		Log.d(TAG, "realFile重命名成功:" + realFile.getAbsolutePath());
 		
 		// 准备内容
 		String oldFakePath = getFakePath(), newFakePath = newPath.getFakePath();
@@ -146,5 +161,4 @@ public class SharedFile extends SharedLink {
 		getSystem().changePersist(oldFakePath, newFakePath, newRealPath);
 		return true;
 	}
-	
 }

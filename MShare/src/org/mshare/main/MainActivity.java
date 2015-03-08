@@ -2,10 +2,10 @@ package org.mshare.main;
 
 import java.io.File;
 
-import org.mshare.file.MShareFileAdapter.ItemContainer;
-import org.mshare.file.MShareFile;
-import org.mshare.file.MShareFileBrowser;
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.browser.MShareFile;
+import org.mshare.file.browser.MShareFileBrowser;
+import org.mshare.file.browser.MShareFileAdapter.ItemContainer;
+import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.ftp.server.Account;
 import org.mshare.ftp.server.AccountFactory;
 import org.mshare.ftp.server.AccountFactory.Token;

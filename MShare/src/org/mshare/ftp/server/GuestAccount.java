@@ -1,6 +1,6 @@
 package org.mshare.ftp.server;
 
-import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.file.share.SharedLinkSystem.Permission;
 
 public class GuestAccount extends Account {
 

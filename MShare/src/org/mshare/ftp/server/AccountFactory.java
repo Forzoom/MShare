@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.mshare.file.SharedLinkSystem;
-import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.file.share.SharedLinkSystem;
+import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.ftp.server.FsService.SessionNotifier;
 import org.mshare.main.MShareApp;
 

@@ -3,7 +3,7 @@ package org.mshare.main;
 import java.io.File;
 import java.text.BreakIterator;
 
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.share.SharedLinkSystem;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

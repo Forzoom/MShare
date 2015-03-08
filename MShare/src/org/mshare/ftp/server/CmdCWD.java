@@ -22,7 +22,7 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.io.IOException;
 
-import org.mshare.file.SharedLink;
+import org.mshare.file.share.SharedLink;
 
 import android.util.Log;
 
