@@ -42,11 +42,11 @@ import android.util.Log;
  * TODO 管理员账户的名字不可使用
  * 有AdminAccount的Token由AccountFactory来管理
  * 
- * 将不再让Account被直接使用，而是使用Token
- * 
  * AccountFactory不使用单例模式，否则其他类可以轻易获取AccountFactory对象
  * 
  * Account仅仅在需要的时候才会被加载到allAccounts中
+ *
+ * 担心统一加载所有的Account会造成卡顿，所以考虑在需要的时候加载
  * 
  * TODO 用户名需要统一进行规范
  * @author HM
@@ -55,7 +55,7 @@ import android.util.Log;
 public class AccountFactory implements SharedLinkSystem.Callback {
 	private static final String TAG = AccountFactory.class.getSimpleName();
 	
-	// 匿名账户的用户名和密码
+	// 匿名账户用户名和密码
 	public static final String AnonymousUsername = "anonymous";
 	public static final String AnonymousPassword = "guest";
 	// 管理员账户的用户名和密码
@@ -85,7 +85,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     public static final int PERMISSION_GUEST = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ_GUEST; 
     
     /**
-     * 担心统一加载所有的Account会造成卡顿，所以考虑在需要的时候加载
+     * 创建管理员账户、匿名账户以及验证器
      */
     public AccountFactory() {
     	

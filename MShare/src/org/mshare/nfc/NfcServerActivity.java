@@ -77,7 +77,8 @@ public class NfcServerActivity extends Activity {
 			
 			// 关于dispatching system中还有不明白的
 		} else {
-			// 当NFC失败的时候，暂时提示用户的那个钱NFC不可用，以后如果用户的NFC不可用情况下，不应该有NFC相关的内容显示出来
+			// 当NFC失败时，提示NFC不可用
+			// 以后如果用户的NFC不可用情况下，不应该有NFC相关的内容显示出来
 			Toast.makeText(this, "NFC无法使用", Toast.LENGTH_SHORT).show();
 			TextView hint = (TextView)findViewById(R.id.nfc_hint);
 			hint.setText("NFC无法使用");
@@ -137,6 +138,10 @@ public class NfcServerActivity extends Activity {
 		return record;
 	}
 	
+	/**
+	 * 判断nfc是否可以使用
+	 * @return
+	 */
 	public boolean isNfcEnable() {
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 		if (mNfcAdapter == null) {

@@ -76,10 +76,6 @@
         <activity 
             android:name="org.mshare.p2p.P2pActivity"
             android:label="P2P" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
 		</activity>
 		<activity
             android:name="org.mshare.main.FtpMainActivity"
@@ -104,9 +100,14 @@
             android:label="@string/activity_label_play_video" >
         </activity>
         
+        <!-- MainActivity -->
         <activity
             android:name="org.mshare.main.MainActivity"
             android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         
         <receiver android:name="org.mshare.file.MShareFileBrowser">

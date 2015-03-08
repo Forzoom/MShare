@@ -151,6 +151,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		int itemId = item.getItemId();
 
 		// 获得管理员账户相关内容
+		// TODO 服务器没有开启的时候，好像会出现问题
 		SharedLinkSystem system = null;
 		String fakePath = null, realPath = null;
 		Token token = FsService.getAdminToken();

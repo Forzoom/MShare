@@ -27,6 +27,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -53,7 +54,6 @@ import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
 /**
- * TODO 如何获得Service的实例对象
  * TODO 当有Session的数量发生变化的时候，如果能够通知就好了，以保证当前的Session数量合适
  * TODO 关键是现在如何通知client有文件需要更新，在FsService中使用通知是否合适
  * @author HM
@@ -103,7 +103,7 @@ public class FsService extends Service implements Runnable {
         shouldExit = false;
         int attempts = 10;
         // The previous server thread may still be cleaning up, wait for it to finish.
-        // 用于等待上一个服务器关闭
+        // 等待上一个服务器关闭
         while (serverThread != null) {
             Log.w(TAG, "Won't start, server thread exists");
             if (attempts > 0) {
@@ -114,14 +114,6 @@ public class FsService extends Service implements Runnable {
                 return START_STICKY;
             }
         }
-        
-        // 用于检测账户是否存在
-        // TODO 向AccountFactory中传递SessionNotifier
-        SessionNotifier notifier = new SessionNotifier();
-        // 创建AccountFactory
-        mAccountFactory = new AccountFactory();
-        mAccountFactory.checkReservedAccount();
-        mAccountFactory.setSessionNotifier(notifier);
         
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
@@ -526,8 +518,31 @@ public class FsService extends Service implements Runnable {
 //                SystemClock.elapsedRealtime() + 2000, restartServicePI);
 //    }
 
+    /**
+     * 获得管理员账户对应的Token
+     * @return
+     */
     public static Token getAdminToken() {
+    	if (mAccountFactory == null) {
+    		Log.e(TAG, "AccountFactory is null, try get one");
+    		prepareAdminAccount();
+    	}
     	return mAccountFactory.getAdminAccountToken();
+    }
+    
+    /**
+     * 用于准备管理员账户
+     */
+    private static void prepareAdminAccount() {
+    	// 用于检测账户是否存在
+        // TODO 向AccountFactory中传递SessionNotifier
+        SessionNotifier notifier = new SessionNotifier();
+        
+        // 创建AccountFactory
+        mAccountFactory = new AccountFactory();
+        mAccountFactory.checkReservedAccount();
+        mAccountFactory.setSessionNotifier(notifier);
+        Log.d(TAG, "AccountFactory is created");
     }
     
     /**
@@ -538,6 +553,9 @@ public class FsService extends Service implements Runnable {
      * TODO 对于发送这个提醒的Session，不应该被提醒
      * TODO SessionThread可能现在正在发送消息，需要用什么样的方式来发送消息提醒呢？使用消息队列？
      * TODO 将发送消息处理成一个函数
+     * 
+     * 应该保证传入的sessionThreads能够被正确的回收，或者说使用static class
+     * 
      * @author HM
      *
      */
