@@ -136,63 +136,49 @@ public class SharedLinkSystem {
 	public SharedLinkSystem(Account account) {
 		this.mAccount = account;
 		// 根没有被持久化，所以需要每次自行创建,根文件只有读权限
-		root = SharedLink.newFakeDirectory(this, SEPARATOR, Permission.PERMISSION_READ_ALL);
+		root = SharedLink.newFakeDirectory(SEPARATOR, Permission.PERMISSION_READ_ALL);
+		root.bindSystem(this);
 		
 		// 设置当前的working directory为"/"
 		setWorkingDir(SEPARATOR); // root作为working directory
 	}
 	
 	/**
-	 * 需要使用prepared来确保文件树被创建了
-	 * prepared要怎么使用呢，用来判断
+	 * 加载账户中的SharedLink内容
+	 * 准备账户的上传文件接收路径
 	 */
 	public void prepare() {
 		if (prepared) {
-			Log.d(TAG, "already prepared");
+			Log.d(TAG, "SharedLinkSystem already prepared");
 			return;
 		}
-		
-		// TODO 这样不好,需要将这些内容放在哪里加载呢？
-		if (getAccount().isUser() || getAccount().isGuest()) {
-			// 加载管理员文件
-		}
 		if (getAccount() != null) {
-			SharedPreferences privateSp = getAccount().getSharedPreferences();
-			load(privateSp, SharedLinkSystem.FILE_PERMISSION_USER);
+			// 加载数据
+			load(getAccount().getStorage(), SharedLinkSystem.FILE_PERMISSION_USER);
 		}
-		
+		// TODO prepareUpload在这调用不好
 		prepareUpload();
 		prepared = true;
 	}
 	
 	/**
-	 * 尝试多个持久化内容添加到文件树中
-	 * 需要自己调用
-	 * TODO 需要修正load，不应该使用sp，应该更能够够被改变
-	 * TODO 需要了解instanceof是否拥有足够高的效率，对于内存和效率是否有很大的影响
-	 * TODO 了解SharedPreferences的效率问题
-	 * TODO 需要考虑更好的方法来存储数据
-	 * @param sp 将尝试添加其中所有以"/"开头的内容
+	 * 尝试将Storage中的数据添加到文件树中
+	 * @param storage 将添加的Storage
 	 * @param filePermission 添加的文件的权限 {@link #FILE_PERMISSION_ADMIN}, {@link #FILE_PERMISSION_USER}
 	 */
-	public void load(SharedPreferences sp, int filePermission) {
+	public void load(SharedLinkStorage storage, int filePermission) {
 		Log.d(TAG, "start load");
-		Iterator<String> iterator = sp.getAll().keySet().iterator();
+		SharedLink[] all = storage.getAll();
 		int count = 0;
 		
-		while (iterator.hasNext()) {
-			String key = iterator.next();
-			// 判断fakePath的第一位是否是'/'
-			Log.d(TAG, "fakePath:" + key);
-			if (key.charAt(0) == SEPARATOR_CHAR) {
-				// 不可能在keySet中有，但是在sp中没有的情况
-				String value = sp.getString(key, REAL_PATH_NONE);
-				Log.d(TAG, "+content:fakePath:" + key + " realPath:" + value);
-				if (addSharedLink(key, value, filePermission)) {
-					count++;
-				}
+		for (int index = 0; index < all.length; index++) {
+			SharedLink sharedLink = all[index];
+			if (addSharedLink(sharedLink, filePermission)) {
+				Log.d(TAG, "+content:fakePath:" + sharedLink.getFakePath() + " realPath:" + sharedLink.getRealPath());
+				count++;
 			}
 		}
+		
 		Log.d(TAG, "end load, add " + count + " SharedLink object");
 	}
 	
@@ -221,9 +207,9 @@ public class SharedLinkSystem {
 	 * @param realPath
 	 * @return
 	 */
-	public boolean addSharedPath(String fakePath, String realPath) {
+	public boolean addSharedPath(SharedLink sharedLink) {
 		int filePermission = mAccount.isAdministrator() ? FILE_PERMISSION_ADMIN : FILE_PERMISSION_USER;
-		return addSharedLink(fakePath, realPath, filePermission);
+		return addSharedLink(sharedLink, filePermission);
 	}
 	
 	/**
@@ -234,20 +220,28 @@ public class SharedLinkSystem {
 	 * 
 	 * 当所添加的真实文件并不存在的时候，共享层文件不会被显示出来
 	 * 
-	 * @param fakePath 对应的是SharedFileSystem中的文件路径，不能为""或者"/",并且必须是'/'开头
-	 * @param realPath 只有在添加最终的内容的时候才会被使用
+	 * TODO 在方法中判断了sharedLink是否是有效的，包括exists(),REAL_PATH_NONE等等，但是在其他的方法中，例如load也有判断的过程，如何让判断的过程不再重复
+	 * 		在SharedLink对象中添加boolean inValid用于判断?判断是由谁来判断
+	 * 
+	 * @param sharedLink 将被添加到文件树中的SharedLink对象
 	 * @param filePermission 所添加的文件权限
 	 * @return 成功返回true
 	 */
-	public boolean addSharedLink(String fakePath, String realPath, int filePermission) {
+	public boolean addSharedLink(SharedLink sharedLink, int filePermission) {
 		if (!prepared) {
 			Log.e(TAG, "invoke prepare first!");
 			return false;
 		}
+		if (sharedLink == null) {
+			Log.e(TAG, "sharedLink is null");
+			return false;
+		}
+		
+		String fakePath = sharedLink.getFakePath(), realPath = sharedLink.getRealPath();
 		// split
 		String[] crumbs = split(fakePath);
 		// 检测fakePath是否有效
-		if (!isFakePathValid(fakePath) || crumbs.length == 0) {
+		if (!isFakePathLegal(fakePath) || crumbs.length == 0) {
 			Log.e(TAG, "invalid fakePath");
 			return false;
 		}
@@ -276,33 +270,30 @@ public class SharedLinkSystem {
 		}
 		
 		fileName = crumbs[crumbs.length - 1];
-		if (file.isDirectory() || file.isFakeDirectory()) { // 父文件是一个文件夹
+		if (file.isDirectory() || file.isFakeDirectory()) { // 要求父文件是一个文件夹
 			// 添加新的文件
 			// TODO 被设置为共享的可能是一个Directoyr或者FakeDirectory
-			SharedLink newSharedLink = null;
 			
-			if (realPath == REAL_PATH_FAKE_DIRECTORY) {
-				// realPath为空，需要设置的是FakeDirectory
-				newSharedLink = SharedLink.newFakeDirectory(this, fakePath, filePermission);
+			if (sharedLink.isFakeDirectory()) {
 				Log.d(TAG, "+SharedFakeDirectory -> " + file.getFakePath());
 			} else {
 				File realFile = new File(realPath);
 				if (realFile.exists()) {
 					if (realFile.isFile()) {
-						newSharedLink = SharedLink.newFile(this, fakePath, realPath, filePermission);
 						Log.d(TAG, "+SharedFile -> " + file.getFakePath());
 					} else if (realFile.isDirectory()) {
-						newSharedLink = SharedLink.newDirectory(this, fakePath, realPath, filePermission);
 						Log.d(TAG, "+SharedDirectory -> " + file.getFakePath());
 						Log.d(TAG, "try add files in SharedDirectory");
-						// 需要将共享文件夹下的所有内容都添加到文件树中
-						// 对于文件，将会以SharedFile的形式加入文件树，对于文件夹，将已SharedDirectory的方式加入文件树
+						
+						// 共享文件夹下所有文件都添加到文件树中
 						File[] files = realFile.listFiles();
 						for (int index = 0, len = files.length; index < len; index++) {
 							File f = files[index];
-							String _fakePath = getFakePath(newSharedLink.getFakePath(), f.getName()), _realPath = f.getAbsolutePath();
+							String newFakePath = getFakePath(sharedLink.getFakePath(), f.getName());
+							String newRealPath = f.getAbsolutePath();
+							SharedLink newLink = SharedLink.newSharedLink(newFakePath, newRealPath);
 							// TODO 尝试添加,可能会出现错误
-							addSharedLink(_fakePath, _realPath, filePermission);
+							addSharedLink(newLink, filePermission);
 						}
 					}
 				} else {
@@ -311,8 +302,8 @@ public class SharedLinkSystem {
 				}
 			}
 			
-			if (newSharedLink != null) {
-				file.list().put(fileName, newSharedLink);
+			if (sharedLink != null) {
+				file.list().put(fileName, sharedLink);
 				if (mCallback != null) {
 					mCallback.onAdd();
 				}
@@ -359,20 +350,20 @@ public class SharedLinkSystem {
 	/**
 	 * 持久化内容，调用commonPersist，sp对应Account的sp
 	 * 将所有的内容添加到SharedPreferences中
+	 * @param sharedLink 所需要支持的仅仅是sharedLink，所以将原本的String fakePath和String realPath替换成sharedLink
 	 */
-	public boolean persist(String fakePath, String realPath) {
-		SharedPreferences sp = getAccount().getSharedPreferences();
+	public boolean persist(SharedLink sharedLink) {
+		SharedLinkStorage storage = getAccount().getStorage();
 		boolean persistResult = false;
-		// TODO 为了保存fakePath和realPath的联系，可能需要更好的持久化方式
-		// 因为所需要的保存的内容可能会有很多，包括对于文件的其他信息的保存
-		// 可能需要更新信息的操作按钮
-		if (realPath == null) {
-			Log.e(TAG, "realPath is null, should invoke unpersist()?");
+		
+		// TODO 可能需要更新信息的操作按钮
+		if (sharedLink == null) {
+			Log.e(TAG, "SharedLink is null!");
 			return false;
 		}
-		Editor editor = sp.edit();
-		editor.putString(fakePath, realPath);
-		persistResult = editor.commit();
+		
+		persistResult = storage.set(sharedLink);
+		String fakePath = sharedLink.getFakePath(), realPath = sharedLink.getRealPath();
 		Log.d(TAG, "+persist: fakePath:" + fakePath + " realPath:" + realPath + " result:" + persistResult);
 		if (persistResult) {
 			if (mCallback != null) {
@@ -383,25 +374,18 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * 仅仅是为了删除被持久化的内容
+	 * 删除被持久化的内容
 	 * 在defaultSp中的内容不会被删除
 	 * 在调用的时候，可能需要非持久话的文件是在默认账户中的
+	 * TODO 考虑使用SharedLink代替fakePath
 	 * @param fakePath
 	 */
 	public boolean unpersist(String fakePath) {
-		SharedPreferences sp = getAccount().getSharedPreferences();
+		SharedLinkStorage storage = getAccount().getStorage();
 		boolean persistResult = false;
-		String realPath = sp.getString(fakePath, REAL_PATH_NONE);
-		// 文件并不存在
-		if (realPath.equals(REAL_PATH_NONE)) { // 并不存在对应的持久化内容，为什么
-			// do nothing
-			return false;
-		}
-		
-		Editor editor = sp.edit();
-		editor.remove(fakePath);
-		persistResult = editor.commit();
-		Log.d(TAG, "-unpersist: fakePath:" + fakePath + " realPath:" + realPath + " result:" + persistResult);
+		// TODO remove a SharedLink is better than String
+		persistResult = storage.remove(fakePath);
+		Log.d(TAG, "-unpersist: fakePath:" + fakePath + " result:" + persistResult);
 		if (persistResult) {
 			if (mCallback != null) {
 				mCallback.onUnpersist(fakePath);
@@ -411,33 +395,22 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * 修正持久化内容，一般用于修改文件名
+	 * <p>修正持久化内容，一般用于修改文件名</p>
 	 * TODO 需要修正的内容部分在两个部分，不好解决
 	 * 将尝试在private的部分修正持久化内容
 	 */
 	public boolean changePersist(String oldFakePath, String newFakePath, String newRealPath) {
 		Log.d(TAG, "修正持久化内容");
-		SharedPreferences sp = getAccount().getSharedPreferences();
-		if (!sp.getString(oldFakePath, REAL_PATH_NONE).equals(REAL_PATH_NONE)) {
-			Editor editor = sp.edit();
-			// 删除原本内容
-			editor.remove(oldFakePath);
-			Log.d(TAG, "-oldFakePath :" + oldFakePath);
-			editor.putString(newFakePath, newRealPath);
-			Log.d(TAG, "+newFakePath :" + newFakePath + " newRealPath :" + newRealPath);
-			boolean changeResult = editor.commit();
-			Log.d(TAG, "=result: " + changeResult);
-			return changeResult;
-		} else {
-			Log.e(TAG, "没有找到对应持久化内容");
-			return false;
-		}
-	}
-	
-	// TODO 需要实现类似linux系统的内容,如果有更好的实现办法
-	// 可能不需要这个函数，因为Android是在linux系统上，所以File.getCanonicalPath就可以了
-	private String getCanonicalPath(String path) {
-		return path;
+		SharedLinkStorage storage = getAccount().getStorage();
+		SharedLink sharedLink = SharedLink.newSharedLink(newFakePath, newRealPath);
+		storage.remove(oldFakePath);
+		storage.set(sharedLink);
+		Log.d(TAG, "-oldFakePath :" + oldFakePath);
+		Log.d(TAG, "+newFakePath :" + newFakePath + " newRealPath :" + newRealPath);
+		// TODO 需要修正
+		boolean changeResult = true;
+		Log.d(TAG, "=result: " + changeResult);
+		return changeResult;
 	}
 	
 	/**
@@ -627,7 +600,13 @@ public class SharedLinkSystem {
 		return prepared;
 	}
 
-	public static boolean isFakePathValid(String fakePath) {
+	/**
+	 * 判断fakePath是否合法
+	 * TODO 改名isFakePathLegal?是否需要新的isFakePathValid()判断是否能添加到文件树中
+	 * @param fakePath
+	 * @return
+	 */
+	public static boolean isFakePathLegal(String fakePath) {
 		return fakePath.charAt(0) == SEPARATOR_CHAR;
 	}
 	

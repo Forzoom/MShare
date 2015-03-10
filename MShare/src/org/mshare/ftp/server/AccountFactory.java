@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.main.MShareApp;
@@ -360,7 +361,8 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		
 		Log.d(TAG, "add new account : " + username);
 		Account newAccount = new UserAccount(username, password);
-		newAccount.prepare();
+		// 将管理员中的内容添加到新的账户中
+		newAccount.prepare(adminAccount.getStorage());
 		allAccounts.put(username, newAccount);
 		return true;
 	}
@@ -379,14 +381,14 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	 */
 	@Override
 	public void onPersist(String fakePath, String realPath) {
-		// TODO 需要调整所有Account中的文件树
+		// 循环处理所有的文件树
 		Set<String> keySet = allAccounts.keySet();
 		Iterator<String> iterator = keySet.iterator();
-		
 		while (iterator.hasNext()) {
 			String key = iterator.next();
 			Account account = allAccounts.get(key);
-			account.getSystem().addSharedLink(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_ADMIN);
+			SharedLink sharedLink = SharedLink.newSharedLink(fakePath, realPath);
+			account.getSystem().addSharedLink(sharedLink, SharedLinkSystem.FILE_PERMISSION_ADMIN);
 		}
 		
 		// TODO 通知所有的Session，使用Notifier

@@ -10,11 +10,6 @@ import android.util.Log;
 public class SharedFile extends SharedLink {
 	private static final String TAG = SharedFile.class.getSimpleName();
 	
-	private int type = TYPE_FILE;
-	public SharedFile(SharedLinkSystem system) {
-		super(system);
-	}
-	
 	@Override
 	public boolean isFile() {
 		return true;

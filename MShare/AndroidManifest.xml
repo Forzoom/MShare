@@ -100,6 +100,12 @@
             android:label="@string/activity_label_play_video" >
         </activity>
         
+        <!-- 安全加密的测试Activity -->
+         <activity
+            android:name="org.mshare.secure.AESCodeTest"
+            android:label="加密测试" >
+        </activity>
+        
         <!-- MainActivity -->
         <activity
             android:name="org.mshare.main.MainActivity"

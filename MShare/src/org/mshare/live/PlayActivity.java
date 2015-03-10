@@ -68,10 +68,10 @@ public class PlayActivity extends Activity {
 	/**
 	 * 对应的是1000KB
 	 */
-	private static final int READY_BUFF = 1000 * 1024;
+	private static final int READY_BUFF = 40 * 1000 * 1024;
 	private static final int CACHE_BUFF = 500 * 1024;
 	// 8mb
-	private static final int CACHE_FILE_SIZE = 8 * 1024 * 1024;
+	private static final int CACHE_FILE_SIZE = 40 * 1024 * 1024;
 	 
 	private boolean isReady = false;
 	// 判断当前是否出现了播放错误
@@ -312,7 +312,6 @@ public class PlayActivity extends Activity {
 						}
 					}
 
-					sleep(20);
 				}
  
 				mHandler.sendEmptyMessage(CACHE_VIDEO_END);
