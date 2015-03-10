@@ -16,11 +16,6 @@ import android.util.Log;
  */
 public class SharedDirectory extends SharedLink {
 	private static final String TAG = SharedDirectory.class.getSimpleName();
-	private int mType = TYPE_DIRECTORY;
-
-	public SharedDirectory(SharedLinkSystem system) {
-		super(system);
-	}
 	
 	@Override
 	public boolean isFile() {

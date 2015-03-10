@@ -14,12 +14,7 @@ import android.util.Log;
  */
 public class SharedFakeDirectory extends SharedLink {
 	private static final String TAG = SharedFakeDirectory.class.getSimpleName();
-	private int mType = TYPE_FAKE_DIRECTORY;
 	private long mLastModified = 0l;
-	
-	public SharedFakeDirectory(SharedLinkSystem system) {
-		super(system);
-	}
 	
 	public boolean setLastModified(long lastModified) {
 		mLastModified = lastModified;

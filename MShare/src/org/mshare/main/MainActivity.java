@@ -13,6 +13,7 @@ import org.mshare.ftp.server.FsService;
 import org.mshare.main.R;
 
 import android.app.ActionBar;
+import android.app.ActionBar.Tab;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
@@ -21,6 +22,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences.Editor;
 //import android.view.View.OnClickListener; 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -43,8 +45,8 @@ import android.widget.Toast;
  * @version 
  */
 public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
-	
 	private static final String TAG = MainActivity.class.getSimpleName();
+	
 	private static final int GROUP_FILE_BROWSER = 1;
 	ViewPager viewPager;
 	ActionBar actionBar;
@@ -56,8 +58,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	DummyFragment fragment;
 	
 	@Override
-	public void onCreate(Bundle savedInstanceState)
-	{
+	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		// 获取ActionBar对象
@@ -86,10 +87,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			}
 			// 该方法的返回值决定每个Fragment的标题
 			@Override
-			public CharSequence getPageTitle(int position)
-			{
-				switch (position)
-				{
+			public CharSequence getPageTitle(int position) {
+				switch (position) {
 					case 0:
 						return "共享服务";
 					case 1:
@@ -100,24 +99,26 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		};
 		// 设置ActionBar使用Tab导航方式
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+		
 		// 遍历pagerAdapter对象所包含的全部Fragment。
 		// 每个Fragment对应创建一个Tab标签
-		for (int i = 0; i < pagerAdapter.getCount(); i++)
-		{
-			actionBar.addTab(actionBar.newTab()
-				.setText(pagerAdapter.getPageTitle(i))
-				.setTabListener(this));
+		Drawable shareIcon = getResources().getDrawable(R.drawable.share);
+		Drawable fileIcon = getResources().getDrawable(R.drawable.tab_file);
+		Drawable[] icons = new Drawable[2];
+		icons[0] = shareIcon;
+		icons[1] = fileIcon;
+		for (int i = 0; i < pagerAdapter.getCount(); i++) {
+			actionBar.addTab(actionBar.newTab().setText(pagerAdapter.getPageTitle(i)).setIcon(icons[i]).setTabListener(this));
 		}
+		
 		// 为ViewPager组件设置FragmentPagerAdapter
 		viewPager.setAdapter(pagerAdapter);  //①
 		// 为ViewPager组件绑定事件监听器
 		viewPager.setOnPageChangeListener(
-			new ViewPager.SimpleOnPageChangeListener()
-			{
+			new ViewPager.SimpleOnPageChangeListener() {
 				// 当ViewPager显示的Fragment发生改变时激发该方法
 				@Override
-				public void onPageSelected(int position)
-				{
+				public void onPageSelected(int position) {
 					actionBar.setSelectedNavigationItem(position);
 				}
 			});
@@ -213,4 +214,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
 	@Override
 	public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {}
+	
+	
 }

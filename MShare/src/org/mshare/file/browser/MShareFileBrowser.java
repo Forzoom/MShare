@@ -74,7 +74,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 */
 	private MShareFile[] files;
 	
-	private boolean isLongClicked = true;
+	private boolean isLongClicked = false;
 	
 	private boolean enable;
 	/**
@@ -93,14 +93,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	public View getView() {
 		// 文件浏览器布局
 		View fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
-		
-		fileBrowserLayout.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				Log.d(TAG, "file browser is clicked");
-			}
-		});
 		
 		// 设置后退按钮
 		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
@@ -209,9 +201,10 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		// 设置当前正在文件浏览器中的内容
 		this.files = files;
 		
-		// 设置当前正在刷新的是否是共享的文件
+		// 设置文件是否被共享
 		for (int i = 0; i < files.length; i++) {
 			MShareFile file = files[i];
+//			file.setShared(shared)
 //			FsService.isFile
 		}
 		

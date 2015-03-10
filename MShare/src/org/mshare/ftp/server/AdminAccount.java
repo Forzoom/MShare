@@ -11,7 +11,6 @@ import org.mshare.file.share.SharedLinkSystem.Permission;
  *
  */
 public class AdminAccount extends Account {
-
 	private static final String TAG = AdminAccount.class.getSimpleName();
 	
 	private int mPermission = AccountFactory.PERMISSION_ADMIN;
@@ -53,4 +52,6 @@ public class AdminAccount extends Account {
 	public boolean isFileShared(File file) {
 		return false;
 	}
+	
+	
 }

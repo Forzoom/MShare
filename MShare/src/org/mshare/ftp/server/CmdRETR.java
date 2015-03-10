@@ -24,6 +24,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.mshare.file.share.SharedLink;
+
 import android.util.Log;
 
 public class CmdRETR extends FtpCmd implements Runnable {
@@ -44,8 +46,9 @@ public class CmdRETR extends FtpCmd implements Runnable {
         String errString = null;
 
         mainblock: {
-        	fileToRetr = sessionThread.getToken().getSystem().getSharedLink(param).getRealFile();
-            if (fileToRetr.isDirectory()) {
+        	SharedLink linkToRetr = sessionThread.getToken().getSystem().getSharedLink(param);
+        	fileToRetr = linkToRetr.getRealFile();
+            if (linkToRetr.isDirectory() || linkToRetr.isFakeDirectory()) { // 不允许文件夹被RETR
                 Log.d(TAG, "Ignoring RETR for directory");
                 errString = "550 Can't RETR a directory\r\n";
                 break mainblock;
@@ -57,13 +60,17 @@ public class CmdRETR extends FtpCmd implements Runnable {
                 Log.i(TAG, "Failed RETR permission (canRead() is false)");
                 errString = "550 No read permissions\r\n";
                 break mainblock;
-            } /*
-               * else if(!sessionThread.isBinaryMode()) { myLog.l(Log.INFO,
-               * "Failed RETR in text mode"); errString =
-               * "550 Text mode RETR not supported\r\n"; break mainblock; }
-               */
+            }
+            
+            /*
+             * else if(!sessionThread.isBinaryMode()) { myLog.l(Log.INFO,
+             * "Failed RETR in text mode"); errString =
+             * "550 Text mode RETR not supported\r\n"; break mainblock; }
+             */
             FileInputStream in = null;
             try {
+            	// 使用不同的Mode有什么区别吗?对于AsciiMode不能使用加密?
+            	// ASCII的存在是为了处理回车换行问题
                 in = new FileInputStream(fileToRetr);
                 byte[] buffer = new byte[Defaults.getDataChunkSize()];
                 int bytesRead;
@@ -102,8 +109,7 @@ public class CmdRETR extends FtpCmd implements Runnable {
                         for (endPos = 0; endPos < bytesRead; endPos++) {
                             if (buffer[endPos] == '\n') {
                                 // Send bytes up to but not including the newline
-                                sessionThread.sendViaDataSocket(buffer, startPos, endPos
-                                        - startPos);
+                                sessionThread.sendViaDataSocket(buffer, startPos, endPos - startPos);
                                 if (endPos == 0) {
                                     // handle special case where newline occurs at
                                     // the beginning of a buffer
