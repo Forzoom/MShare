@@ -107,15 +107,18 @@ final class CameraConfigurationManager {
 //                                      Camera.Parameters.FOCUS_MODE_AUTO);
 //      }
 //    }
+    
+    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+    
     // Maybe selected auto-focus but not available, so fall through here:
-    if (!safeMode && focusMode == null) {
-      focusMode = findSettableValue(parameters.getSupportedFocusModes(),
-                                    Camera.Parameters.FOCUS_MODE_MACRO,
-                                    Camera.Parameters.FOCUS_MODE_EDOF);
-    }
-    if (focusMode != null) {
-      parameters.setFocusMode(focusMode);
-    }
+//    if (!safeMode && focusMode == null) {
+//      focusMode = findSettableValue(parameters.getSupportedFocusModes(),
+//                                    Camera.Parameters.FOCUS_MODE_MACRO,
+//                                    Camera.Parameters.FOCUS_MODE_EDOF);
+//    }
+//    if (focusMode != null) {
+//      parameters.setFocusMode(focusMode);
+//    }
 
 //    if (prefs.getBoolean(PreferencesActivity.KEY_INVERT_SCAN, false)) {
 //      String colorMode = findSettableValue(parameters.getSupportedColorEffects(),
