@@ -12,6 +12,9 @@
   	<color name="color_light_gray">#eeeeee</color>
   	<color name="color_transparent">#00000000</color>
   	
+  	<!-- button in picture -->
+  	<color name="color_picture_button">#00ff00</color>
+  	
   	<!-- 文件浏览器 -->
   	<color name="color_crumb_btn_pressed">#55eeeeee</color>
   	<color name="color_crumb_btn_pressing">#99eeeeee</color>
