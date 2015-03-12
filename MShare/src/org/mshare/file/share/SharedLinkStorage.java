@@ -72,8 +72,13 @@ public class SharedLinkStorage {
 		
 		while (iterator.hasNext()) {
 			String fakePath = iterator.next();
-			String realPath = sp.getString(fakePath, SharedLinkSystem.REAL_PATH_NONE);
 			Log.d(TAG, "fakePath:" + fakePath);
+
+			String realPath = SharedLinkSystem.REAL_PATH_NONE;
+			if (SharedLinkSystem.isFakePathLegal(fakePath)) {
+				realPath = sp.getString(fakePath, SharedLinkSystem.REAL_PATH_NONE);
+			}
+			
 			// ´´½¨SharedLink
 			SharedLink sharedLink = SharedLink.newSharedLink(fakePath, realPath);
 			

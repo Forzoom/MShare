@@ -49,7 +49,6 @@ import org.mshare.p2p.P2pActivity;
 
 /**
  * TODO 当在选择要分享的内容的时候，能不能将我们的应用也加入到其中
- * TODO 尝试用NFC来连接
  * @author HM
  *
  */
@@ -66,13 +65,12 @@ public class NewConn extends Activity implements StateCallback {
 	private TextView ftpAddrView;
 	// 服务器状态
 	private TextView serverStateView;
-	// StateBar
-	private RelativeLayout stateBar;
+	// StatusBar
+	private RelativeLayout statusBar;
 	
 	private TextView uploadPathView;
 	
 	private ToggleButton apTest;
-	private TextView ftpApIp;
 	
 	// 总共是6种状态
 	private static final int SERVER_STATE_STARTING = 0x1;
@@ -106,7 +104,7 @@ public class NewConn extends Activity implements StateCallback {
 		serverStateView = (TextView)findViewById(R.id.server_state);
 		
 		// StateBar
-		stateBar = (RelativeLayout)findViewById(R.id.state_bar);
+		statusBar = (RelativeLayout)findViewById(R.id.state_bar);
 		
 		// 上传路径
 		uploadPathView = (TextView)findViewById(R.id.upload_path);
@@ -114,7 +112,7 @@ public class NewConn extends Activity implements StateCallback {
 		// 尝试启动AP
 		apTest = (ToggleButton)findViewById(R.id.ftp_ap_test);
 		// TODO 不知道该怎么对应的IP地址
-		ftpApIp = (TextView)findViewById(R.id.ftp_ap_ip);
+//		ftpApIp = (TextView)findViewById(R.id.ftp_ap_ip);
 		
 		// 服务器设置显示
 		ftpUsernameView = (TextView)findViewById(R.id.ftp_username);

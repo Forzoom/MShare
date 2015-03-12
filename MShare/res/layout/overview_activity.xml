@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical"
+        >
+	    <RelativeLayout 
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:background="@drawable/server_overview_background">
+		    <TextView 
+		        android:id="@+id/server_overview_id_share_text"
+		        android:layout_width="wrap_content"
+		    	android:layout_height="wrap_content"
+		    	android:layout_centerVertical="true" 
+		    	android:textSize="18sp"
+		    	android:text="我的共享"/>
+		    
+		    
+		    <!-- 尝试大部分用户处于空闲？如何显示当前服务器最重要的信息 -->
+		    <!-- 
+		    
+		    <LinearLayout 
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:orientation="horizontal"
+		        android:layout_toRightOf="@id/server_overview_id_share_text">
+		        
+		        <ImageView 
+			        android:layout_width="wrap_content"
+			    	android:layout_height="wrap_content"
+			    	android:layout_centerVertical="true"
+			    	android:src="@drawable/ic_action_user"
+			    	android:background="@color/green09"
+			        />
+		        <ImageView 
+			        android:layout_width="wrap_content"
+			    	android:layout_height="wrap_content"
+			    	android:layout_centerVertical="true"
+			    	android:src="@drawable/ic_action_user"
+			    	android:background="@color/green09"
+			        />
+		        <ImageView 
+			        android:layout_width="wrap_content"
+			    	android:layout_height="wrap_content"
+			    	android:layout_centerVertical="true"
+			    	android:src="@drawable/ic_action_user"
+			    	android:background="@color/green09"
+			        />
+		        <ImageView 
+			        android:layout_width="wrap_content"
+			    	android:layout_height="wrap_content"
+			    	android:layout_centerVertical="true"
+			    	android:src="@drawable/ic_action_user"
+			    	android:background="@color/green09"
+			        />
+		        
+		    </LinearLayout>
+		    
+		     -->
+		    
+		    <ImageView 
+		        android:layout_width="wrap_content"
+		    	android:layout_height="wrap_content"
+		    	android:layout_alignParentRight="true"
+		    	android:layout_centerVertical="true"
+		    	android:src="@drawable/server_overview_setting"
+		        />
+		</RelativeLayout>
+		<!-- 具体的服务器信息 -->
+		<RelativeLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:background="@drawable/server_overview_item_background">
+			<ImageView
+			    android:id="@+id/server_overview_item_account_icon" 
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_centerVertical="true"
+				android:background="@color/blue08"
+				android:padding="6sp"
+				android:src="@drawable/account"/>
+			<!-- 还想没有必要出现这些内容 -->
+			<TextView
+			    android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_toRightOf="@id/server_overview_item_account_icon"
+				android:paddingLeft="10dp"
+				android:text="username"
+				android:layout_centerVertical="true"/>
+		</RelativeLayout>
+    </LinearLayout>
+</ScrollView>
