@@ -13,7 +13,7 @@
   	<color name="color_draken_gray">#999999</color>
   	<color name="color_light_black">#333333</color>
   	<color name="color_transparent">#00000000</color>
-  	
+
   	<color name="blue01">#0099CC</color>
 	<color name="blue02">#079DD0</color>
 	<color name="blue03">#0FA1D3</color>
@@ -88,6 +88,9 @@
 	<color name="red12">#FFAFAF</color>
 	<color name="red13">#FFCACA</color>
 	<color name="red14">#FFE4E4</color>
+
+  	<!-- button in picture -->
+  	<color name="color_picture_button">#00ff00</color>
   	
   	<!-- 文件浏览器 -->
   	<color name="color_crumb_btn_pressed">#55eeeeee</color>
