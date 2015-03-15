@@ -199,7 +199,12 @@ public class StatusController {
 	
 	// ÉèÖÃ·şÎñÆ÷×´Ì¬
 	public void setServerStatus(int status) {
+		Log.d(TAG, "set server status : " + status);
 		this.serverStatus  = status;
+		
+		if (callback != null) {
+			callback.onServerStatusChange(status);
+		}
 	}
 	
 	public static int getWifiStatus() {

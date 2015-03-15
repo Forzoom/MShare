@@ -14,6 +14,7 @@
   	<color name="color_light_black">#333333</color>
   	<color name="color_transparent">#00000000</color>
 
+  	<color name="blue00">#003366</color>
   	<color name="blue01">#0099CC</color>
 	<color name="blue02">#079DD0</color>
 	<color name="blue03">#0FA1D3</color>

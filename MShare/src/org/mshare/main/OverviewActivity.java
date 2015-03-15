@@ -18,6 +18,7 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -59,29 +60,36 @@ import android.os.Handler;
  */
 public class OverviewActivity extends Activity implements SurfaceHolder.Callback, Handler.Callback, StatusController.StatusCallback {
 	private static final String TAG = OverviewActivity.class.getSimpleName();
-	
+
+	// 所有将被绘制的内容
 	private ArrayList<CanvasElement> canvasElements = new ArrayList<CanvasElement>();
-	
-	SurfaceHolder surfaceHolder; 
+	// SurfaceHolder
+	private SurfaceHolder surfaceHolder;
+	// 判断Fling的GestureDetector
 	private GestureDetector gestureDetector;
-	RefreshHandler refreshHandler;
-	
-	// 所使用的统一画笔
+	// 刷新SurfaceView所用的Handler
+	private RefreshHandler refreshHandler;
+	// 统一画笔
 	private Paint canvasPaint = new Paint();
-	
-	boolean isLooping = false;
-	
-	int colorBlueDarken;
-	int colorBlueLighten;
+	// 当前是否在循环绘制
+	private boolean isLooping = false;
+	// 背景颜色
+	private int stopColor;
+	private int startColor;
+	private int operatingColor;
 	
 	private PictureBackground pictureBackground = new PictureBackground();
 	private RingButton serverButton = new RingButton();
 	// 所设置的缩小的内半径
-	int serverInnerRadius;
+	private int serverInnerRadius;
+	// 所设置的放大的呼吸外半径
+	private int serverOuterRadius;
 	
 	private ViewSwitcher viewSwitcher;
 	
 	private StatusController statusController;
+	
+	private boolean isSurfaceCreated = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -92,13 +100,17 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		viewSwitcher = (ViewSwitcher)findViewById(R.id.view_switcher);
 		
 		FrameLayout.LayoutParams serverParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-		// 不知道为什么，在这里设置并没有用
+		// TODO 不知道为什么，在这里设置并没有用
 		ViewGroup serverOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_flat, null);
 		FrameLayout.LayoutParams clientParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		ViewGroup clientOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_other, null);
-		
 		viewSwitcher.addView(serverOverview, serverParams);
 		viewSwitcher.addView(clientOverview, clientParams);
+		
+		// 创建背景颜色
+		stopColor = getResources().getColor(R.color.blue01);
+		startColor = getResources().getColor(R.color.blue08);
+		operatingColor = getResources().getColor(R.color.blue00);
 		
 		// 设置服务器相关
 		ServerOverviewSurfaceView surfaceView = (ServerOverviewSurfaceView)findViewById(R.id.server_overview_surface_view);
@@ -124,8 +136,7 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	protected void onStart() {
 		// TODO 可能需要使用更加安全的BroadcastReceiver注册方式
 		super.onStart();
-		
-		// TODO 临时设置的检测当前是否是MOBILE信号，
+
 		// TODO 需要处理的内容太多了，考虑不加入开启AP的功能
 		// 并没有AP cannot enable，所以对于isWifiApEnable函数，可以正确的执行,但是对于setWifiApEnabled就会报错
 		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
@@ -145,9 +156,12 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	public boolean handleMessage(Message msg) {
 		Log.d(TAG, "handleMessage");
 
+		if (!isSurfaceCreated) {
+			return false;
+		}
+		
 		// 获得需要刷新的区域，仅仅能够在这里刷新
 		Canvas canvas = surfaceHolder.lockCanvas();
-		canvas.drawColor(getResources().getColor(R.color.blue08));
 		isLooping = false;
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
@@ -160,7 +174,7 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 
 		if (isLooping) {
 			Message message = refreshHandler.obtainMessage();
-			refreshHandler.sendMessageDelayed(message, 10);
+			refreshHandler.sendMessageDelayed(message, 20);
 		}
 
 		surfaceHolder.unlockCanvasAndPost(canvas);
@@ -178,25 +192,40 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		Log.d(TAG, "surface created");
+		isSurfaceCreated = true;
 		
 		Canvas canvas = holder.lockCanvas();
 		canvas.drawColor(getResources().getColor(R.color.blue08));
 		int canvasWidth = canvas.getWidth(), canvasHeight = canvas.getHeight();
 
-		// 会被首先绘制
-		colorBlueDarken = getResources().getColor(R.color.blue01);
-		colorBlueLighten = getResources().getColor(R.color.blue08);
-		pictureBackground.setCurrentColor(statusController.getServerStatus() == StatusController.STATUS_SERVER_STOPPED ? colorBlueDarken : colorBlueLighten);
+		// 在前的会先被绘制
+		// 绘制背景色
+		switch (statusController.getServerStatus()) {
+		case StatusController.STATUS_SERVER_STARTED:
+			pictureBackground.setCurrentColor(startColor);
+			break;
+		case StatusController.STATUS_SERVER_STOPPED:
+			pictureBackground.setCurrentColor(stopColor);
+			break;
+		case StatusController.STATUS_SERVER_STARTING:
+		case StatusController.STATUS_SERVER_STOPING:
+			pictureBackground.setCurrentColor(operatingColor);
+			break;
+		}
+		pictureBackground.setColorAnimation(pictureBackground.new ColorAnimation(pictureBackground, pictureBackground.getCurrentColor(), pictureBackground.getCurrentColor()));
 		canvasElements.add(pictureBackground);
 		
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
 		
 		// 圆环
 		serverInnerRadius = canvasWidth / 4 - 50;
-		serverButton.setInnerRadius(canvasWidth / 4 - 20);
-		serverButton.setOuterRadius(canvasWidth / 4);
+		serverOuterRadius = canvasWidth / 4 + 30;
 		serverButton.setCx(canvasWidth / 2);
 		serverButton.setCy(canvasHeight / 2);
+		serverButton.setInnerRadius(canvasWidth / 4 - 20); 
+		serverButton.setOuterRadius(canvasWidth / 4);
+		serverButton.setBounceAnimation(serverButton.new BounceAnimation(serverButton, serverInnerRadius));
+		serverButton.setBreatheAnimation(serverButton.new OuterRadiusBreatheAnimation(serverButton, serverOuterRadius));
 		canvasElements.add(serverButton);
 		
 		// 绘制基本内容
@@ -217,12 +246,39 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		Log.d(TAG, "surface destoryed");
+		isSurfaceCreated = false;
 	}
 	
 
 	@Override
 	public void onServerStatusChange(int status) {
-		// 当服务器群状态变化的时候，需要用来调整背景颜色
+		// 可以将operating的颜色变化放在这里
+		if (status == StatusController.STATUS_SERVER_STARTED) {
+			long startTime = System.currentTimeMillis();
+			
+			pictureBackground.stopColorAnimation();
+			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
+			if (colorAnimation != null) {
+				colorAnimation.setDuration(500);
+			}
+			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), startColor, startTime);
+			
+			serverButton.stopBreatheAnimation();
+			CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
+			if (breatheAnimation != null) {
+				breatheAnimation.setDuration(3000);
+				breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_INFINITE);
+			}
+			serverButton.startBreatheAnimation(serverOuterRadius, startTime);
+			
+		} else if (status == StatusController.STATUS_SERVER_STOPPED) {
+			pictureBackground.stopColorAnimation();
+			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
+			if (colorAnimation != null) {
+				colorAnimation.setDuration(500);
+			}
+			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), stopColor);
+		}
 		
 	}
 	
@@ -289,31 +345,35 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			Log.d(TAG, "onDown");
 			int x = (int)e.getX(), y = (int)e.getY();
 			
-			// 使用bounce效果
-			// 不允许有任何的animation
-			if (serverButton.isClicked(x, y) && !serverButton.hasAnimation()) {
+			int serverStatus = statusController.getServerStatus();
+			
+			// 用于启动和停止服务器
+			// 目前不允许有任何的animation
+			if (serverButton.isClicked(x, y) && !serverButton.hasAnimation() && (serverStatus == StatusController.STATUS_SERVER_STARTED || serverStatus == StatusController.STATUS_SERVER_STOPPED)) {
 				long startTime = System.currentTimeMillis();
-				CanvasAnimation bounceAnimation = serverButton.addBounceAnimation(serverInnerRadius);
-				bounceAnimation.setStartTime(startTime);
+				
+				serverButton.stopBounceAnimation();
+				CanvasAnimation bounceAnimation = serverButton.getBounceAnimation();
 				bounceAnimation.setDuration(500);
-				CanvasAnimation colorAnimation = null;
+				serverButton.startBounceAnimation(serverInnerRadius, startTime);
 				
-				if (statusController.getServerStatus() == StatusController.STATUS_SERVER_STOPPED) {
-					colorAnimation = pictureBackground.addColorAnimation(colorBlueDarken, colorBlueLighten);
-					statusController.setServerStatus(StatusController.STATUS_SERVER_STARTED);
-				} else {
-					colorAnimation = pictureBackground.addColorAnimation(colorBlueLighten, colorBlueDarken);
-					statusController.setServerStatus(StatusController.STATUS_SERVER_STOPPED);
+				// 修改服务器状态、启动或关闭服务器
+				if (serverStatus == StatusController.STATUS_SERVER_STARTED) {
+					statusController.setServerStatus(StatusController.STATUS_SERVER_STOPING);
+					stopServer();
+				} else if (serverStatus == StatusController.STATUS_SERVER_STOPPED) {
+					statusController.setServerStatus(StatusController.STATUS_SERVER_STARTING);
+					startServer();
 				}
 				
-				if (colorAnimation != null) {
-					colorAnimation.setStartTime(startTime);
-					colorAnimation.setDuration(500);
-				}
+				// 修改背景色
+				pictureBackground.stopColorAnimation();
+				CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
+				colorAnimation.setDuration(500);
+				pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), operatingColor, startTime);
 				
 				// TODO 修改成函数
 				if (!isLooping) {
-					// 发送PictureButton
 					Message message = refreshHandler.obtainMessage();				
 					message.sendToTarget();
 				}
@@ -321,6 +381,22 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			
 			return super.onDown(e);
 		}
+		
+	}
+	
+	/**
+	 * 尝试启动服务器
+	 */
+	private void startServer() {
+		// 设置新的配置内容
+		sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
+	}
+	
+	/**
+	 * 尝试停止服务器
+	 */
+	private void stopServer() {
+		sendBroadcast(new Intent(FsService.ACTION_STOP_FTPSERVER));
 		
 	}
 	

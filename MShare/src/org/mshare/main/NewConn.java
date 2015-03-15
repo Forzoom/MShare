@@ -100,9 +100,6 @@ public class NewConn extends Activity {
 		ftpPasswordView.setText(FsSettings.getPassword());
 		ftpPortView.setText(String.valueOf(FsSettings.getPort()));
 		
-		// 设置启动和关闭的监听器
-		ftpSwitch.setOnClickListener(new StartStopServerListener());
-		
 	}
 	
 	@Override
@@ -155,23 +152,6 @@ public class NewConn extends Activity {
 	}
 	
 	/**
-	 * 启动服务器
-	 */
-	private void startServer() {
-		// 设置新的配置内容
-//		statusController.
-		sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
-	}
-	
-	/**
-	 * 尝试停止服务器
-	 */
-	private void stopServer() {
-		sendBroadcast(new Intent(FsService.ACTION_STOP_FTPSERVER));
-		
-	}
-	
-	/**
 	 * 尝试启动Ap
 	 * 这样的函数放在这里是不是不大好
 	 */
@@ -193,20 +173,4 @@ public class NewConn extends Activity {
 		}
 	}
 	
-	/**
-	 * 服务器开关监听器
-	 * @author HM
-	 *
-	 */
-	private class StartStopServerListener implements View.OnClickListener {
-		
-		@Override
-		public void onClick(View arg0) {
-			if (ftpSwitch.isChecked()) {
-				startServer();
-			} else {
-				stopServer();
-			}
-		}
-	}
 }
