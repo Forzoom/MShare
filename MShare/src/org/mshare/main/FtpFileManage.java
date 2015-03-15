@@ -1,7 +1,9 @@
 package org.mshare.main;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,6 +98,10 @@ public class FtpFileManage extends Activity{
 	
 	private static final int MAX_THREAD_NUMBER = 5;
 	private static final int MAX_DAMEON_TIME_WAIT = 2 * 1000; // millisecond
+	/** 
+     * 定义了初始缓存区的大小，当视频加载到初始缓存区满的时候，播放器开始播放， 
+     */  
+    private static final int READY_BUFF = 1316 * 1024*10;
 
 	private static final int MENU_OPTIONS_BASE = 0;
 	private static final int MSG_CMD_CONNECT_OK = MENU_OPTIONS_BASE + 1;
@@ -112,7 +118,8 @@ public class FtpFileManage extends Activity{
 	private static final int MSG_CMD_CDU_FAILED = MENU_OPTIONS_BASE + 12;
 	private static final int MSG_CMD_OPEN_OK = MENU_OPTIONS_BASE + 13;
 	private static final int MSG_CMD_OPEN_FAILED = MENU_OPTIONS_BASE + 14;
-	 
+	private static final int CACHE_VIDEO_READY = MENU_OPTIONS_BASE + 15;
+	
 	private static final int MENU_OPTIONS_DOWNLOAD = MENU_OPTIONS_BASE + 20;
 	private static final int MENU_OPTIONS_RENAME = MENU_OPTIONS_BASE + 21;
 	private static final int MENU_OPTIONS_DELETE = MENU_OPTIONS_BASE + 22;
@@ -188,8 +195,14 @@ public class FtpFileManage extends Activity{
 					executeCWDRequest(mFileList.get(positioin).getName());
 				}else if(mFileList.get(positioin).getType() == FTPFile.TYPE_FILE){
 					mSelectedPosistion = positioin;
-					showDialog(DIALOG_LOAD);
-					new CmdOPEN().execute();
+					String fileName = mFileList.get(mSelectedPosistion).getName();
+					if(getMIMEType(fileName).startsWith("video")){
+						showDialog(DIALOG_LOAD);
+						executeOpenRequest();
+					}else{
+						showDialog(DIALOG_LOAD);
+						new CmdOPEN().execute();
+					}
 				}
 			}
 		});
@@ -356,7 +369,13 @@ public class FtpFileManage extends Activity{
 			File cacheFile = new File(cachePath);
 			if(cacheFile.exists()){
 				cacheFile.delete();
-				cachePath = null;
+				if(cachePath.endsWith("1.mp4")){  
+					cachePath = cachePath.replace("1.mp4", "2.mp4");    
+                }else if(cachePath.endsWith("2.mp4")){  
+                	cachePath = cachePath.replace("2.mp4", "3.mp4");  
+                }else{  
+                	cachePath = cachePath.replace("3.mp4", "1.mp4");  
+                }
 			}
 		}
 	}
@@ -444,6 +463,9 @@ public class FtpFileManage extends Activity{
 			case MSG_CMD_OPEN_FAILED:
 				toast("请求数据失败。");
 				break;
+			case CACHE_VIDEO_READY:
+				openFile(new File(cachePath));  
+				break;
 			default:
 				break;
 			}
@@ -490,6 +512,9 @@ public class FtpFileManage extends Activity{
 		mThreadPool.execute(mCmdFactory.createCmdRENAME(newPath));
 	}
 
+	private void executeOpenRequest() {
+		mThreadPool.execute(mCmdFactory.createCmdOpenVideo());
+	}
 	
 	private void logv(String log) {
 		Log.v(TAG, log);
@@ -565,6 +590,10 @@ public class FtpFileManage extends Activity{
 
 		public FtpCmd createCmdRENAME(String newPath) {
 			return new CmdRENAME(newPath);
+		}
+		
+		public FtpCmd createCmdOpenVideo() {
+			return new CmdOpenVideo();
 		}
 	}
 	public class DameonFtpConnector implements Runnable {
@@ -754,6 +783,84 @@ public class FtpFileManage extends Activity{
 		}
 	}
 	
+	public class CmdOpenVideo extends FtpCmd {
+
+		@Override
+		public void run() {
+			String localPath = getParentCachePath() + File.separator
+					+ "VideoCache" + File.separator;
+			if (cachePath == null) {  
+				cachePath = localPath + "1.mp4";  
+            }
+			FileOutputStream out = null;
+			try {
+				InputStream is =  mFTPClient.openStream(
+						mFileList.get(mSelectedPosistion).getName());
+			    byte buf[] = new byte[4 * 1024];
+	            
+	            File cacheFile = new File(cachePath);  
+	            
+                if (!cacheFile.exists()) {  
+                    cacheFile.getParentFile().mkdirs();  
+                    cacheFile.createNewFile();  
+                } 
+                
+                out = new FileOutputStream(cacheFile, true);
+				
+                int size = 0, readSize = 0, fileNum=0;
+                
+				while ((size = is.read(buf)) != -1) {
+					if (size > 0) {  
+                        try {  
+                            if(readSize>=READY_BUFF){  
+                                fileNum++;  
+                                  
+                                switch(fileNum%3){  
+                                    case 0:  
+                                        out=new FileOutputStream(localPath+"1.mp4");  
+                                        break;  
+                                    case 1:  
+                                        out=new FileOutputStream(localPath+"2.mp4");  
+                                        break;  
+                                    case 2:  
+                                        out=new FileOutputStream(localPath+"3.mp4");  
+                                        break;  
+                                }  
+                                  
+                                readSize=0;   
+                                mHandler.sendEmptyMessage(CACHE_VIDEO_READY);  
+                            }  
+                            out.write(buf, 0, size);  
+                            out.flush();  
+                            readSize += size;  
+                            size = 0;// 循环接收  
+                              
+                              
+                        } catch (Exception e) {  
+                            Log.e(TAG, "出现异常0",e);  
+                        }  
+                          
+                  }else{  
+                      Log.i(TAG, "TS流停止发送数据");  
+                  }
+                }} catch (Exception e) {  
+                    Log.e(TAG, "出现异常",e);  
+                } finally {  
+                    if (out != null) {  
+                        try {  
+                            out.close();  
+                            progressDialog.dismiss();
+                        } catch (IOException e) {  
+                            //  
+                            Log.e(TAG, "出现异常1",e);  
+                        }  
+                    }  
+  
+//				mHandler.sendEmptyMessage(MSG_CMD_CDU_OK);
+			} 
+		}
+	}
+	
 	public class CmdDELE extends FtpCmd {
 
 		String realivePath;
@@ -810,7 +917,7 @@ public class FtpFileManage extends Activity{
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			try {
-				String localPath = getParentCachePath() + File.separator
+				String localPath = getParentRootPath() + File.separator
 						+ mFileList.get(mSelectedPosistion).getName();
 				mFTPClient.download(
 						mFileList.get(mSelectedPosistion).getName(),
@@ -830,7 +937,7 @@ public class FtpFileManage extends Activity{
 		}
 
 		protected void onPostExecute(Boolean result) {
-			toast(result ? "打开成功" : "打开失败");
+			toast(result ? "下载成功，文件保存至/MShareDownload" : "下载失败");
 			progressDialog.dismiss();
 		}
 	}
@@ -1138,7 +1245,96 @@ public class FtpFileManage extends Activity{
 	            type = MIME_MapTable[i][1];  
 	    }         
 	    return type;  
-	}  
+	}
+	
+	private String getMIMEType(String fName) {  
+		final String[][] MIME_MapTable={
+				//{后缀名，	MIME类型}
+				{".3gp",	"video/3gpp"},
+				{".apk",	"application/vnd.android.package-archive"},
+				{".asf",	"video/x-ms-asf"},
+				{".avi",	"video/x-msvideo"},
+				{".bin",	"application/octet-stream"},
+				{".bmp",  	"image/bmp"},
+				{".c",	"text/plain"},
+				{".class",	"application/octet-stream"},
+				{".conf",	"text/plain"},
+				{".cpp",	"text/plain"},
+				{".doc",	"application/msword"},
+				{".docx",	"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+				{".xls",	"application/vnd.ms-excel"}, 
+				{".xlsx",	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+				{".exe",	"application/octet-stream"},
+				{".gif",	"image/gif"},
+				{".gtar",	"application/x-gtar"},
+				{".gz",	"application/x-gzip"},
+				{".h",	"text/plain"},
+				{".htm",	"text/html"},
+				{".html",	"text/html"},
+				{".jar",	"application/java-archive"},
+				{".java",	"text/plain"},
+				{".jpeg",	"image/jpeg"},
+				{".jpg",	"image/jpeg"},
+				{".js",	"application/x-javascript"},
+				{".log",	"text/plain"},
+				{".m3u",	"audio/x-mpegurl"},
+				{".m4a",	"audio/mp4a-latm"},
+				{".m4b",	"audio/mp4a-latm"},
+				{".m4p",	"audio/mp4a-latm"},
+				{".m4u",	"video/vnd.mpegurl"},
+				{".m4v",	"video/x-m4v"},	
+				{".m4v",	"video/x-matroska"},
+				{".mov",	"video/quicktime"},
+				{".mp2",	"audio/x-mpeg"},
+				{".mp3",	"audio/x-mpeg"},
+				{".mp4",	"video/mp4"},
+				{".mpc",	"application/vnd.mpohun.certificate"},		
+				{".mpe",	"video/mpeg"},	
+				{".mpeg",	"video/mpeg"},	
+				{".mpg",	"video/mpeg"},	
+				{".mpg4",	"video/mp4"},	
+				{".mpga",	"audio/mpeg"},
+				{".msg",	"application/vnd.ms-outlook"},
+				{".ogg",	"audio/ogg"},
+				{".pdf",	"application/pdf"},
+				{".png",	"image/png"},
+				{".pps",	"application/vnd.ms-powerpoint"},
+				{".ppt",	"application/vnd.ms-powerpoint"},
+				{".pptx",	"application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+				{".prop",	"text/plain"},
+				{".rc",	"text/plain"},
+				{".rmvb",	"audio/x-pn-realaudio"},
+				{".rtf",	"application/rtf"},
+				{".sh",	"text/plain"},
+				{".tar",	"application/x-tar"},	
+				{".tgz",	"application/x-compressed"}, 
+				{".txt",	"text/plain"},
+				{".wav",	"audio/x-wav"},
+				{".wma",	"audio/x-ms-wma"},
+				{".wmv",	"audio/x-ms-wmv"},
+				{".wps",	"application/vnd.ms-works"},
+				{".xml",	"text/plain"},
+				{".z",	"application/x-compress"},
+				{".zip",	"application/x-zip-compressed"},
+				{"",		"*/*"}	
+			};
+	      
+	    String type="*/*";   
+	    //获取后缀名前的分隔符"."在fName中的位置。  
+	    int dotIndex = fName.lastIndexOf(".");  
+	    if(dotIndex < 0){  
+	        return type;  
+	    }  
+	    /* 获取文件的后缀名 */  
+	    String end=fName.substring(dotIndex,fName.length()).toLowerCase();  
+	    if(end=="")return type;  
+	    //在MIME和文件类型的匹配表中找到对应的MIME类型。  
+	    for(int i=0;i<MIME_MapTable.length;i++){ //MIME_MapTable??在这里你一定有疑问，这个MIME_MapTable是什么？  
+	        if(end.equals(MIME_MapTable[i][0]))  
+	            type = MIME_MapTable[i][1];  
+	    }         
+	    return type;  
+	}
 }
 
 
