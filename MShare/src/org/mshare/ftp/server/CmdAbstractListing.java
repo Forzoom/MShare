@@ -36,8 +36,8 @@ import java.util.Set;
 
 import android.util.Log;
 
-import org.mshare.file.SharedFile;
-import org.mshare.file.SharedLink;
+import org.mshare.file.share.SharedFile;
+import org.mshare.file.share.SharedLink;
 import org.mshare.ftp.server.*;
 
 public abstract class CmdAbstractListing extends FtpCmd {

@@ -34,7 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import org.mshare.file.SharedLink;
+import org.mshare.file.share.SharedLink;
 
 import android.util.Log;
 

@@ -20,12 +20,14 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -52,9 +54,10 @@ import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
 /**
- * TODO 如何获得Service的实例对象
  * TODO 当有Session的数量发生变化的时候，如果能够通知就好了，以保证当前的Session数量合适
  * TODO 关键是现在如何通知client有文件需要更新，在FsService中使用通知是否合适
+ * 
+ * 维护AccountFactory，AccountFactory在应用启动之后就一直存在
  * @author HM
  *
  */
@@ -84,15 +87,21 @@ public class FsService extends Service implements Runnable {
     // to receive an exit signal and cleanly exit.
     public static final int WAKE_INTERVAL_MS = 1000; // milliseconds
 
+    /**
+     * TODO 为什么名字叫这个?
+     */
     private TcpListener wifiListener = null;
-    // 所有客户连接，每个客户都不应该知道其他的客户是如何工作的
-    private final List<SessionThread> sessionThreads = new ArrayList<SessionThread>();
     
     // wifi和wake锁
     private WakeLock wakeLock;
     private WifiLock wifiLock = null;
     
     private static AccountFactory mAccountFactory;
+    
+    // 管理Session的控制器
+    private SessionController sessionController;
+    // 用于通知线程新消息
+    private SessionNotifier sessionNotifier;
     
     /**
      * 当start被调用的时候，即尝试启动一个新的服务器线程
@@ -102,7 +111,7 @@ public class FsService extends Service implements Runnable {
         shouldExit = false;
         int attempts = 10;
         // The previous server thread may still be cleaning up, wait for it to finish.
-        // 用于等待上一个服务器关闭
+        // 等待上一个服务器关闭
         while (serverThread != null) {
             Log.w(TAG, "Won't start, server thread exists");
             if (attempts > 0) {
@@ -113,14 +122,17 @@ public class FsService extends Service implements Runnable {
                 return START_STICKY;
             }
         }
-        
-        // 用于检测账户是否存在
-        // TODO 向AccountFactory中传递SessionNotifier
-        SessionNotifier notifier = new SessionNotifier();
-        // 创建AccountFactory
-        mAccountFactory = new AccountFactory();
-        mAccountFactory.checkReservedAccount();
-        mAccountFactory.setSessionNotifier(notifier);
+
+        // 创建SessionController，并绑定SessionNotifier
+        sessionController = new SessionController();
+        sessionNotifier = new SessionNotifier(sessionController);
+        if (mAccountFactory == null) {
+        	Log.e(TAG, "AccountFactory is null until onStartCommand!");
+        	prepareAdminAccount();
+        }
+        mAccountFactory.bindSessionNotifier(sessionNotifier);
+        // 设置验证器
+        sessionController.setVerifier(mAccountFactory.getVerifier());
         
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
@@ -173,7 +185,7 @@ public class FsService extends Service implements Runnable {
             }
         } catch (IOException e) {
         }
-
+        
         if (wifiLock != null) {
             Log.d(TAG, "onDestroy: Releasing wifi lock");
             wifiLock.release();
@@ -183,6 +195,10 @@ public class FsService extends Service implements Runnable {
             Log.d(TAG, "onDestroy: Releasing wake lock");
             wakeLock.release();
             wakeLock = null;
+        }
+        
+        if (mAccountFactory != null) {
+        	mAccountFactory.releaseSessionNotifier();
         }
         Log.d(TAG, "FTPServerService.onDestroy() finished");
     }
@@ -266,7 +282,7 @@ public class FsService extends Service implements Runnable {
             }
         }
 
-        terminateAllSessions();
+        sessionController.terminateAllSessions();
 
         if (wifiListener != null) {
             wifiListener.quit();
@@ -277,30 +293,6 @@ public class FsService extends Service implements Runnable {
 
         stopSelf();
         sendBroadcast(new Intent(ACTION_STOPPED));
-    }
-    /**
-     * 停止所有会话
-     */
-    private void terminateAllSessions() {
-        Log.i(TAG, "Terminating " + sessionThreads.size() + " session thread(s)");
-        synchronized (this) {
-            for (SessionThread sessionThread : sessionThreads) {
-                if (sessionThread != null) {
-                    sessionThread.closeDataSocket();
-                    sessionThread.closeSocket();
-                }
-            }
-        }
-    }
-
-    /**
-     * 提醒所有的普通用户，有新的共享内容
-     * TODO 使用该方法来通知，可能会有安全方面的问题，该方法可能被人调用
-     */
-    public static void notifyAllSession() {
-//    	for (SessionThread sessionThread : sessionThreads) {
-//    		
-//    	}
     }
     
     /**
@@ -425,6 +417,7 @@ public class FsService extends Service implements Runnable {
 
     /**
      * 检测当前WifiAp是否可用
+     * TODO 是否可以使用StatusController来判断
      * @return
      */
     public static boolean isConnectedUsingWifiAp() {
@@ -451,52 +444,11 @@ public class FsService extends Service implements Runnable {
     public static void writeMonitor(boolean incoming, String s) {
     }
 
-    /**
-     * The FTPServerService must know about all running session threads so they can be
-     * terminated on exit. Called when a new session is created.
-     * 注册会话线程？
-     */
-    public void registerSessionThread(SessionThread newSession) {
-        // Before adding the new session thread, clean up any finished session
-        // threads that are present in the list.
-
-        // Since we're not allowed to modify the list while iterating over
-        // it, we construct a list in toBeRemoved of threads to remove
-        // later from the sessionThreads list.
-        synchronized (this) {
-        	// 获得所有"失效"的连接线程？调用join让其能够正确退出
-            List<SessionThread> toBeRemoved = new ArrayList<SessionThread>();
-            for (SessionThread sessionThread : sessionThreads) {
-                if (!sessionThread.isAlive()) {
-                    Log.d(TAG, "Cleaning up finished session...");
-                    try {
-                    	// 如果线程失效，那么终止线程，调用join
-                        sessionThread.join();
-                        Log.d(TAG, "Thread joined");
-                        toBeRemoved.add(sessionThread);
-                        sessionThread.closeSocket(); // make sure socket closed
-                    } catch (InterruptedException e) {
-                        Log.d(TAG, "Interrupted while joining");
-                        // We will try again in the next loop iteration
-                    }
-                }
-            }
-            
-            // 所有失效线程都调用了join，所以现在可以将其移出
-            for (SessionThread removeThread : toBeRemoved) {
-                sessionThreads.remove(removeThread);
-            }
-
-            // Cleanup is complete. Now actually add the new thread to the list.
-            newSession.verifier = mAccountFactory.getVerifier();
-            sessionThreads.add(newSession);
-        }
-        Log.d(TAG, "Registered session thread");
+    // 判断指定的文件是否是共享文件
+    public static boolean isFileShared(File file) {
+    	return mAccountFactory.isFileShared(file);
     }
 
-    // TODO 可能需要监听器来监听当前的sessionThread的数量变化
-//    public static int getCurrentLink
-    
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -507,73 +459,54 @@ public class FsService extends Service implements Runnable {
      * 应该和Service的生命周期有关吧
      * TODO 在发布版本中，应该将该函数去掉注释
      */
-//    @Override
-//    public void onTaskRemoved(Intent rootIntent) {
-//        super.onTaskRemoved(rootIntent);
-//        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
-//        Intent restartService = new Intent(getApplicationContext(), this.getClass());
-//        restartService.setPackage(getPackageName());
-//        PendingIntent restartServicePI = PendingIntent.getService(
-//                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
-//        AlarmManager alarmService = (AlarmManager) getApplicationContext()
-//                .getSystemService(Context.ALARM_SERVICE);
-//        alarmService.set(AlarmManager.ELAPSED_REALTIME,
-//                SystemClock.elapsedRealtime() + 2000, restartServicePI);
-//    }
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
+        Intent restartService = new Intent(getApplicationContext(), this.getClass());
+        restartService.setPackage(getPackageName());
+        PendingIntent restartServicePI = PendingIntent.getService(
+                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
+        AlarmManager alarmService = (AlarmManager) getApplicationContext()
+                .getSystemService(Context.ALARM_SERVICE);
+        alarmService.set(AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + 2000, restartServicePI);
+    }
 
+    /**
+     * 获得管理员账户对应的Token
+     * @return
+     */
     public static Token getAdminToken() {
+    	if (mAccountFactory == null) {
+    		Log.e(TAG, "AccountFactory is null, try get one");
+    		prepareAdminAccount();
+    	}
     	return mAccountFactory.getAdminAccountToken();
     }
     
     /**
-     * 用于向多个Session发送消息，消息的内容已经包装好了
-     * TODO 在客户端有小红点
-     * 不应该让所有人都可以使用Notifier，因为Notifier将会向用户发送消息
-     * TODO 发送消息通知其他线程:"有新的文件"，该如何发送这些消息呢？
-     * TODO 对于发送这个提醒的Session，不应该被提醒
-     * TODO SessionThread可能现在正在发送消息，需要用什么样的方式来发送消息提醒呢？使用消息队列？
-     * TODO 将发送消息处理成一个函数
-     * @author HM
-     *
+     * 当 {@link #mAccountFactory}不是null时，创建管理员账户
      */
-    protected class SessionNotifier {
-    	/**
-    	 * 需要如何排除sender
-    	 * TODO 如果是管理员账户该怎么办？
-    	 * TODO 需要调整
-    	 * @param sender 可以是null
-    	 */
-    	public void notifyAddFile(Token token, SessionThread sender) {
-    		int sessionCount = sessionThreads.size();
-    		
-    		// 对于管理员账户来说
-    		if (token.isAdministrator()) {
-    			for (int index = 0; index < sessionCount; index++) {
-        			SessionThread receiveSession = sessionThreads.get(index);
-    				// 发送消息通知所有的Session
-//        			receiveSession.
-        		}
-    		} else {
-    			// 普通账户
-    			for (int index = 0; index < sessionCount; index++) {
-        			// 在所有的session中寻找拥有相同的Accoount的SessionThread,但不包括sender
-        			SessionThread receiveSession = sessionThreads.get(index);
-        			// session和sender不相等如何判断
-        			if (receiveSession.getToken().equals(token) && receiveSession != sender) {
-        				// 发送消息通知
-//        				receiveSession.
-        			}
-        		}
-    		}
-    		
-    		
+    private static void prepareAdminAccount() {
+    	
+    	if (mAccountFactory != null) {
+    		Log.e(TAG, "AccountFactory is already prepared");
+    		return;
     	}
     	
-    	public void notifyDeleteFile(Account account, SessionThread sender) {
-    		
-    	}
-    	
-    	// 需要通知当前内容：新文件，正在使用，删除
+        // 创建AccountFactory
+        mAccountFactory = new AccountFactory();
+        mAccountFactory.checkReservedAccount();
+        Log.d(TAG, "AccountFactory is created");    
+    }
+    
+    /**
+     * 临时所使用的用于注册session的函数，不知道以后还需不需要
+     * @param newSession
+     */
+    public void registerSessionThread(SessionThread newSession) {
+    	sessionController.registerSessionThread(newSession);
     }
     
 }

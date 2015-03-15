@@ -5,6 +5,10 @@
 	    android:title="@string/option_nfc"
 	    android:showAsAction="ifRoom" />
     <item
+	    android:id="@+id/menu_set_ftp_p2p" 
+	    android:title="P2P"
+	    android:showAsAction="ifRoom" />
+    <item
 	    android:id="@+id/menu_set_ftp_server_qrcode" 
 	    android:title="@string/option_two_dimensions_bar"
 	    android:showAsAction="ifRoom" />

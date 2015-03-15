@@ -20,15 +20,16 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.ftp.server;
 
 import java.io.File;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.mshare.file.SharedLinkSystem;
-import org.mshare.file.SharedLinkSystem.Permission;
+import org.mshare.file.share.SharedLinkStorage;
+import org.mshare.file.share.SharedLinkSystem;
+import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.ftp.server.AccountFactory.Token;
-import org.mshare.ftp.server.FsService.SessionNotifier;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -67,43 +68,58 @@ public abstract class Account {
     private String mUserName = null;
     private String mPassword = null;
     
+    // 共享层文件树
     private SharedLinkSystem mSharedLinkSystem;
-
+    // 共享层存储
+    private SharedLinkStorage mSharedLinkStorage;
+    
 	// 存放在SharedPreferences中的键值
-    // TODO 使用public合适吗
     public static final String KEY_PASSWORD = "password";
     public static final String KEY_PERMISSION = "permission";
     public static final String KEY_UPLOAD = "upload";
     
     /**
-     * 总共有多少个Session在使用当前的Account
+     * 使用当前Account的Session数量
      */
     public int tokenCount;
     
-    // TODO 考虑将Account的内容移动到AccountFactory中，多例模式是怎么弄的？
     // TODO 考虑unprepared函数，用于将文件树释放
     public Account(String username, String password) {
     	this.mUserName = username != null ? username : "";
     	this.mPassword = password;
     	// TODO 调用USER的时候文件树就生成了，改为调用
-    	
     }
     
     /**
-     * 创建Account对应的文件树
+     * 在准备文件树SharedLinkSystem的同时
+     * 向文件树中添加一些内容作为文件树中的已有内容
+     * @see #prepare()
+     * @param storage storage中的内容都将被添加到文件树中
+     * @param filePermission 所添加的SharedLink所拥有的权限
+     */
+    public void prepare(SharedLinkStorage storage, int filePermission) {
+    	prepare();
+    	// TODO 文件权限不对
+    	getSystem().load(storage, filePermission);
+    }
+    
+    /**
+     * 创建存储和文件树
      */
     public void prepare() {
-    	mSharedLinkSystem = new SharedLinkSystem(this);
-    	mSharedLinkSystem.prepare();
-    }
-    
-    /**
-     * 获得账户对应的SharedPreferences
-     * @return
-     */
-    public SharedPreferences getSharedPreferences() {
-    	Context context = MShareApp.getAppContext();
-    	return context.getSharedPreferences(mUserName, Context.MODE_PRIVATE);
+    	if (mSharedLinkStorage == null) {
+    		Log.d(TAG, "create SharedLinkStorage!");
+    		mSharedLinkStorage = SharedLinkStorage.getStorage(mUserName);
+    	}
+    	
+    	if (mSharedLinkSystem == null) {
+    		Log.d(TAG, "create SharedLinkSystem!");
+    		mSharedLinkSystem = new SharedLinkSystem(this);
+    	}
+    	if (!mSharedLinkSystem.isPrepared()) {
+    		Log.d(TAG, "make SharedLinkSystem prepared!");
+    		mSharedLinkSystem.prepare();
+    	}
     }
     
     /**
@@ -116,11 +132,8 @@ public abstract class Account {
 			Log.e(TAG, "invalid upload path");
 			return false;
 		}
-		
-		SharedPreferences sp = getSharedPreferences();
-		Editor editor = sp.edit();
-		editor.putString(KEY_UPLOAD, path);
-		return editor.commit();
+
+		return mSharedLinkStorage.set(KEY_UPLOAD, path);
 	}
 	
 	/**
@@ -128,8 +141,7 @@ public abstract class Account {
 	 * @return
 	 */
 	public String getUpload() {
-		SharedPreferences sp = getSharedPreferences();
-		return sp.getString(KEY_UPLOAD, FsSettings.getUpload() + File.separator + getUsername());
+		return getStorage().get(KEY_UPLOAD, FsSettings.getUpload() + File.separator + getUsername());
 	}
 	
 	/**
@@ -212,6 +224,10 @@ public abstract class Account {
      */
     public SharedLinkSystem getSystem() {
     	return mSharedLinkSystem;
+    }
+    
+    public SharedLinkStorage getStorage() {
+    	return mSharedLinkStorage;
     }
     
     /**

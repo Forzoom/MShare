@@ -28,9 +28,9 @@ package org.mshare.ftp.server;
 
 import java.io.File;
 
-import org.mshare.file.SharedFile;
-import org.mshare.file.SharedLink;
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.share.SharedFile;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
 
 import android.util.Log;
 

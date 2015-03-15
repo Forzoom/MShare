@@ -31,8 +31,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
-import org.mshare.file.SharedLink;
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.ftp.server.AccountFactory.Token;
 import org.mshare.ftp.server.AccountFactory.Verifier;
 
@@ -52,8 +52,8 @@ public class SessionThread extends Thread {
     protected boolean pasvMode = false;
     protected boolean binaryMode = false;
     private Token token;
-    protected String username;
-    // TODO 从数据存储中将原本的文件数据取出
+    // 保存SessionInfo,暂时设置为public
+    public SessionInfo sessionInfo;
     /**
      * 数据传送所使用的Socket
      */
@@ -78,12 +78,14 @@ public class SessionThread extends Thread {
     public int authFails = 0;
     public static int MAX_AUTH_FAILS = 3;
 
+    // 需要保证verifier能够被正常的初始化?
     public Verifier verifier;
     
     public SessionThread(Socket socket, LocalDataSocket dataSocket) {
         this.cmdSocket = socket;
         this.localDataSocket = dataSocket;
         this.sendWelcomeBanner = true;
+        this.sessionInfo = new SessionInfo();
     }
 
     /**
@@ -375,6 +377,10 @@ public class SessionThread extends Thread {
     	}
     	// 获得新的Token
     	Token newToken = null;
+    	
+    	if (verifier == null) {
+    		Log.e(TAG, "verifier is null");
+    	}
         if ((newToken = verifier.auth(username, password, this)) != null) {
         	setToken(newToken);
             Log.i(TAG, "Authentication complete");
@@ -420,13 +426,5 @@ public class SessionThread extends Thread {
     
     public void setToken(Token token) {
     	this.token = token;
-    }
-    
-    public String getUsername() {
-    	return username;
-    }
-    
-    public void setUsername(String username) {
-    	this.username = username;
     }
 }

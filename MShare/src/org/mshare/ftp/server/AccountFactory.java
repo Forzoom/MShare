@@ -1,13 +1,14 @@
 package org.mshare.ftp.server;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.mshare.file.SharedLinkSystem;
-import org.mshare.file.SharedLinkSystem.Permission;
-import org.mshare.ftp.server.FsService.SessionNotifier;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
+import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -16,7 +17,7 @@ import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 /**
- * TODO 除了管理员账户，还需要匿名账户一同进行管理
+ * 维护管理员账户、匿名账户
  * 管理所有的账户，包括管理员账户，当对管理员账户中的内容进行操作的时候，同时也需要对其他的不同账户进行操作
  * TODO AccountFactory是否需要都是静态方法,因为连allAccounts都是static的
  * TODO 客户端那边会发送QUIT消息吗，如果发送的话，就可以判断Session数量，可是如果客户意外断线了呢？
@@ -39,13 +40,13 @@ import android.util.Log;
  * 如何将FsService中的AccountFactory的adminToken交给文件浏览器呢？
  * 
  * TODO 管理员账户的名字不可使用
- * 如果有AdminAccount的Token由AccountFactory来管理
- * 
- * 将不再让Account被直接使用，而是使用Token
+ * 有AdminAccount的Token由AccountFactory来管理
  * 
  * AccountFactory不使用单例模式，否则其他类可以轻易获取AccountFactory对象
  * 
- * TODO 将所有的Account统一全部加载
+ * Account仅仅在需要的时候才会被加载到allAccounts中
+ *
+ * 担心统一加载所有的Account会造成卡顿，所以考虑在需要的时候加载
  * 
  * TODO 用户名需要统一进行规范
  * @author HM
@@ -54,29 +55,32 @@ import android.util.Log;
 public class AccountFactory implements SharedLinkSystem.Callback {
 	private static final String TAG = AccountFactory.class.getSimpleName();
 	
-	// 匿名账户的用户名和密码
+	// 匿名账户用户名和密码
 	public static final String AnonymousUsername = "anonymous";
 	public static final String AnonymousPassword = "guest";
 	// 管理员账户的用户名和密码
+	
 	// 管理员账户不应该被知道
 	public static final String AdminUsername = "admin";
 	private static final String AdminPassword = "admin";
 	
-	// 保存账户存在信息的sp
+	// 保存账户存在信息的sp，可以封装这些内容吗
     public static final String SP_ACCOUNT_INFO = "accounts";
 	
 	// 所有的账户内容,新的账户从这里获得，每个sessionThread仅仅是获得对应其中的引用
     private static HashMap<String, Account> allAccounts = new HashMap<String, Account>();
     
     // 匿名账户
-    private Account guestAccount;
+    private GuestAccount guestAccount;
     // 默认的管理员账户
-    private Account adminAccount;
+    private AdminAccount adminAccount;
+    
     // adminAccount所对应的唯一Token
     private Token adminAccountToken;
     // 用于通知其他的Session
     // TODO 使用static是否好，在多个线程中，将会使用同一个Notifier,这样会不会有什么错误,两个线程同时调用一个方法会不会有问题
-    private static SessionNotifier mNotifier;
+    private SessionNotifier mNotifier;
+    // 用于验证
     private Verifier mVerifier;
     
     public static final int PERMISSION_ADMIN = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
@@ -84,7 +88,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     public static final int PERMISSION_GUEST = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ_GUEST; 
     
     /**
-     * 担心统一加载所有的Account会造成卡顿，所以考虑在需要的时候加载
+     * 创建管理员账户、匿名账户以及验证器
      */
     public AccountFactory() {
     	
@@ -96,9 +100,11 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		
 		// 创建匿名账户信息
 		guestAccount = new GuestAccount(AnonymousUsername, AnonymousPassword);
+		guestAccount.prepare();
 		
-		// prepare
+		// Verifier的创建
 		mVerifier = new Verifier();
+		Log.d(TAG, "create verifier");
 	}
     
 	/**
@@ -109,8 +115,8 @@ public class AccountFactory implements SharedLinkSystem.Callback {
      */
 	private Token getToken(String username, String password, SessionThread owner) {
 		Context context = MShareApp.getAppContext();
-		// 检测accountSp中的内容
-		if (!isAccountExists(context, username)) {
+		// 检测allAccounts和accountSp中的内容，只有当两者都不存在的时候才判定不存在
+		if (allAccounts.get(username) == null && !isAccountExists(context, username)) {
 			Log.e(TAG, "帐号 " + username + " 不存在");
 			return null;
 		}
@@ -127,7 +133,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			// 判断账户信息是否正确
 			Account account = allAccounts.get(username);
 			if (account != null && authAttempt(account, username, password)) {
-				Token token = new Token(username, password, owner);;
+				Token token = new Token(username, password, owner);
 				token.setAccount(account);
 				// 将registerToken放在这里合适吗?
 				account.registerToken();
@@ -204,7 +210,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			Log.d(TAG, "+结果:success");
 			return true;
 		} else {
-			Log.e(TAG, "+结果:Fail");
+			Log.e(TAG, "+结果:fail");
 			return false;
 		}			
 	}
@@ -280,6 +286,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	
 	/**
 	 * 检测账户信息是否存在,使用MShareApp.getAppContext()
+	 * @see #isAccountExists(Context, String)
 	 * @param username
 	 * @return
 	 */
@@ -289,13 +296,43 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
 	
 	/**
-	 * 设置notifier，如果没有设置，那么当管理员账户中的内容发生变化时，不会通知其他的Session
-	 * @param notifier
+	 * 指明本地文件是否被共享
+	 * @param file 所要判断的文件
+	 * @return 当文件存在且被共享时，返回true，否则返回false
 	 */
-	public void setSessionNotifier(SessionNotifier notifier) {
+	public boolean isFileShared(File file) {
+		// 判断文件有效
+		if (file == null || !file.exists()) {
+			Log.d(TAG, "invalid or unexisted file");
+			return false;
+		}
+		
+		return adminAccount.isFileShared(file);
+	}
+	
+	/**
+	 * 设置notifier，如果没有设置，那么当管理员账户中的内容发生变化时，不会通知其他的Session
+	 * @param notifier 
+	 */
+	public void bindSessionNotifier(SessionNotifier notifier) {
 		mNotifier = notifier;
 	}
 
+	/**
+	 * 为了尽量保证SessionNotifier能够被正常的释放
+	 */
+	public void releaseSessionNotifier() {
+		mNotifier = null;
+	}
+	
+	/**
+	 * 
+	 * @return may be null
+	 */
+	public SessionNotifier getSessionNotifier() {
+		return mNotifier;
+	}
+	
 	/**
 	 * 需要保证不会为null
 	 * @return 返回值不会为null
@@ -306,6 +343,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	
 	/**
 	 * 从SharedPreferences中加载普通用户账户的内容
+	 * TODO 将SharedPreferences封装
 	 * @param username 需要加载的用户名
 	 * @return 成功返回true，否则返回false
 	 */
@@ -326,7 +364,8 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		
 		Log.d(TAG, "add new account : " + username);
 		Account newAccount = new UserAccount(username, password);
-		newAccount.prepare();
+		// 将管理员中的内容添加到新的账户中
+		newAccount.prepare(adminAccount.getStorage(), PERMISSION_ADMIN);
 		allAccounts.put(username, newAccount);
 		return true;
 	}
@@ -345,14 +384,14 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	 */
 	@Override
 	public void onPersist(String fakePath, String realPath) {
-		// TODO 需要调整所有Account中的文件树
+		// 循环处理所有的文件树
 		Set<String> keySet = allAccounts.keySet();
 		Iterator<String> iterator = keySet.iterator();
-		
 		while (iterator.hasNext()) {
 			String key = iterator.next();
 			Account account = allAccounts.get(key);
-			account.getSystem().addSharedLink(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_ADMIN);
+			SharedLink sharedLink = SharedLink.newSharedLink(fakePath, realPath);
+			account.getSystem().addSharedLink(sharedLink, SharedLinkSystem.FILE_PERMISSION_ADMIN);
 		}
 		
 		// TODO 通知所有的Session，使用Notifier
@@ -409,10 +448,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	/**
 	 * 允许对Account中的文件树进行操作，包括添加，删除，持久化和非持久化
 	 * Token由AccountFactory保管和发放，交由AccountFactory来对Account进行操作
-	 * TODO 需要release函数来释放？
+	 * 
 	 * TODO 需要当所有的用户都结束的时候，token才有可能是无效的，不能在用户仍在使用的时候，token变为无效的了，为了防止意外发生，还是需要调用isValid
+	 * 
 	 * 需要类似Lock的机制，Token就是Lock，所以需要release
-	 * 如何记录Account总共有多少个Token
+	 * 
+	 * 作为private构造函数的内部类，是为了Token不能被随意地new出来
+	 * 
 	 * @author HM
 	 *
 	 */

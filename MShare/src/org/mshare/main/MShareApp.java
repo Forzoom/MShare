@@ -40,7 +40,6 @@ public class MShareApp extends Application {
     public void onCreate() {
         super.onCreate();
         sContext = getApplicationContext();
-        Log.v(TAG, sContext.toString());
     }
 
     /**

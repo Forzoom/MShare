@@ -13,10 +13,13 @@ import android.nfc.NfcAdapter.CreateNdefMessageCallback;
 import android.nfc.NfcEvent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
 /**
+ * TODO 在大多数的Android手机上都没有NFC的支持，所以在使用NFC时需要谨慎
+ * 
  * TODO 当在该Activity使用后退按钮的时候，可以返回到上一个Activity吗，使用parentActivity可以吗
  * 
  * TODO 需要设置FTP服务器超时关闭
@@ -42,14 +45,32 @@ import android.widget.Toast;
  *
  */
 public class NfcServerActivity extends Activity {
-
+	private static final String TAG = NfcServerActivity.class.getSimpleName();
+	
 	// 对应nfc的适配器
 	private NfcAdapter mNfcAdapter;
+	
+	// 所做的内容:
+	// 发送服务器参数
+	public static final int MESSAGE_NONE = -1;
+	public static final int MESSAGE_SERVER_INFO = 1;
+	// 用来传递所使用的情景
+	public static final String EXTRA_MESSAGE_TYPE = "message_type";
+	public static final String EXTRA_SERVER_INFO = "server_info";
+	
+	public int messageType;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.nfc_server);
+		
+		// 获得当前的情景
+		messageType = getIntent().getIntExtra(EXTRA_MESSAGE_TYPE, MESSAGE_NONE);
+		if (messageType == MESSAGE_NONE) {
+			Log.e(TAG, "no message scene");
+			return;
+		}
 		
 		// 只有在nfc启动的情况下
 		// TODO 不知道能不能代码启动NFC
@@ -58,13 +79,6 @@ public class NfcServerActivity extends Activity {
 			// TODO 不知道为什么要设置Locale
 			// 使用该方法，因为该方法支持到API9
 			NdefMessage message = new NdefMessage(new NdefRecord[] {createTextRecord("content", Locale.CHINA, true)});
-			
-			// setNdefPushMessage();当两台设备足够靠近的时候自动发送Message
-			// 该函数需要指定一些Activity，只有Push Message 的 Activity还在前台运行(resume)的时候，才能够push Message，该函数不阻塞线程，相当于异步操作
-			// 建议在onCreate中调用
-			// 只有当两台设备足够靠近的时候才会发送Message
-			// 所设置的Activity是将可能被Beam所启动的Activity，但是怎么能获得这些Activity的对象呢？
-			// 当所有需要推送的Message都一样的情况下，一般使用
 			mNfcAdapter.setNdefPushMessage(message, this);
 			
 			// 在每次两台设备足够靠近的时候，将调用callback中的createNdefMessage来创建一个Message进行发送
@@ -77,18 +91,27 @@ public class NfcServerActivity extends Activity {
 			
 			// 关于dispatching system中还有不明白的
 		} else {
-			// 当NFC失败的时候，暂时提示用户的那个钱NFC不可用，以后如果用户的NFC不可用情况下，不应该有NFC相关的内容显示出来
+			// 当NFC失败时，提示NFC不可用
+			// 以后如果用户的NFC不可用情况下，不应该有NFC相关的内容显示出来
 			Toast.makeText(this, "NFC无法使用", Toast.LENGTH_SHORT).show();
 			TextView hint = (TextView)findViewById(R.id.nfc_hint);
 			hint.setText("NFC无法使用");
 		}
 	}
 	
+	/**
+	 * TODO 了解NfcEvent是干什么的 
+	 * @author HM
+	 *
+	 */
 	class NdefCallback implements NfcAdapter.CreateNdefMessageCallback {
 
 		@Override
 		public NdefMessage createNdefMessage(NfcEvent event) {
-			// TODO 不知道NfcEvent是干什么的
+			
+			switch (messageType) {
+				
+			}
 			// 考虑到用户名和密码可能会有所不同，所以考虑将使用callback的方式
 			NdefMessage message = new NdefMessage(new NdefRecord[] {createTextRecord("content", Locale.CHINA, true)});
 			return message;
@@ -137,6 +160,10 @@ public class NfcServerActivity extends Activity {
 		return record;
 	}
 	
+	/**
+	 * 判断nfc是否可以使用
+	 * @return
+	 */
 	public boolean isNfcEnable() {
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 		if (mNfcAdapter == null) {

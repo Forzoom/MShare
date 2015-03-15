@@ -6,9 +6,12 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.util.Log;
 import android.widget.TextView;
 
 /**
@@ -18,7 +21,8 @@ import android.widget.TextView;
  *
  */
 public class NfcClientActivity extends Activity {
-
+	private static final String TAG = NfcClientActivity.class.getSimpleName();
+	
 	private NfcAdapter mNfcAdapter;
 	private boolean isNfcEnabled = false;
 	private TextView nfcHintView;
@@ -45,18 +49,19 @@ public class NfcClientActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 		// 使用onResume和onPause可以确保foreground dispatch system可以在Activity正在获得focus的时候运行
-		
 		// foreground dispatch system 表明只有intent满足了filter之后，就会被foreground dispatch system所拦截，并打开foreground中所指定的Activity？
 		
 		if (isNfcEnabled) {
 
 			// 默认将启动的Activity是自己?
 			// FLAG_ACTIVITY_SINGLE_TOP，当所指定的Activity已经在栈顶的时候，不会再启动一个
+			// 因为不会再启动Activity了，所以onNewIntent会得到一个新的Intent
 			PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
 			
 			String[][] techLists = new String[][] {};
 			
 			// 对于filter，还可以设置setDataType?
+			// 只有在NDEF被发现的时候才会处理
 			IntentFilter filter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
 			IntentFilter[] filters = new IntentFilter[] {filter};
 			mNfcAdapter.enableForegroundDispatch(this, intent, filters, techLists);
@@ -76,7 +81,16 @@ public class NfcClientActivity extends Activity {
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		// 和Server端并不相同的是，这里使用的是TAG
-		Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-		// TODO 对于TAG，不知道该怎么处理了
+//		Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+		// TODO 对于TAG，不知道怎么处理
+		
+		Parcelable[] rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+		if (rawMessages.length > 0) {
+			Log.d(TAG, "get raw message array, it has content");
+			NdefMessage msg = (NdefMessage)rawMessages[0];
+			// 获得结果中的文本数据
+			String result = new String(msg.getRecords()[0].getPayload());
+			Log.d(TAG, "content is");
+		}
 	}
 }

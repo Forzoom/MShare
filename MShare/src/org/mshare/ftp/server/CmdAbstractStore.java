@@ -33,8 +33,8 @@ import java.io.RandomAccessFile;
 
 import android.util.Log;
 
-import org.mshare.file.SharedLink;
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.ftp.server.*;
 import org.mshare.main.MShareUtil;
 
@@ -246,9 +246,10 @@ abstract public class CmdAbstractStore extends FtpCmd {
         
         // 文件传送已经完成
         // 添加到文件树中
-        system.addSharedLink(fakePath, realPath, SharedLinkSystem.FILE_PERMISSION_USER);
+        SharedLink sharedLink = SharedLink.newSharedLink(fakePath, realPath);
+        system.addSharedLink(sharedLink, SharedLinkSystem.FILE_PERMISSION_USER);
         // 持久化内容
-        system.persist(fakePath, realPath);
+        system.persist(sharedLink);
         
         Log.d(TAG, "STOR finished");
     }

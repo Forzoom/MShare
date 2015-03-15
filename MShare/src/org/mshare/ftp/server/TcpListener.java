@@ -56,6 +56,7 @@ public class TcpListener extends Thread {
                 SessionThread newSession = new SessionThread(clientSocket,
                         new LocalDataSocket());
                 newSession.start();
+                // register应该放在哪里呢？
                 ftpServerService.registerSessionThread(newSession);
             }
         } catch (Exception e) {

@@ -22,8 +22,8 @@ package org.mshare.ftp.server;
 import java.io.File;
 import java.io.IOException;
 
-import org.mshare.file.SharedLink;
-import org.mshare.file.SharedLinkSystem;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.main.MShareUtil;
 
 import android.test.RenamingDelegatingContext;
