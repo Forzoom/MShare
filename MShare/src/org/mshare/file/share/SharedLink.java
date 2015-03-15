@@ -236,8 +236,8 @@ public abstract class SharedLink {
 	}
 	
 	/**
-	 * 当FakeDirectory调用getRealFile的时候返回null
-	 * @return 将会返回File，不保证File一定能够正常使用，可能是null
+	 * 
+	 * @return 返回对应的真实文件，不保证文件的正确性，当SharedLink是{@link SharedFakeDirectory}时，将返回null
 	 */
 	public File getRealFile() {
 		if (isFile() || isFakeDirectory()) {

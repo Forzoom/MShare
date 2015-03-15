@@ -15,9 +15,11 @@ import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 /**
- * 用于代替SharedPreferences保存用户的配置属性和文件树内容
+ * <p>保存用户的配置和文件树内容，当SharedLinkStorage被正确生成的时候，其中包含了所有的SharedLink</p>
  * 
- * 文件被保存在应用的私有空间内
+ * <p>所有在其中的内容都将被持久化</p>
+ * 
+ * TODO 文件被保存在应用的私有空间内
  *
  * 构建持久化内容和非持久化内容之间的桥梁
  * 
@@ -25,15 +27,13 @@ import android.util.Log;
  * 
  * (为load函数特地准备的内容)同时，当需要新的SharedLink对象的时候，应该能够获得新对象的数组
  * 
- * TODO 加密
- * 
  * TODO org.mshare也并不需要自己来创建？用户名需要用hash来掩饰，了解Java的hash内容
  * 
- * TODO 需要考虑备份内容,考虑文件SD卡加密备份
+ * TODO 需要考虑备份内容,考虑文件SD卡加密备份,但是SD卡在以后并不能被写入了，所以只能将所有内容保存在私有空间内，当用户要求清除时，就会被自动清除
  * 
  * TODO 需要将配置属性和文件树内容区分？将配置内容移动到这里面,配置内容本来就不应该在Account中处理
  * 
- * 所有在其中的内容都将被持久化
+ * 
  * 
  * @author HM
  *
@@ -51,7 +51,7 @@ public class SharedLinkStorage {
 	 */
 	private String spKey;
 	/**
-	 * 将持久化的内容读取后添加到其中
+	 * 保存所有的{@link SharedLink}
 	 */
 	private ArrayList<SharedLink> list = new ArrayList<SharedLink>();
 	

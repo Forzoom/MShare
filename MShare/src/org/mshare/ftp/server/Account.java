@@ -95,11 +95,12 @@ public abstract class Account {
      * 向文件树中添加一些内容作为文件树中的已有内容
      * @see #prepare()
      * @param storage storage中的内容都将被添加到文件树中
+     * @param filePermission 所添加的SharedLink所拥有的权限
      */
-    public void prepare(SharedLinkStorage storage) {
+    public void prepare(SharedLinkStorage storage, int filePermission) {
     	prepare();
     	// TODO 文件权限不对
-    	getSystem().load(storage, 0);
+    	getSystem().load(storage, filePermission);
     }
     
     /**

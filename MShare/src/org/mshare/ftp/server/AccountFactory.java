@@ -59,11 +59,12 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	public static final String AnonymousUsername = "anonymous";
 	public static final String AnonymousPassword = "guest";
 	// 管理员账户的用户名和密码
+	
 	// 管理员账户不应该被知道
 	public static final String AdminUsername = "admin";
 	private static final String AdminPassword = "admin";
 	
-	// 保存账户存在信息的sp
+	// 保存账户存在信息的sp，可以封装这些内容吗
     public static final String SP_ACCOUNT_INFO = "accounts";
 	
 	// 所有的账户内容,新的账户从这里获得，每个sessionThread仅仅是获得对应其中的引用
@@ -73,6 +74,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     private GuestAccount guestAccount;
     // 默认的管理员账户
     private AdminAccount adminAccount;
+    
     // adminAccount所对应的唯一Token
     private Token adminAccountToken;
     // 用于通知其他的Session
@@ -131,7 +133,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			// 判断账户信息是否正确
 			Account account = allAccounts.get(username);
 			if (account != null && authAttempt(account, username, password)) {
-				Token token = new Token(username, password, owner);;
+				Token token = new Token(username, password, owner);
 				token.setAccount(account);
 				// 将registerToken放在这里合适吗?
 				account.registerToken();
@@ -294,7 +296,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	}
 	
 	/**
-	 * 判断本地文件是否被共享了
+	 * 指明本地文件是否被共享
 	 * @param file 所要判断的文件
 	 * @return 当文件存在且被共享时，返回true，否则返回false
 	 */
@@ -341,6 +343,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	
 	/**
 	 * 从SharedPreferences中加载普通用户账户的内容
+	 * TODO 将SharedPreferences封装
 	 * @param username 需要加载的用户名
 	 * @return 成功返回true，否则返回false
 	 */
@@ -362,7 +365,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		Log.d(TAG, "add new account : " + username);
 		Account newAccount = new UserAccount(username, password);
 		// 将管理员中的内容添加到新的账户中
-		newAccount.prepare(adminAccount.getStorage());
+		newAccount.prepare(adminAccount.getStorage(), PERMISSION_ADMIN);
 		allAccounts.put(username, newAccount);
 		return true;
 	}
