@@ -2,16 +2,14 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-     >
-
-    <org.mshare.picture.ServerOverviewSurfaceView 
-        android:id="@+id/server_overview_surface_view"
-        android:layout_width="match_parent" 
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_above="@+id/server_overview_sub_layout"/>
-        
-    <LinearLayout 
+    android:background="@color/Color_White" >
+    
+	<ImageView 
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_centerInParent="true"
+	    android:src="@drawable/background_user"/>
+	<LinearLayout 
         android:id="@+id/server_overview_sub_layout"
         android:layout_width="match_parent" 
         android:layout_height="wrap_content"
@@ -31,7 +29,7 @@
             	<ImageView
 	                android:layout_width="wrap_content"
 	                android:layout_height="wrap_content"
-	                android:src="@drawable/account"
+	                android:src="@drawable/plus"
 	                android:layout_gravity="center_vertical"
 	                android:paddingLeft="12dp"
 	                android:paddingTop="12dp"
@@ -41,9 +39,9 @@
 	                android:layout_height="wrap_content"
 	                android:layout_gravity="center_vertical"
 	                android:textSize="18sp"
-	                android:textColor="@color/blue08"
+	                android:textColor="@color/Color_Black"
 	                android:textStyle="bold"
-	                android:text="账户"/>
+	                android:text="连接"/>
             </LinearLayout>
         </RelativeLayout>
     </LinearLayout>	

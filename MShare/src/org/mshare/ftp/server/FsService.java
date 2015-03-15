@@ -417,6 +417,7 @@ public class FsService extends Service implements Runnable {
 
     /**
      * 检测当前WifiAp是否可用
+     * TODO 是否可以使用StatusController来判断
      * @return
      */
     public static boolean isConnectedUsingWifiAp() {
@@ -443,13 +444,11 @@ public class FsService extends Service implements Runnable {
     public static void writeMonitor(boolean incoming, String s) {
     }
 
+    // 判断指定的文件是否是共享文件
     public static boolean isFileShared(File file) {
     	return mAccountFactory.isFileShared(file);
     }
 
-    // TODO 可能需要监听器来监听当前的sessionThread的数量变化
-//    public static int getCurrentLink
-    
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -460,19 +459,19 @@ public class FsService extends Service implements Runnable {
      * 应该和Service的生命周期有关吧
      * TODO 在发布版本中，应该将该函数去掉注释
      */
-//    @Override
-//    public void onTaskRemoved(Intent rootIntent) {
-//        super.onTaskRemoved(rootIntent);
-//        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
-//        Intent restartService = new Intent(getApplicationContext(), this.getClass());
-//        restartService.setPackage(getPackageName());
-//        PendingIntent restartServicePI = PendingIntent.getService(
-//                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
-//        AlarmManager alarmService = (AlarmManager) getApplicationContext()
-//                .getSystemService(Context.ALARM_SERVICE);
-//        alarmService.set(AlarmManager.ELAPSED_REALTIME,
-//                SystemClock.elapsedRealtime() + 2000, restartServicePI);
-//    }
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        Log.d(TAG, "user has removed my activity, we got killed! restarting...");
+        Intent restartService = new Intent(getApplicationContext(), this.getClass());
+        restartService.setPackage(getPackageName());
+        PendingIntent restartServicePI = PendingIntent.getService(
+                getApplicationContext(), 1, restartService, PendingIntent.FLAG_ONE_SHOT);
+        AlarmManager alarmService = (AlarmManager) getApplicationContext()
+                .getSystemService(Context.ALARM_SERVICE);
+        alarmService.set(AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + 2000, restartServicePI);
+    }
 
     /**
      * 获得管理员账户对应的Token
@@ -487,7 +486,7 @@ public class FsService extends Service implements Runnable {
     }
     
     /**
-     * 当 {@link #mAccountFactory}不是null时，用于准备管理员账户
+     * 当 {@link #mAccountFactory}不是null时，创建管理员账户
      */
     private static void prepareAdminAccount() {
     	

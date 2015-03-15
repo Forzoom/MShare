@@ -19,9 +19,9 @@ import android.util.Log;
  * @author HM
  *
  */
-public class NetworkStateRecevier extends BroadcastReceiver {
+public class NetworkStatusRecevier extends BroadcastReceiver {
 
-	private static final String TAG = NetworkStateRecevier.class.getSimpleName();
+	private static final String TAG = NetworkStatusRecevier.class.getSimpleName();
 	
 	private OnRssiChangeListener rcListener;
 	
@@ -30,7 +30,7 @@ public class NetworkStateRecevier extends BroadcastReceiver {
 	
 	public StatusController mState;
 	
-	public NetworkStateRecevier(StatusController stateController) {
+	public NetworkStatusRecevier(StatusController stateController) {
 		this.mState = stateController;
 	}
 	
@@ -47,7 +47,7 @@ public class NetworkStateRecevier extends BroadcastReceiver {
 		// WIFI״̬
 		if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
 			if (mState != null) {
-				mState.setWifiState(StatusController.getWifiState());
+				mState.setWifiStatus(StatusController.getWifiStatus());
 			}
 		}
 		

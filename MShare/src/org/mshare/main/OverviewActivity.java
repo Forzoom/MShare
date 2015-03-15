@@ -33,14 +33,20 @@ import android.os.Message;
 import android.text.TextPaint;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.FrameLayout.LayoutParams;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
+import android.widget.ViewFlipper;
+import android.widget.ViewSwitcher;
 import android.os.Handler;
 
 public class OverviewActivity extends Activity implements SurfaceHolder.Callback, Handler.Callback {
@@ -49,30 +55,41 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	private ArrayList<CanvasElement> canvasElements = new ArrayList<CanvasElement>();
 	
 	SurfaceHolder mSurfaceHolder; 
-	
+	private GestureDetector mGestureDetector;
 	RefreshHandler mRefreshHandler;
 	
-	Paint canvasPaint = new Paint();
+	// 所使用的统一画笔
+	private Paint canvasPaint = new Paint();
 	
 	boolean isLooping = false;
 	
 	int colorBlueDarken;
 	int colorBlueLighten;
 	
-	private static final int SERVER_STATUS_STOP = 1;
-	private static final int SERVER_STATUS_START = 2;
-	
-	int serverStatus = SERVER_STATUS_STOP;
-	
 	private PictureBackground pictureBackground = new PictureBackground();
 	private RingButton serverButton = new RingButton();
 	// 所设置的缩小的内半径
 	int serverInnerRadius;
 	
+	private ViewSwitcher viewSwitcher;
+	
+	private StatusController statusController;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.overview_activity_flat);
+		setContentView(R.layout.overview_activity_container);
+		
+		viewSwitcher = (ViewSwitcher)findViewById(R.id.view_switcher);
+		
+		// 服务器相关内容
+		FrameLayout.LayoutParams serverParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+		ViewGroup serverOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_flat, null);
+		FrameLayout.LayoutParams clientParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+		ViewGroup clientOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_other, null);
+		
+		viewSwitcher.addView(serverOverview, serverParams);
+		viewSwitcher.addView(clientOverview, clientParams);
 		
 		ServerOverviewSurfaceView surfaceView = (ServerOverviewSurfaceView)findViewById(R.id.server_overview_surface_view);
 		surfaceView.setGestureDetector(new GestureDetector(this, new GestureListener()));
@@ -80,12 +97,10 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		mSurfaceHolder.addCallback(this);
 		
 		mRefreshHandler = new RefreshHandler(Looper.myLooper(), this);
+		mGestureDetector = new GestureDetector(this, new SwitchListener());
 		
-		Resources resources = getResources();
-		int color_white = resources.getColor(R.color.Color_White);
-		int color_darken_blue = resources.getColor(R.color.blue02);
-		int color_light_blue = resources.getColor(R.color.blue08);
-
+		statusController = new StatusController();
+		
 		canvasPaint.setAntiAlias(true);
 		canvasPaint.setColor(getResources().getColor(R.color.color_light_gray));
 		canvasPaint.setAlpha(223);
@@ -120,6 +135,13 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	}
 
 	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		// 用于检测Fling
+		mGestureDetector.onTouchEvent(event);
+		return super.onTouchEvent(event);
+	}
+	
+	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		Log.d(TAG, "surface created");
 		
@@ -130,12 +152,14 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		// 会被首先绘制
 		colorBlueDarken = getResources().getColor(R.color.blue01);
 		colorBlueLighten = getResources().getColor(R.color.blue08);
-		pictureBackground.setCurrentColor(serverStatus == SERVER_STATUS_STOP ? colorBlueDarken : colorBlueLighten);
+		pictureBackground.setCurrentColor(statusController.getServerStatus() == StatusController.STATUS_SERVER_STOPPED ? colorBlueDarken : colorBlueLighten);
 		canvasElements.add(pictureBackground);
 		
+		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
+		
 		// 圆环
-		serverInnerRadius = canvasWidth / 4 - 30;
-		serverButton.setInnerRadius(canvasWidth / 4 - 10);
+		serverInnerRadius = canvasWidth / 4 - 50;
+		serverButton.setInnerRadius(canvasWidth / 4 - 20);
 		serverButton.setOuterRadius(canvasWidth / 4);
 		serverButton.setCx(canvasWidth / 2);
 		serverButton.setCy(canvasHeight / 2);
@@ -177,12 +201,12 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 				bounceAnimation.setDuration(500);
 				CanvasAnimation colorAnimation = null;
 				
-				if (serverStatus == SERVER_STATUS_STOP) {
+				if (statusController.getServerStatus() == StatusController.STATUS_SERVER_STOPPED) {
 					colorAnimation = pictureBackground.addColorAnimation(colorBlueDarken, colorBlueLighten);
-					serverStatus = SERVER_STATUS_START;
+					statusController.setServerStatus(StatusController.STATUS_SERVER_STARTED);
 				} else {
 					colorAnimation = pictureBackground.addColorAnimation(colorBlueLighten, colorBlueDarken);
-					serverStatus = SERVER_STATUS_STOP;
+					statusController.setServerStatus(StatusController.STATUS_SERVER_STOPPED);
 				}
 				
 				if (colorAnimation != null) {
@@ -201,5 +225,27 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			return super.onDown(e);
 		}
 		
+	}
+	
+	class SwitchListener extends GestureDetector.SimpleOnGestureListener {
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+				float velocityY) {
+			
+			Log.d(TAG, "onFling");
+			// 如何判断左右
+			// 右
+			if (velocityX > 0.0f) {
+				viewSwitcher.setInAnimation(OverviewActivity.this, R.animator.slide_in_left);
+				viewSwitcher.setOutAnimation(OverviewActivity.this, R.animator.slide_out_right);
+				viewSwitcher.showPrevious();
+			} else {
+				viewSwitcher.setInAnimation(OverviewActivity.this, R.animator.slide_in_right);
+				viewSwitcher.setOutAnimation(OverviewActivity.this, R.animator.slide_out_left);
+				viewSwitcher.showNext();
+			}
+			
+			return super.onFling(e1, e2, velocityX, velocityY);
+		}
 	}
 }

@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
-import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
 
 import android.app.Service;
 import android.content.Context;
@@ -35,19 +34,13 @@ import android.widget.TextView;
 public class StatusController {
 	private static final String TAG = StatusController.class.getSimpleName();
 	
-	// 所有的颜色
-	private int colorDisable = -1;
-	private int colorEnable = -1;
-	private int colorUsing = -1;
-	
-	// 网络状态:当前正在使用什么网络进行数据传输
-	private TextView wifiStateView;
-	private TextView apStateView;
-	private TextView p2pStateView;
-	// 显示NFC的状态
-	private TextView nfcStateView;
-	// 扩展存储状态 TODO 需要指导是否可用
-	private TextView sdStateView;
+	// 服务器状态
+	public static final int STATUS_SERVER_UNKNOWN= 0x0;
+	public static final int STATUS_SERVER_STARTING = 0x1;
+	public static final int STATUS_SERVER_STARTED = 0x2;
+	public static final int STATUS_SERVER_STOPING = 0x4;
+	public static final int STATUS_SERVER_STOPPED = 0x8;
+	private int serverStatus = STATUS_SERVER_UNKNOWN;
 	
 	public static final int STATE_WIFI_UNKNOWN = -1;
 	public static final int STATE_WIFI_ENABLE = 0;
@@ -88,24 +81,26 @@ public class StatusController {
     public static final int WIFI_AP_STATE_ENABLED = 13;
     public static final int WIFI_AP_STATE_FAILED = 14;
 	
-	private StateCallback callback;
+	private StatusCallback callback;
 	
 	// 监听状态对UI界面进行控制
-	private NetworkStateRecevier networkStateReceiver;
-	private ExternalStorageStateReceiver externalStorageStateReceiver;
+	private NetworkStatusRecevier networkStateReceiver;
+	private ExternalStorageStatusReceiver externalStorageStateReceiver;
+	private ServerStatusRecevier serverStatusReceiver;
 	
 	/**
 	 * 状态变化的回调接口
 	 * @author HM
 	 *
 	 */
-	public interface StateCallback {
-		public void onWifiStateChange(int state);
-		public void onWifiApStateChange(int state);
-		public void onWifiP2pStateChange(int state);
-		public void onExternalStorageChange(int state);
+	public interface StatusCallback {
+		public void onServerStatusChange(int status);
+		public void onWifiStatusChange(int status);
+		public void onWifiApStatusChange(int status);
+		public void onWifiP2pStatusChange(int status);
+		public void onExternalStorageChange(int status);
 		// NFC的状态不太了解
-		public void onNfcStateChange(int state);
+		public void onNfcStatusChange(int state);
 	}
 	
 	/**
@@ -113,25 +108,9 @@ public class StatusController {
 	 * @param container 包含所有图标的View
 	 */
 	public void initial(ViewGroup container) {
-		// 颜色
-		Resources resources = container.getResources();
-		colorDisable = resources.getColor(R.color.state_disable);
-		colorEnable = resources.getColor(R.color.state_enable);
-		colorUsing = resources.getColor(R.color.state_using);
-		
-		// 写死了是不是不好
-		wifiStateView = (TextView)container.findViewById(R.id.wifi_state);
-		// 当前数据传输连接
-		wifiStateView = (TextView)container.findViewById(R.id.wifi_state);
-		apStateView = (TextView)container.findViewById(R.id.ap_state);
-		p2pStateView = (TextView)container.findViewById(R.id.wifip2p_state);
-		// NFC状态
-		nfcStateView = (TextView)container.findViewById(R.id.nfc_state);
-		// 扩展存储状态
-		sdStateView = (TextView)container.findViewById(R.id.sd_state);
 		
 		// 设置颜色默认为disable
-		setWifiState(getWifiState());
+		setWifiStatus(getWifiStatus());
 		setWifiApState(getWifiApState());
 		setWifiP2pState(getWifiP2pState());
 		setNfcState(getNfcState());
@@ -147,7 +126,7 @@ public class StatusController {
 		/* 注册监听器 */
 		
 		// 注册简单的BroadcastReceiver用来监听设备的网络状况变化，可能存在安全风险
-		networkStateReceiver = new NetworkStateRecevier(this);
+		networkStateReceiver = new NetworkStatusRecevier(this);
 		
 		// 设置IntentFilter
 		IntentFilter wifiConnectFilter = new IntentFilter();
@@ -163,11 +142,23 @@ public class StatusController {
 		/*
 		 * 扩展存储监听器
 		 */
-		externalStorageStateReceiver = new ExternalStorageStateReceiver(this);
+		externalStorageStateReceiver = new ExternalStorageStatusReceiver(this);
 		IntentFilter externalStorageFilter = new IntentFilter();
 		// TODO 不知道需要添加的Action是什么
 		// externalStorageFilter.addAction(action)
 		context.registerReceiver(externalStorageStateReceiver, externalStorageFilter);
+		
+		/*
+		 * 服务器状态监听器
+		 */
+		serverStatusReceiver = new ServerStatusRecevier(this);
+		
+		IntentFilter serverStatusFilter = new IntentFilter();
+		serverStatusFilter.addAction(FsService.ACTION_STARTED);
+		serverStatusFilter.addAction(FsService.ACTION_FAILEDTOSTART);
+		serverStatusFilter.addAction(FsService.ACTION_STOPPED);
+		
+		context.registerReceiver(serverStatusReceiver, serverStatusFilter);
 	}
 	
 	/**
@@ -182,13 +173,35 @@ public class StatusController {
 		if (externalStorageStateReceiver != null) {
 			context.unregisterReceiver(externalStorageStateReceiver);
 		}
+		
+		if (serverStatusReceiver != null) {
+			context.unregisterReceiver(serverStatusReceiver);
+		}
 	}
 	
-	public void setCallback(StateCallback callback) {
+	public void setCallback(StatusCallback callback) {
 		this.callback = callback;
 	}
 	
-	public static int getWifiState() {
+	// 获得服务器状态
+	public int getServerStatus() {
+		if (serverStatus == STATUS_SERVER_UNKNOWN) {
+			if (FsService.isRunning()) {
+				return STATUS_SERVER_STARTED;
+			} else {
+				return STATUS_SERVER_STOPPED;
+			}
+		} else {
+			return serverStatus;
+		}
+	}
+	
+	// 设置服务器状态
+	public void setServerStatus(int status) {
+		this.serverStatus  = status;
+	}
+	
+	public static int getWifiStatus() {
 		Context context = MShareApp.getAppContext();
 		ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Service.CONNECTIVITY_SERVICE);
 		NetworkInfo ni = cm.getActiveNetworkInfo();
@@ -204,23 +217,10 @@ public class StatusController {
 		}
 	}
 	
-	public void setWifiState(int state) {
-		Log.d(TAG, "set WIFI state : " + state);
-		if (wifiStateView != null) {
-			switch (state) {
-			case STATE_WIFI_ENABLE:
-				wifiStateView.setTextColor(colorEnable);
-				break;
-			case STATE_WIFI_DISABLE:
-				wifiStateView.setTextColor(colorDisable);
-				break;
-			case STATE_WIFI_USING:
-				wifiStateView.setTextColor(colorUsing);
-				break;
-			}
-		}
+	public void setWifiStatus(int status) {
+		Log.d(TAG, "set WIFI state : " + status);
 		if (callback != null) {
-			callback.onWifiStateChange(state);
+			callback.onWifiStatusChange(status);
 		}
 	}
 	
@@ -233,21 +233,10 @@ public class StatusController {
 		return STATE_WIFI_P2P_DISABLE;
 	}
 	
-	public void setWifiP2pState(int state) {
-		Log.d(TAG, "set WIFI_P2P state : " + state);
-		switch (state) {
-		case STATE_WIFI_P2P_ENABLE:
-			p2pStateView.setTextColor(colorEnable);
-			break;
-		case STATE_WIFI_P2P_DISABLE:
-			p2pStateView.setTextColor(colorDisable);
-			break;
-		case STATE_WIFI_P2P_USING:
-			p2pStateView.setTextColor(colorUsing);
-			break;
-		}
+	public void setWifiP2pState(int status) {
+		Log.d(TAG, "set WIFI_P2P state : " + status);
 		if (callback != null) {
-			callback.onWifiP2pStateChange(state);
+			callback.onWifiP2pStatusChange(status);
 		}
 	}
 	
@@ -267,17 +256,6 @@ public class StatusController {
 	
 	public void setExternalStorageState(int state) {
 		Log.d(TAG, "set ExternalStorage state : " + state);
-		switch (state) {
-		case STATE_EXTERNAL_STORAGE_ENABLE:
-			sdStateView.setTextColor(colorEnable);
-			break;
-		case STATE_EXTERNAL_STORAGE_DISABLE:
-			sdStateView.setTextColor(colorDisable);
-			break;
-		case STATE_EXTERNAL_STORAGE_USING:
-			sdStateView.setTextColor(colorUsing);
-			break;
-		}
 		if (callback != null) {
 			callback.onExternalStorageChange(state);
 		}
@@ -328,19 +306,8 @@ public class StatusController {
 	
 	public void setWifiApState(int state) {
 		Log.d(TAG, "set WIFI_AP state : " + state);
-		switch (state) {
-		case STATE_WIFI_AP_ENABLE:
-			apStateView.setTextColor(colorEnable);
-			break;
-		case STATE_WIFI_AP_DISABLE:
-			apStateView.setTextColor(colorDisable);
-			break;
-		case STATE_WIFI_AP_USING:
-			apStateView.setTextColor(colorUsing);
-			break;
-		}
 		if (callback != null) {
-			callback.onWifiApStateChange(state);
+			callback.onWifiApStatusChange(state);
 		}
 	}
 	
@@ -361,19 +328,8 @@ public class StatusController {
 	
 	public void setNfcState(int state) {
 		Log.d(TAG, "set NFC state : " + state);
-		switch (state) {
-		case STATE_NFC_ENABLE:
-			nfcStateView.setTextColor(colorEnable);
-			break;
-		case STATE_NFC_DISABLE:
-			nfcStateView.setTextColor(colorDisable);
-			break;
-		case STATE_NFC_USING:
-			nfcStateView.setTextColor(colorUsing);
-			break;
-		}
 		if (callback != null) {
-			callback.onNfcStateChange(state);
+			callback.onNfcStatusChange(state);
 		}
 	}
 	

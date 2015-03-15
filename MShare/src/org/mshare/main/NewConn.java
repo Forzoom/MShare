@@ -41,8 +41,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.TextView;
 
-import org.mshare.main.ServerStateRecevier.OnServerStateChangeListener;
-import org.mshare.main.StatusController.StateCallback;
+import org.mshare.main.StatusController.StatusCallback;
 import org.mshare.nfc.NfcServerActivity;
 import org.mshare.scan.ScanActivity;
 import org.mshare.p2p.P2pActivity;
@@ -52,7 +51,7 @@ import org.mshare.p2p.P2pActivity;
  * @author HM
  *
  */
-public class NewConn extends Activity implements StateCallback {
+public class NewConn extends Activity implements StatusCallback {
 	
 	private static final String TAG = NewConn.class.getSimpleName();
 	
@@ -70,25 +69,19 @@ public class NewConn extends Activity implements StateCallback {
 	
 	private TextView uploadPathView;
 	
-	private ToggleButton apTest;
-	
 	// 总共是6种状态
-	private static final int SERVER_STATE_STARTING = 0x1;
-	private static final int SERVER_STATE_STARTED = 0x2;
-	private static final int SERVER_STATE_STOPING = 0x4;
-	private static final int SERVER_STATE_STOPPED = 0x8;
 	private static final int WIFI_STATE_CONNECTED = 0x10;
 	private static final int WIFI_STATE_DISCONNECTED = 0x20;
 	
 	private static final int SERVER_STATE_MASK = 0xf;
 	private static final int WIFI_STATE_MASK = 0x30;
 	
-	private StatusController mState;
+	private StatusController statusController;
 	
 	// 没有任何状态
 	private int state = 0;
 	
-	private ServerStateRecevier serverStateReceiver;
+	private ServerStatusRecevier serverStatusReceiver;
 	
 	protected void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
@@ -109,11 +102,6 @@ public class NewConn extends Activity implements StateCallback {
 		// 上传路径
 		uploadPathView = (TextView)findViewById(R.id.upload_path);
 		
-		// 尝试启动AP
-		apTest = (ToggleButton)findViewById(R.id.ftp_ap_test);
-		// TODO 不知道该怎么对应的IP地址
-//		ftpApIp = (TextView)findViewById(R.id.ftp_ap_ip);
-		
 		// 服务器设置显示
 		ftpUsernameView = (TextView)findViewById(R.id.ftp_username);
 		ftpPasswordView = (TextView)findViewById(R.id.ftp_password);
@@ -126,7 +114,6 @@ public class NewConn extends Activity implements StateCallback {
 		
 		// 设置启动和关闭的监听器
 		ftpSwitch.setOnClickListener(new StartStopServerListener());
-		apTest.setOnClickListener(new WifiApControlListener());
 		
 	}
 	
@@ -136,48 +123,27 @@ public class NewConn extends Activity implements StateCallback {
 		super.onStart();
 		
 		// 设置和初始化状态内容
-		mState = new StatusController();
-		mState.setCallback(this);
-		mState.initial((ViewGroup)findViewById(R.id.state_bar));
+		statusController = new StatusController();
+		statusController.setCallback(this);
+		statusController.initial((ViewGroup)findViewById(R.id.state_bar));
 		
 		// TODO 临时设置的检测当前是否是MOBILE信号，
 		// TODO 需要处理的内容太多了，考虑不加入开启AP的功能
-		// 并没有AP cannot enable
+		// 并没有AP cannot enable，所以对于isWifiApEnable函数，可以正确的执行,但是对于setWifiApEnabled就会报错
 		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
-
-		// 先设置当前的服务器状态
-		// TODO 如果当前服务器已经启动了，发送启动命令给服务器，服务器也应该做出相应，所以NewConn和服务器之间的状态应该统一
-		if (FsService.isRunning()) {
-			changeState(SERVER_STATE_STARTED);
-		} else {
-			changeState(SERVER_STATE_STOPPED);
-		}
 
 		// 当前上传路径
 		uploadPathView.setText(FsSettings.getUpload());
 
-		mState.registerReceiver();
-		/*
-		 * 服务器状态监听器
-		 */
-		serverStateReceiver = new ServerStateRecevier();
-		ServerStateChangeListener ssclistener = new ServerStateChangeListener();
-		serverStateReceiver.setListener(ssclistener);
-		
-		IntentFilter serverStateFilter = new IntentFilter();
-		serverStateFilter.addAction(FsService.ACTION_STARTED);
-		serverStateFilter.addAction(FsService.ACTION_FAILEDTOSTART);
-		serverStateFilter.addAction(FsService.ACTION_STOPPED);
-		
-		registerReceiver(serverStateReceiver, serverStateFilter);
+		statusController.registerReceiver();
 	}
 	
 	@Override
 	protected void onStop() {
 		super.onStop();
-		mState.unregisterReceiver();
-		if (serverStateReceiver != null) {
-			unregisterReceiver(serverStateReceiver);
+		statusController.unregisterReceiver();
+		if (serverStatusReceiver != null) {
+			unregisterReceiver(serverStatusReceiver);
 		}
 	}
 	
@@ -231,99 +197,12 @@ public class NewConn extends Activity implements StateCallback {
 	}
 	
 	/**
-	 * 当其中的状态发生改变
-	 * 服务器状态:1.启动2.启动中3.停止4.停止中
-	 * wifi状态1.连上，没连上
-	 * 总共8中状态，加上从一个状态变成另外一种状态，总共需要的代码太多，太乱
-	 */
-	private void changeState(int s) {
-		if ((s & SERVER_STATE_MASK) != 0) {// 改变server状态
-			state = state & (~SERVER_STATE_MASK) | s; 
-		} else {
-			state = state & (~WIFI_STATE_MASK) | s;
-		}
-		
-		int networkState = state & WIFI_STATE_MASK;
-		int serverState = state & SERVER_STATE_MASK;
-		
-		// TODO 在其中添加了关于服务器状态的内容
-		
-		if (networkState == WIFI_STATE_CONNECTED) {
-			switch (serverState) {
-				case (SERVER_STATE_STARTING):
-					setSwitchChecked(true);
-					setSwitchEnable(false);
-					
-					serverStateView.setText("服务器启动中");
-					
-					break;
-				case (SERVER_STATE_STARTED):
-					setSwitchChecked(true);
-					setSwitchEnable(true);
-					
-					serverStateView.setText("服务器已启动");
-					
-					break;
-				case (SERVER_STATE_STOPING):
-					setSwitchChecked(false);
-					setSwitchEnable(false);
-					
-					serverStateView.setText("服务器关闭中");
-					
-					break;
-				case (SERVER_STATE_STOPPED):
-					setSwitchChecked(false);
-					setSwitchEnable(true);
-					
-					serverStateView.setText("服务器已关闭");
-					
-					break;
-				default:
-					break;
-			}
-		} else if (networkState == WIFI_STATE_DISCONNECTED) {
-			// 当没有连接网络的状态下，能否修改服务器状态
-			switch(serverState) {
-			case (SERVER_STATE_STARTING):
-				setSwitchChecked(FsService.isRunning());
-				setSwitchEnable(false);
-				
-				serverStateView.setText("服务器启动中");
-				
-				break;
-			case (SERVER_STATE_STARTED):
-				setSwitchChecked(FsService.isRunning());
-				setSwitchEnable(false);
-				
-				serverStateView.setText("服务器已启动");
-				
-				break;
-			case (SERVER_STATE_STOPING):
-				setSwitchChecked(FsService.isRunning());
-				setSwitchEnable(false);
-				
-				serverStateView.setText("服务器关闭中");
-				
-				break;
-			case (SERVER_STATE_STOPPED):
-				setSwitchChecked(FsService.isRunning());
-				setSwitchEnable(false);
-				
-				serverStateView.setText("服务器已关闭");
-				
-				break;
-			}
-		}
-		
-	}
-	
-	/**
 	 * 启动服务器
 	 */
 	private void startServer() {
 		// 设置新的配置内容
+//		statusController.
 		sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
-		changeState(SERVER_STATE_STARTING);
 	}
 	
 	/**
@@ -331,7 +210,7 @@ public class NewConn extends Activity implements StateCallback {
 	 */
 	private void stopServer() {
 		sendBroadcast(new Intent(FsService.ACTION_STOP_FTPSERVER));
-		changeState(SERVER_STATE_STOPING);
+		
 	}
 	
 	/**
@@ -350,20 +229,7 @@ public class NewConn extends Activity implements StateCallback {
 			Method setWifiApEnabledMethod = wm.getClass().getDeclaredMethod("setWifiApEnabled");
 			setWifiApEnabledMethod.invoke(wm, config, enable);
 			
-		} catch (NoSuchMethodException e) {
-			apTest.setEnabled(false);
-			apTest.setChecked(false);
-			Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO 添加对应的响应
-			apTest.setEnabled(false);
-			apTest.setChecked(false);
-			Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			apTest.setEnabled(false);
-			apTest.setChecked(false);
+		} catch (Exception e) {
 			Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
 			e.printStackTrace();
 		}
@@ -399,46 +265,19 @@ public class NewConn extends Activity implements StateCallback {
 		}
 	}
 
-	/**
-	 * 响应Activity中的点击事件，用来启动和关闭WifiAp
-	 * @author HM
-	 *
-	 */
-	private class WifiApControlListener implements View.OnClickListener {
-
-		@Override
-		public void onClick(View v) {
-			if (apTest.isChecked()) {
-				// 尝试对WIFIAP进行操作
-				setWifiApEnabled(true);
-			} else {
-				setWifiApEnabled(false);
-			}
-			apTest.setEnabled(false);
-		}
+	@Override
+	public void onServerStatusChange(int status) {
+		// 当服务器群状态变化的时候，需要用来调整背景颜色
+		
 	}
 	
-	private class ServerStateChangeListener implements OnServerStateChangeListener {
-
-		@Override
-		public void onServerStateChange(boolean start) {
-			// 当服务器启动时
-			if (start) {
-				changeState(SERVER_STATE_STARTED);
-			} else {
-				changeState(SERVER_STATE_STOPPED);
-			}
-		}
-	}
-
 	@Override
-	public void onWifiStateChange(int state) {
+	public void onWifiStatusChange(int state) {
 		Log.d(TAG, "on wifi state change");
 		switch (state) {
 		// 表示的是手机不支持WIFI
 		case StatusController.STATE_WIFI_DISABLE:
 		case StatusController.STATE_WIFI_ENABLE:
-			changeState(WIFI_STATE_DISCONNECTED);
 			if (FsService.isRunning()) {
 				// 尝试关闭服务器
 				stopServer();
@@ -446,7 +285,7 @@ public class NewConn extends Activity implements StateCallback {
 			ftpAddrView.setText("未知");
 			break;
 		case StatusController.STATE_WIFI_USING:
-			changeState(WIFI_STATE_CONNECTED);
+			
 			// 设置显示的IP地址
 			ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
 			break;
@@ -457,29 +296,9 @@ public class NewConn extends Activity implements StateCallback {
 	 * 这里可能会有代码重复,需要将上面的内容除去
 	 */
 	@Override
-	public void onWifiApStateChange(int state) {
+	public void onWifiApStatusChange(int status) {
 		Log.d(TAG, "on wifi ap state change");
-		switch (state) {
-		case StatusController.STATE_WIFI_AP_UNSUPPORT:
-			apTest.setEnabled(false);
-			apTest.setChecked(false);
-			break;
-			// 下面三种情况下有什么需要处理的吗?
-			// 下面的不处理apTest的checkd?
-		case StatusController.STATE_WIFI_AP_ENABLE:
-			apTest.setEnabled(true);
-			apTest.setChecked(true);
-			break;
-		case StatusController.STATE_WIFI_AP_DISABLE:
-			apTest.setEnabled(true);
-			apTest.setChecked(false);
-			break;
-		case StatusController.STATE_WIFI_AP_USING:
-			apTest.setEnabled(true);
-			apTest.setChecked(true);
-			break;
-		}
-		// TODO 地址可能并不是这样设置的，所以暂时将这些撤销
+		// TODO 地址可能并不是这样设置的，所以暂时将这些注释
 		// 设置地址
 //		byte[] address = FsService.getLocalInetAddress().getAddress();
 //		String addressStr = "";
@@ -492,19 +311,20 @@ public class NewConn extends Activity implements StateCallback {
 	}
 
 	@Override
-	public void onWifiP2pStateChange(int state) {
+	public void onWifiP2pStatusChange(int status) {
 		// TODO Auto-generated method stub
 		Log.d(TAG, "on wifi p2p state change");
 	}
 
 	@Override
-	public void onExternalStorageChange(int state) {
+	public void onExternalStorageChange(int status) {
 		// TODO 对于扩展存储的变化能够作为响应
 		Log.d(TAG, "on external storage state change");
 	}
 
 	@Override
-	public void onNfcStateChange(int state) {
+	public void onNfcStatusChange(int status) {
 		Log.d(TAG, "on nfc state change");
 	}
+	
 }

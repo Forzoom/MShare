@@ -362,7 +362,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 
 	/**
 	 * <p>监听扩展存储的状态</p>
-	 * TODO 将来将使用{@link ExternalStorageStateReceiver}来代替
+	 * TODO 将来将使用{@link ExternalStorageStatusReceiver}来代替
 	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {

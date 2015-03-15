@@ -11,10 +11,14 @@ import android.util.Log;
  * @author HM
  *
  */
-public class ServerStateRecevier extends BroadcastReceiver {
-
-	private static final String TAG = ServerStateRecevier.class.getSimpleName();
-	private OnServerStateChangeListener listener;
+public class ServerStatusRecevier extends BroadcastReceiver {
+	private static final String TAG = ServerStatusRecevier.class.getSimpleName();
+	
+	private StatusController statusController;
+	
+	public ServerStatusRecevier(StatusController statusController) {
+		this.statusController = statusController;
+	}
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
@@ -22,24 +26,14 @@ public class ServerStateRecevier extends BroadcastReceiver {
 		String action = intent.getAction();
 		Log.d(TAG, "Recevie action : " + action);
 		
-		if (listener != null) {
+		if (statusController != null) {
 			if (action.equals(FsService.ACTION_STARTED)) {
-				listener.onServerStateChange(true);
+				statusController.setServerStatus(StatusController.STATUS_SERVER_STARTED);
+				// 可能发送了启动请求，但是启动失败了
 			} else if (action.equals(FsService.ACTION_STOPPED) || action.equals(FsService.ACTION_FAILEDTOSTART)) {
-				listener.onServerStateChange(false);
+				statusController.setServerStatus(StatusController.STATUS_SERVER_STOPPED);
 			}
 		}
 	}
 
-	public void setListener(OnServerStateChangeListener listener) {
-		this.listener = listener;
-	}
-	
-	interface OnServerStateChangeListener {
-		/**
-		 * 仅仅用于提示服务器的启动和结束
-		 * @param start
-		 */
-		void onServerStateChange(boolean start);
-	}
 }
