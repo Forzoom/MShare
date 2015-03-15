@@ -51,7 +51,7 @@ import org.mshare.p2p.P2pActivity;
  * @author HM
  *
  */
-public class NewConn extends Activity implements StatusCallback {
+public class NewConn extends Activity {
 	
 	private static final String TAG = NewConn.class.getSimpleName();
 	
@@ -64,8 +64,6 @@ public class NewConn extends Activity implements StatusCallback {
 	private TextView ftpAddrView;
 	// 服务器状态
 	private TextView serverStateView;
-	// StatusBar
-	private RelativeLayout statusBar;
 	
 	private TextView uploadPathView;
 	
@@ -75,13 +73,6 @@ public class NewConn extends Activity implements StatusCallback {
 	
 	private static final int SERVER_STATE_MASK = 0xf;
 	private static final int WIFI_STATE_MASK = 0x30;
-	
-	private StatusController statusController;
-	
-	// 没有任何状态
-	private int state = 0;
-	
-	private ServerStatusRecevier serverStatusReceiver;
 	
 	protected void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
@@ -95,9 +86,6 @@ public class NewConn extends Activity implements StatusCallback {
 		
 		// 服务器状态显示
 		serverStateView = (TextView)findViewById(R.id.server_state);
-		
-		// StateBar
-		statusBar = (RelativeLayout)findViewById(R.id.state_bar);
 		
 		// 上传路径
 		uploadPathView = (TextView)findViewById(R.id.upload_path);
@@ -115,36 +103,6 @@ public class NewConn extends Activity implements StatusCallback {
 		// 设置启动和关闭的监听器
 		ftpSwitch.setOnClickListener(new StartStopServerListener());
 		
-	}
-	
-	@Override
-	protected void onStart() {
-		// TODO 可能需要使用更加安全的BroadcastReceiver注册方式
-		super.onStart();
-		
-		// 设置和初始化状态内容
-		statusController = new StatusController();
-		statusController.setCallback(this);
-		statusController.initial((ViewGroup)findViewById(R.id.state_bar));
-		
-		// TODO 临时设置的检测当前是否是MOBILE信号，
-		// TODO 需要处理的内容太多了，考虑不加入开启AP的功能
-		// 并没有AP cannot enable，所以对于isWifiApEnable函数，可以正确的执行,但是对于setWifiApEnabled就会报错
-		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
-
-		// 当前上传路径
-		uploadPathView.setText(FsSettings.getUpload());
-
-		statusController.registerReceiver();
-	}
-	
-	@Override
-	protected void onStop() {
-		super.onStop();
-		statusController.unregisterReceiver();
-		if (serverStatusReceiver != null) {
-			unregisterReceiver(serverStatusReceiver);
-		}
 	}
 	
 	@Override
@@ -236,19 +194,6 @@ public class NewConn extends Activity implements StatusCallback {
 	}
 	
 	/**
-	 * 设置服务器开关是否可用
-	 */
-	private void setSwitchEnable(boolean b) {
-		ftpSwitch.setEnabled(b);
-	}
-	/**
-	 * 设置服务器开关上显示的是开还是关
-	 */
-	private void setSwitchChecked(boolean b) {
-		ftpSwitch.setChecked(b);
-	}
-	
-	/**
 	 * 服务器开关监听器
 	 * @author HM
 	 *
@@ -264,67 +209,4 @@ public class NewConn extends Activity implements StatusCallback {
 			}
 		}
 	}
-
-	@Override
-	public void onServerStatusChange(int status) {
-		// 当服务器群状态变化的时候，需要用来调整背景颜色
-		
-	}
-	
-	@Override
-	public void onWifiStatusChange(int state) {
-		Log.d(TAG, "on wifi state change");
-		switch (state) {
-		// 表示的是手机不支持WIFI
-		case StatusController.STATE_WIFI_DISABLE:
-		case StatusController.STATE_WIFI_ENABLE:
-			if (FsService.isRunning()) {
-				// 尝试关闭服务器
-				stopServer();
-			}
-			ftpAddrView.setText("未知");
-			break;
-		case StatusController.STATE_WIFI_USING:
-			
-			// 设置显示的IP地址
-			ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
-			break;
-		}
-	}
-	
-	/**
-	 * 这里可能会有代码重复,需要将上面的内容除去
-	 */
-	@Override
-	public void onWifiApStatusChange(int status) {
-		Log.d(TAG, "on wifi ap state change");
-		// TODO 地址可能并不是这样设置的，所以暂时将这些注释
-		// 设置地址
-//		byte[] address = FsService.getLocalInetAddress().getAddress();
-//		String addressStr = "";
-//		for (int i = 0, len = address.length; i < len; i++) {
-//			byte b = address[i];
-//			addressStr += String.valueOf(((int)b + 256)) + " ";
-//		}
-//		ftpApIp.setText(addressStr);
-//		ftpApIp.setVisibility(View.VISIBLE);
-	}
-
-	@Override
-	public void onWifiP2pStatusChange(int status) {
-		// TODO Auto-generated method stub
-		Log.d(TAG, "on wifi p2p state change");
-	}
-
-	@Override
-	public void onExternalStorageChange(int status) {
-		// TODO 对于扩展存储的变化能够作为响应
-		Log.d(TAG, "on external storage state change");
-	}
-
-	@Override
-	public void onNfcStatusChange(int status) {
-		Log.d(TAG, "on nfc state change");
-	}
-	
 }

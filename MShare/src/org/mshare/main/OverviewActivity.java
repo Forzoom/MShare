@@ -2,6 +2,9 @@ package org.mshare.main;
 
 import java.util.ArrayList;
 
+import org.mshare.ftp.server.FsService;
+import org.mshare.ftp.server.FsSettings;
+import org.mshare.main.StatusController.StatusCallback;
 import org.mshare.picture.CanvasAnimation;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
@@ -49,14 +52,19 @@ import android.widget.ViewFlipper;
 import android.widget.ViewSwitcher;
 import android.os.Handler;
 
-public class OverviewActivity extends Activity implements SurfaceHolder.Callback, Handler.Callback {
+/**
+ * ViewSwitcher并不能将SurfaceView移动，所以还是有问题的
+ * @author HM
+ *
+ */
+public class OverviewActivity extends Activity implements SurfaceHolder.Callback, Handler.Callback, StatusController.StatusCallback {
 	private static final String TAG = OverviewActivity.class.getSimpleName();
 	
 	private ArrayList<CanvasElement> canvasElements = new ArrayList<CanvasElement>();
 	
-	SurfaceHolder mSurfaceHolder; 
-	private GestureDetector mGestureDetector;
-	RefreshHandler mRefreshHandler;
+	SurfaceHolder surfaceHolder; 
+	private GestureDetector gestureDetector;
+	RefreshHandler refreshHandler;
 	
 	// 所使用的统一画笔
 	private Paint canvasPaint = new Paint();
@@ -80,10 +88,11 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.overview_activity_container);
 		
+		// 设置ViewSwitcher
 		viewSwitcher = (ViewSwitcher)findViewById(R.id.view_switcher);
 		
-		// 服务器相关内容
 		FrameLayout.LayoutParams serverParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+		// 不知道为什么，在这里设置并没有用
 		ViewGroup serverOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_flat, null);
 		FrameLayout.LayoutParams clientParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		ViewGroup clientOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_other, null);
@@ -91,15 +100,19 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		viewSwitcher.addView(serverOverview, serverParams);
 		viewSwitcher.addView(clientOverview, clientParams);
 		
+		// 设置服务器相关
 		ServerOverviewSurfaceView surfaceView = (ServerOverviewSurfaceView)findViewById(R.id.server_overview_surface_view);
 		surfaceView.setGestureDetector(new GestureDetector(this, new GestureListener()));
-		mSurfaceHolder = surfaceView.getHolder();
-		mSurfaceHolder.addCallback(this);
+		surfaceHolder = surfaceView.getHolder();
+		surfaceHolder.addCallback(this);
 		
-		mRefreshHandler = new RefreshHandler(Looper.myLooper(), this);
-		mGestureDetector = new GestureDetector(this, new SwitchListener());
+		refreshHandler = new RefreshHandler(Looper.myLooper(), this);
+		gestureDetector = new GestureDetector(this, new SwitchListener());
 		
+		// 初始化StatusController，初始化所有状态
 		statusController = new StatusController();
+		statusController.setCallback(this);
+		statusController.initial();
 		
 		canvasPaint.setAntiAlias(true);
 		canvasPaint.setColor(getResources().getColor(R.color.color_light_gray));
@@ -108,11 +121,32 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	}
 
 	@Override
+	protected void onStart() {
+		// TODO 可能需要使用更加安全的BroadcastReceiver注册方式
+		super.onStart();
+		
+		// TODO 临时设置的检测当前是否是MOBILE信号，
+		// TODO 需要处理的内容太多了，考虑不加入开启AP的功能
+		// 并没有AP cannot enable，所以对于isWifiApEnable函数，可以正确的执行,但是对于setWifiApEnabled就会报错
+		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
+
+		// 当前上传路径
+//		uploadPathView.setText(FsSettings.getUpload());
+		statusController.registerReceiver();
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		statusController.unregisterReceiver();
+	}
+	
+	@Override
 	public boolean handleMessage(Message msg) {
 		Log.d(TAG, "handleMessage");
 
 		// 获得需要刷新的区域，仅仅能够在这里刷新
-		Canvas canvas = mSurfaceHolder.lockCanvas();
+		Canvas canvas = surfaceHolder.lockCanvas();
 		canvas.drawColor(getResources().getColor(R.color.blue08));
 		isLooping = false;
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
@@ -125,11 +159,11 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		}
 
 		if (isLooping) {
-			Message message = mRefreshHandler.obtainMessage();
-			mRefreshHandler.sendMessageDelayed(message, 10);
+			Message message = refreshHandler.obtainMessage();
+			refreshHandler.sendMessageDelayed(message, 10);
 		}
 
-		mSurfaceHolder.unlockCanvasAndPost(canvas);
+		surfaceHolder.unlockCanvasAndPost(canvas);
 
 		return false;
 	}
@@ -137,7 +171,7 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// 用于检测Fling
-		mGestureDetector.onTouchEvent(event);
+		gestureDetector.onTouchEvent(event);
 		return super.onTouchEvent(event);
 	}
 	
@@ -185,6 +219,69 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		Log.d(TAG, "surface destoryed");
 	}
 	
+
+	@Override
+	public void onServerStatusChange(int status) {
+		// 当服务器群状态变化的时候，需要用来调整背景颜色
+		
+	}
+	
+	@Override
+	public void onWifiStatusChange(int state) {
+		Log.d(TAG, "on wifi state change");
+		switch (state) {
+		// 表示的是手机不支持WIFI
+		case StatusController.STATE_WIFI_DISABLE:
+		case StatusController.STATE_WIFI_ENABLE:
+			if (FsService.isRunning()) {
+				// 尝试关闭服务器
+//				stopServer();
+			}
+//			ftpAddrView.setText("未知");
+			break;
+		case StatusController.STATE_WIFI_USING:
+			
+			// 设置显示的IP地址
+//			ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
+			break;
+		}
+	}
+	
+	/**
+	 * 这里可能会有代码重复,需要将上面的内容除去
+	 */
+	@Override
+	public void onWifiApStatusChange(int status) {
+		Log.d(TAG, "on wifi ap state change");
+		// TODO 地址可能并不是这样设置的，所以暂时将这些注释
+		// 设置地址
+//		byte[] address = FsService.getLocalInetAddress().getAddress();
+//		String addressStr = "";
+//		for (int i = 0, len = address.length; i < len; i++) {
+//			byte b = address[i];
+//			addressStr += String.valueOf(((int)b + 256)) + " ";
+//		}
+//		ftpApIp.setText(addressStr);
+//		ftpApIp.setVisibility(View.VISIBLE);
+	}
+
+	@Override
+	public void onWifiP2pStatusChange(int status) {
+		// TODO Auto-generated method stub
+		Log.d(TAG, "on wifi p2p state change");
+	}
+
+	@Override
+	public void onExternalStorageChange(int status) {
+		// TODO 对于扩展存储的变化能够作为响应
+		Log.d(TAG, "on external storage state change");
+	}
+
+	@Override
+	public void onNfcStatusChange(int status) {
+		Log.d(TAG, "on nfc state change");
+	}
+	
 	class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
 		@Override
@@ -217,7 +314,7 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 				// TODO 修改成函数
 				if (!isLooping) {
 					// 发送PictureButton
-					Message message = mRefreshHandler.obtainMessage();				
+					Message message = refreshHandler.obtainMessage();				
 					message.sendToTarget();
 				}
 			}
@@ -233,19 +330,18 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 				float velocityY) {
 			
 			Log.d(TAG, "onFling");
-			// 如何判断左右
 			// 右
 			if (velocityX > 0.0f) {
-				viewSwitcher.setInAnimation(OverviewActivity.this, R.animator.slide_in_left);
-				viewSwitcher.setOutAnimation(OverviewActivity.this, R.animator.slide_out_right);
+				viewSwitcher.setInAnimation(OverviewActivity.this, R.anim.slide_in_left);
+				viewSwitcher.setOutAnimation(OverviewActivity.this, R.anim.slide_out_right);
 				viewSwitcher.showPrevious();
 			} else {
-				viewSwitcher.setInAnimation(OverviewActivity.this, R.animator.slide_in_right);
-				viewSwitcher.setOutAnimation(OverviewActivity.this, R.animator.slide_out_left);
+				viewSwitcher.setInAnimation(OverviewActivity.this, R.anim.slide_in_right);
+				viewSwitcher.setOutAnimation(OverviewActivity.this, R.anim.slide_out_left);
 				viewSwitcher.showNext();
 			}
 			
 			return super.onFling(e1, e2, velocityX, velocityY);
 		}
-	}
+	}	
 }

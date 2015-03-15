@@ -107,9 +107,10 @@ public class StatusController {
 	 *  初始化所有的状态内容
 	 * @param container 包含所有图标的View
 	 */
-	public void initial(ViewGroup container) {
+	public void initial() {
 		
-		// 设置颜色默认为disable
+		
+		setServerStatus(getServerStatus());
 		setWifiStatus(getWifiStatus());
 		setWifiApState(getWifiApState());
 		setWifiP2pState(getWifiP2pState());

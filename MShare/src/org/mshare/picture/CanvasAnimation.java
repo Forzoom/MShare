@@ -15,6 +15,7 @@ public abstract class CanvasAnimation {
 	private int status = STATUS_STOP;
 	
 	private Interpolator interpolator;
+	private long START_TIME_UNSET = -1;
 	// 动画的开始时间
 	private long startTime;
 	
@@ -37,6 +38,7 @@ public abstract class CanvasAnimation {
 	 */
 	public abstract void doAnimation(float ratio);
 	
+	// 将调用start的时间设置为startTime
 	public void start() {
 		start(System.currentTimeMillis());
 	}
@@ -44,13 +46,13 @@ public abstract class CanvasAnimation {
 	// 使用指定的startTime
 	public void start(long startTime) {
 		if (status == STATUS_STOP) {
-			Log.d(TAG, "animation start");
-			// 调整为running
+			Log.d(TAG, "set animation status and start");
 			status = STATUS_RUNNING;
+			setStartTime(startTime);
 			onStart();
 		} else {
+			// 该怎么办?
 			Log.e(TAG, "already start");
-			// need reset
 		}
 	}
 	

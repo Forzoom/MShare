@@ -90,6 +90,23 @@ public class RingButton extends CanvasElement implements Parcelable {
 		
 	};
 	
+	class OuterRadiusBreatheAnimation extends CanvasAnimation {
+
+		private int targetOuterRadius;
+		private int originOuterRadius;
+		
+		public OuterRadiusBreatheAnimation(int targetOuterRadius) {
+			this.targetOuterRadius = targetOuterRadius;
+			this.originOuterRadius = outerRadius;
+			setInterpolator(new BreatheInterpolator());
+		}
+		
+		@Override
+		public void doAnimation(float ratio) {
+			outerRadius = originOuterRadius + (int)((targetOuterRadius - originOuterRadius) * ratio);
+		}
+	}
+	
 	class BounceAnimation extends CanvasAnimation {
 
 		int targetInnerRadius;

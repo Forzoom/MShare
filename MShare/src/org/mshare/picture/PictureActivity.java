@@ -38,8 +38,8 @@ public class PictureActivity extends Activity {
 //	Paint descriptionPaint = new Paint();
 //	
 //	GestureDetector mGestureDetector;
-//	SurfaceHolder mSurfaceHolder;
-//	RefreshHandler mRefreshHandler;
+//	SurfaceHolder surfaceHolder;
+//	RefreshHandler refreshHandler;
 //
 //	private static final String KEY_PICTURE_BUTTON = "picture_button";
 //
@@ -76,7 +76,7 @@ public class PictureActivity extends Activity {
 //		descriptionPaint.setColor(getResources().getColor(R.color.Color_White));
 //		
 //		mGestureDetector = new GestureDetector(this, new GestureListener());
-//		mRefreshHandler = new RefreshHandler(Looper.myLooper(), this);
+//		refreshHandler = new RefreshHandler(Looper.myLooper(), this);
 //		
 //		// 创建PictureButton
 //		mPictureButton = new RingButton();
@@ -92,7 +92,7 @@ public class PictureActivity extends Activity {
 //		Log.d(TAG, "surface created");
 //		
 //		// Holder
-//		mSurfaceHolder = holder;
+//		surfaceHolder = holder;
 //		
 //		Canvas canvas = holder.lockCanvas();
 //		// 获得canvas的大小
@@ -173,7 +173,7 @@ public class PictureActivity extends Activity {
 //				mPictureButton.start();
 //				if (!isLooping) {
 //					// 发送PictureButton
-//					Message message = mRefreshHandler.obtainMessage();				
+//					Message message = refreshHandler.obtainMessage();				
 //					message.sendToTarget();
 //				}
 //			}
@@ -190,14 +190,14 @@ public class PictureActivity extends Activity {
 //		Log.d(TAG, "handleMessage");
 //		
 //		// 获得需要刷新的区域，仅仅能够在这里刷新
-//		Canvas canvas = mSurfaceHolder.lockCanvas();
+//		Canvas canvas = surfaceHolder.lockCanvas();
 //		canvas.drawBitmap(backgroundBitmap, 0, 0, mPaint);
 //		
 //		if (mPictureButton.isStarted()) {
 //			Log.d(TAG, "draw");
 //			mPictureButton.draw(canvas, buttonPaint);
-//			Message message = mRefreshHandler.obtainMessage();
-//			mRefreshHandler.sendMessageDelayed(message, 10);
+//			Message message = refreshHandler.obtainMessage();
+//			refreshHandler.sendMessageDelayed(message, 10);
 //			isLooping = true;
 //		} else {
 //			// 将不会再刷新了
@@ -215,7 +215,7 @@ public class PictureActivity extends Activity {
 ////			
 ////			drawDescription(canvas, content, left, top, right, bottom);
 //			
-//		mSurfaceHolder.unlockCanvasAndPost(canvas);
+//		surfaceHolder.unlockCanvasAndPost(canvas);
 //		
 //		return false;
 //	}
