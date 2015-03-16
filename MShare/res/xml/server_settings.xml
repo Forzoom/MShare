@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory 
+        android:title="共享">
+        <EditTextPreference 
+            android:key="nickname"
+            android:title="昵称"
+            android:summary="当别人接受你的分享时，让别人知道你是谁"/>
+        <!-- 如果对于端口使用这个，能否限制只能使用数字 -->
+        <!-- 端口也许没有必要设置 -->
+        <EditTextPreference 
+            android:key="port"
+            android:title="端口"
+            />
+        
+        <CheckBoxPreference 
+            android:key="secret"
+            android:title="安全传输"
+            android:summary="让文件共享更加安全，但会影响传输的速度"
+            android:defaultValue="false"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

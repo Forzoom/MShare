@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.StatusController.StatusCallback;
-import org.mshare.picture.BitmapButton;
+import org.mshare.picture.SettingsButton;
 import org.mshare.picture.CanvasAnimation;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
@@ -81,7 +81,7 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	
 	private PictureBackground pictureBackground;
 	private RingButton serverButton;
-	private BitmapButton settingsButton;
+	private SettingsButton settingsButton;
 	// 所设置的缩小的内半径
 	private int serverInnerRadius;
 	// 所设置的放大的呼吸外半径
@@ -128,6 +128,19 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		canvasPaint.setAlpha(223);
 		
 		pictureBackground = new PictureBackground();
+		settingsButton.setElementOnClickListener(new CanvasElement.ElementOnClickListener() {
+			
+			@Override
+			public void onClick() {
+				CanvasAnimation alphaAnimation = settingsButton.getAlphaAnimation();
+				// 需要判断onUp才可以
+				alphaAnimation.setDuration(300);
+				
+				// 尝试启动serverSettings
+				Intent startServerSettingsIntent = new Intent(OverviewActivity.this, ServerSettingActivity.class);
+				startActivity(startServerSettingsIntent);
+			}
+		});
 		serverButton = new RingButton();
 		serverButton.setElementOnClickListener(new CanvasElement.ElementOnClickListener() {
 			
@@ -164,7 +177,7 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			}
 		});
 		Bitmap settings = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
-		settingsButton = new BitmapButton(settings); 
+		settingsButton = new SettingsButton(settings); 
 	}
 
 	@Override
@@ -275,6 +288,8 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		int x = canvasWidth - settingsButton.getBitmap().getWidth();
 		settingsButton.setX(x);
 		settingsButton.setY(0);
+		settingsButton.setAlphaAnimation(settingsButton.new AlphaAnimation(settingsButton, 223));
+		canvasElements.add(settingsButton);
 		
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
 		// 圆环
@@ -332,12 +347,18 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			serverButton.startBreatheAnimation(serverOuterRadius, startTime);
 			
 		} else if (status == StatusController.STATUS_SERVER_STOPPED) {
+			// 调整背景颜色
 			pictureBackground.stopColorAnimation();
 			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
 			if (colorAnimation != null) {
 				colorAnimation.setDuration(500);
 			}
 			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), stopColor);
+			
+			// 调整呼吸动画
+			CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
+			// 通过设置repeatMode，当动画循环结束的时候就会自动stop
+			breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_ONCE);
 		}
 		
 	}

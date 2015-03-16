@@ -15,15 +15,8 @@ public class PictureBackground extends CanvasElement {
 	private static final String TAG = PictureBackground.class.getSimpleName();
 	
 	private int currentColor;
-	
-	private static final int MASK_RED = 0x00ff0000;
-	private static final int MASK_GREEN = 0x0000ff00;
-	private static final int MASK_BLUE = 0x000000ff;
-	
+
 	private ColorAnimation colorAnimation;
-	
-	// Í¸Ã÷É«
-	private int transparentColor = 0x00000000;
 	
 	public PictureBackground() {
 		setClickable(false);
@@ -53,16 +46,7 @@ public class PictureBackground extends CanvasElement {
 		
 		@Override
 		public void doAnimation(float ratio) {
-			int color = 0xff000000;
-			int startRed = (MASK_RED & startColor), endRed = (MASK_RED & endColor);
-			int startGreen = (MASK_GREEN & startColor), endGreen = (MASK_GREEN & endColor);
-			int startBlue = (MASK_BLUE & startColor), endBlue = (MASK_BLUE & endColor);
-			
-			color |= (startRed + ((int)((endRed - startRed) * ratio) & MASK_RED));
-			color |= (startGreen + ((int)((endGreen - startGreen) * ratio) & MASK_GREEN));
-			color |= (startBlue + ((int)((endBlue - startBlue) * ratio) & MASK_BLUE));
-			
-			currentColor = color;
+			currentColor = ColorComputer.computeGradientColor(startColor, endColor, ratio);
 		}
 		
 

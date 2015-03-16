@@ -19,6 +19,7 @@ public abstract class CanvasElement  {
 	
 	private ElementOnClickListener listener;
 	
+	// 判断当前是否被点击了
 	public abstract boolean isClicked(int clickX, int clickY);
 	
 	public void draw(Canvas canvas, Paint paint) {
