@@ -14,6 +14,10 @@ public abstract class CanvasElement  {
 	private ArrayList<CanvasAnimation> animations = new ArrayList<CanvasAnimation>();
 	// 当Animation不存在的时候所应该设置的index
 	public static final int ANIMATION_INDEX_NONE = -1;
+
+	private boolean isClickable = false;
+	
+	private ElementOnClickListener listener;
 	
 	public abstract boolean isClicked(int clickX, int clickY);
 	
@@ -70,5 +74,29 @@ public abstract class CanvasElement  {
 	}
 	
 	// 绘制所需要的内容
-	public void paint(Canvas canvas, Paint paint) {}
+	public abstract void paint(Canvas canvas, Paint paint);
+
+	public void setElementOnClickListener(ElementOnClickListener listener) {
+		this.listener = listener;
+	}
+
+	public boolean isClickable() {
+		return isClickable;
+	}
+
+	public void click(int clickX, int clickY) {
+		if (isClickable() && isClicked(clickX, clickY) && listener != null) {
+			Log.d(TAG, "onClick invoke");
+			listener.onClick();
+		}
+	}
+	
+	public void setClickable(boolean isClickable) {
+		this.isClickable = isClickable;
+	}
+	
+	// click监听器
+	public interface ElementOnClickListener {
+		public void onClick();
+	}
 }

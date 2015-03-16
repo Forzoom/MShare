@@ -26,6 +26,7 @@ public class PictureBackground extends CanvasElement {
 	private int transparentColor = 0x00000000;
 	
 	public PictureBackground() {
+		setClickable(false);
 	}
 	
 	@Override

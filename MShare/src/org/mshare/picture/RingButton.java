@@ -31,6 +31,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 	public RingButton() {
 		Context context = MShareApp.getAppContext();
 		ringColor = context.getResources().getColor(R.color.Color_White);
+		setClickable(true);
 	}
 	
 	@Override
@@ -200,74 +201,55 @@ public class RingButton extends CanvasElement implements Parcelable {
 			this.targetInnerRadius = targetInnerRadius;
 		}
 
+		@Override
+		public void onStart() {
+			setClickable(false);
+			super.onStart();
+		}
+		
+		@Override
+		public void onStop() {
+			setClickable(true);
+			super.onStop();
+		}
 	}
 	
-	/**
-	 * @return the outerRadius
-	 */
 	public int getOuterRadius() {
 		return outerRadius;
 	}
 
-	/**
-	 * @param outerRadius the outerRadius to set
-	 */
 	public void setOuterRadius(int outRadius) {
 		this.outerRadius = outRadius;
 	}
 	
-	/**
-	 * @return the cx
-	 */
 	public int getCx() {
 		return cx;
 	}
 
-	/**
-	 * @param cx the cx to set
-	 */
 	public void setCx(int cx) {
 		this.cx = cx;
 	}
 
-	/**
-	 * @return the cy
-	 */
 	public int getCy() {
 		return cy;
 	}
 
-	/**
-	 * @param cy the cy to set
-	 */
 	public void setCy(int cy) {
 		this.cy = cy;
 	}
 
-	/**
-	 * @return the innerRadius
-	 */
 	public int getInnerRadius() {
 		return innerRadius;
 	}
 
-	/**
-	 * @param innerRadius the innerRadius to set
-	 */
 	public void setInnerRadius(int innerRadius) {
 		this.innerRadius = innerRadius;
 	}
 
-	/**
-	 * @return the ringColor
-	 */
 	public int getRingColor() {
 		return ringColor;
 	}
 
-	/**
-	 * @param ringColor the ringColor to set
-	 */
 	public void setRingColor(int ringColor) {
 		this.ringColor = ringColor;
 	}

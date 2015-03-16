@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.StatusController.StatusCallback;
+import org.mshare.picture.BitmapButton;
 import org.mshare.picture.CanvasAnimation;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
@@ -78,8 +79,9 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	private int startColor;
 	private int operatingColor;
 	
-	private PictureBackground pictureBackground = new PictureBackground();
-	private RingButton serverButton = new RingButton();
+	private PictureBackground pictureBackground;
+	private RingButton serverButton;
+	private BitmapButton settingsButton;
 	// 所设置的缩小的内半径
 	private int serverInnerRadius;
 	// 所设置的放大的呼吸外半径
@@ -121,15 +123,48 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		refreshHandler = new RefreshHandler(Looper.myLooper(), this);
 		gestureDetector = new GestureDetector(this, new SwitchListener());
 		
-		// 初始化StatusController，初始化所有状态
-		statusController = new StatusController();
-		statusController.setCallback(this);
-		statusController.initial();
-		
 		canvasPaint.setAntiAlias(true);
 		canvasPaint.setColor(getResources().getColor(R.color.color_light_gray));
 		canvasPaint.setAlpha(223);
 		
+		pictureBackground = new PictureBackground();
+		serverButton = new RingButton();
+		serverButton.setElementOnClickListener(new CanvasElement.ElementOnClickListener() {
+			
+			@Override
+			public void onClick() {
+				int serverStatus = statusController.getServerStatus();
+				if (serverStatus != StatusController.STATUS_SERVER_STARTED && serverStatus != StatusController.STATUS_SERVER_STOPPED) {
+					Log.d(TAG, "is operating server now");
+					return;
+				}
+				
+				// 执行bounceAnimaion和启动和关闭服务器
+				long startTime = System.currentTimeMillis();
+				
+				serverButton.stopBounceAnimation();
+				CanvasAnimation bounceAnimation = serverButton.getBounceAnimation();
+				bounceAnimation.setDuration(500);
+				serverButton.startBounceAnimation(serverInnerRadius, startTime);
+				
+				// 修改服务器状态、启动或关闭服务器
+				if (serverStatus == StatusController.STATUS_SERVER_STARTED) {
+					statusController.setServerStatus(StatusController.STATUS_SERVER_STOPING);
+					stopServer();
+				} else if (serverStatus == StatusController.STATUS_SERVER_STOPPED) {
+					statusController.setServerStatus(StatusController.STATUS_SERVER_STARTING);
+					startServer();
+				}
+				
+				// 修改背景色
+				pictureBackground.stopColorAnimation();
+				CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
+				colorAnimation.setDuration(500);
+				pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), operatingColor, startTime);
+			}
+		});
+		Bitmap settings = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
+		settingsButton = new BitmapButton(settings); 
 	}
 
 	@Override
@@ -137,6 +172,11 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		// TODO 可能需要使用更加安全的BroadcastReceiver注册方式
 		super.onStart();
 
+		// 初始化StatusController，初始化所有状态
+		statusController = new StatusController();
+		statusController.setCallback(this);
+		statusController.initial();
+		
 		// TODO 需要处理的内容太多了，考虑不加入开启AP的功能
 		// 并没有AP cannot enable，所以对于isWifiApEnable函数，可以正确的执行,但是对于setWifiApEnabled就会报错
 		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
@@ -147,9 +187,25 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	}
 	
 	@Override
+	protected void onResume() {
+		
+		super.onResume();
+	}
+	
+	@Override
 	protected void onStop() {
 		super.onStop();
 		statusController.unregisterReceiver();
+	}
+	
+	public boolean shouldLooping() {
+		for (int i = 0, len = canvasElements.size(); i < len; i++) {
+			CanvasElement element = canvasElements.get(i);
+			if (element.hasAnimation()) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	@Override
@@ -215,8 +271,12 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		pictureBackground.setColorAnimation(pictureBackground.new ColorAnimation(pictureBackground, pictureBackground.getCurrentColor(), pictureBackground.getCurrentColor()));
 		canvasElements.add(pictureBackground);
 		
-		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
+		// 设置按钮
+		int x = canvasWidth - settingsButton.getBitmap().getWidth();
+		settingsButton.setX(x);
+		settingsButton.setY(0);
 		
+		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
 		// 圆环
 		serverInnerRadius = canvasWidth / 4 - 50;
 		serverOuterRadius = canvasWidth / 4 + 30;
@@ -345,38 +405,15 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			Log.d(TAG, "onDown");
 			int x = (int)e.getX(), y = (int)e.getY();
 			
-			int serverStatus = statusController.getServerStatus();
+			for (int index = 0, len = canvasElements.size(); index < len; index++) {
+				CanvasElement element = canvasElements.get(index);
+				element.click(x, y);
+			}
 			
-			// 用于启动和停止服务器
-			// 目前不允许有任何的animation
-			if (serverButton.isClicked(x, y) && !serverButton.hasAnimation() && (serverStatus == StatusController.STATUS_SERVER_STARTED || serverStatus == StatusController.STATUS_SERVER_STOPPED)) {
-				long startTime = System.currentTimeMillis();
-				
-				serverButton.stopBounceAnimation();
-				CanvasAnimation bounceAnimation = serverButton.getBounceAnimation();
-				bounceAnimation.setDuration(500);
-				serverButton.startBounceAnimation(serverInnerRadius, startTime);
-				
-				// 修改服务器状态、启动或关闭服务器
-				if (serverStatus == StatusController.STATUS_SERVER_STARTED) {
-					statusController.setServerStatus(StatusController.STATUS_SERVER_STOPING);
-					stopServer();
-				} else if (serverStatus == StatusController.STATUS_SERVER_STOPPED) {
-					statusController.setServerStatus(StatusController.STATUS_SERVER_STARTING);
-					startServer();
-				}
-				
-				// 修改背景色
-				pictureBackground.stopColorAnimation();
-				CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
-				colorAnimation.setDuration(500);
-				pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), operatingColor, startTime);
-				
-				// TODO 修改成函数
-				if (!isLooping) {
-					Message message = refreshHandler.obtainMessage();				
-					message.sendToTarget();
-				}
+			// TODO 修改成函数
+			if (!isLooping) {
+				Message message = refreshHandler.obtainMessage();				
+				message.sendToTarget();
 			}
 			
 			return super.onDown(e);
