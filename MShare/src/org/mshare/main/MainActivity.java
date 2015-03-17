@@ -3,7 +3,7 @@ package org.mshare.main;
 import java.io.File;
 
 import org.mshare.file.MshareFileManage;
-import org.mshare.file.browser.MShareFile;
+import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
 import org.mshare.file.browser.MShareFileAdapter.ItemContainer;
 import org.mshare.file.share.SharedLink;
@@ -129,7 +129,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			ContextMenuInfo menuInfo) {
 		/*
 		//被选中的文件
-		MShareFile selectFile = fragment.getFileBrowser().getSelectFile();
+		LocalBrowserFile selectFile = fragment.getFileBrowser().getSelectFile();
 		// v所代表的是GridView
 		if(mshareFileManage.getSelected() && !selectFile.isFile()) {
 			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+4, 3, "粘贴");
@@ -168,7 +168,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		Token token = FsService.getAdminToken();
 
 		// 被选中的文件
-		MShareFile selectFile = fragment.getFileBrowser().getSelectFile();
+		LocalBrowserFile selectFile = fragment.getFileBrowser().getSelectFile();
 		//被选中文件的路径,文件名
 		String path = selectFile.getPath();
 		String name = selectFile.getName();

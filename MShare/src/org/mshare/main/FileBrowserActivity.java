@@ -1,6 +1,6 @@
 package org.mshare.main;
 
-import org.mshare.file.browser.MShareFile;
+import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
 
 import android.app.Activity;
@@ -21,7 +21,7 @@ public class FileBrowserActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		fileBrowser = new MShareFileBrowser(this, null, new MShareFile(Environment.getExternalStorageDirectory().getAbsolutePath()));
+		fileBrowser = new MShareFileBrowser(this, null, new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath()));
 		View fileBrowserView = fileBrowser.getView();
 		GridView gridView = fileBrowser.getGridView();
 		
@@ -37,11 +37,9 @@ public class FileBrowserActivity extends Activity {
 		menu.add(0, 0, 0, "≤‚ ‘");
 		
 //		int position = ((GridView)v).getSelected
-		
+
 		int position = ((GridView)v).getSelectedItemPosition();
-		long id = ((GridView)v).getSelectedItemId();
-		Object obj = ((GridView)v).getSelectedItem();
-		Log.d(TAG, "the selected position : " + position + " id : " + id + " obj : " + obj);
+		Log.d(TAG, "the selected position : " + position);
 		
 		if (position != -1) {
 			String path = fileBrowser.getCurrentFiles()[position].getAbsolutePath();

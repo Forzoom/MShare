@@ -61,16 +61,10 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	
 	// 回调函数
 	private FileBrowserCallback callback;
-	
+
 	private View fileBrowserLayout;
 	
 	private boolean enable;
-	/**
-	 * 当前被长按选择的内容
-	 * 需要保证得到及时的更新
-	 * TODO 在何时删除内容
-	 */
-	private FileBrowserFile selectFile = null;
 	
 	public MShareFileBrowser(Context context, ViewGroup container, FileBrowserFile rootFile) {
 		this.context = context;
@@ -97,7 +91,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		
 		// create grid view
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
-//		gridView.setOnItemLongClickListener(new GridViewItemLongClickListener());
+		gridView.setOnItemLongClickListener(new GridViewItemLongClickListener());
 		gridView.setOnItemClickListener(new GridViewItemClickListener());
 		refresh();
 	}
@@ -108,22 +102,6 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 */
 	public View getView() {
 		return fileBrowserLayout;
-	}
-	
-	/**
-	 * 设置当前被选中的文件内容
-	 * @param file
-	 */
-	public void setSelectFile(FileBrowserFile file) {
-		selectFile = file;
-	}
-	
-	/**
-	 * 获得当前正在共享的文件，仅仅用于ContextMenu中，其他情况下不保证信息的及时性
-	 * @return 在非ContextMenu的情况下调用可能是null
-	 */
-	public FileBrowserFile getSelectFile() {
-		return selectFile;
 	}
 	
 	/**
@@ -202,6 +180,11 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		return currentFiles;
 	}
 	
+	// 设置callback
+	public void setCallback(FileBrowserCallback callback) {
+		this.callback = callback;
+	}
+	
 	/**
 	 * 用于响应当面包屑导航中的内容被点击时的事件
 	 * @param selected
@@ -223,27 +206,28 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 			Log.d(TAG, "onItemClick invoke!");
 			Object tag = view.getTag();
 			
-			if (tag != null) {
-				ItemContainer item = (ItemContainer)tag; 
-				FileBrowserFile file = item.file;
-				if (file.isDirectory()) { // whether is a directory
-					
-					if (file != null && file.canRead()) { // 文件夹可以打开
-						pushCrumb(file);
-						refresh();
-						if (callback != null) {
-							callback.onItemClick();
-						}
-					} else {
-						Log.e(TAG, "文件夹无法访问");
-					}
+			if (tag == null) {
+				Log.e(TAG, "tag是null");
+				return;
+			}
+
+			ItemContainer item = (ItemContainer)tag; 
+			FileBrowserFile file = item.file;
+			if (file.isDirectory()) { // whether is a directory
+				
+				if (file != null && file.canRead()) { // 文件夹可以打开
+					pushCrumb(file);
+					refresh();
 				} else {
-					Log.d(TAG, "所点击的是一个文件");
-					
+					Log.e(TAG, "文件夹无法访问");
 				}
 			} else {
-				Log.e(TAG, "tag是null");
-				// error
+				Log.d(TAG, "所点击的是一个文件");
+			}
+			
+			// 尝试告知File被点击了，不论是文件还是文件夹
+			if (callback != null) {
+				callback.onItemClick(file);
 			}
 		}
 	}
@@ -254,11 +238,13 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		@Override
 		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 			Log.d(TAG, "onItemLongClick invoke!");
-			
 			FileBrowserFile file = currentFiles[position];
-			setSelectFile(file);
 			Log.d(TAG, "set select file : " + file.getAbsolutePath());
 
+			if (callback != null) {
+				callback.onItemLongClick(file);
+			}
+			
 			return false;
 		}
 		

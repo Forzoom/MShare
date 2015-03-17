@@ -108,7 +108,7 @@ public class StatusController {
 	 * @param container 包含所有图标的View
 	 */
 	public void initial() {
-		
+		Log.d(TAG, "statusController initial!");
 		
 		setServerStatus(getServerStatus());
 		setWifiStatus(getWifiStatus());

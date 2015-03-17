@@ -4,8 +4,9 @@ public interface FileBrowserCallback {
 
 	public void onBackButtonClick();
 	
-	public void onItemClick();
+	public void onItemClick(FileBrowserFile file);
 	
-	public void onItemLongClick();
+	// 用来获得LongClick的内容
+	public void onItemLongClick(FileBrowserFile file);
 	
 }

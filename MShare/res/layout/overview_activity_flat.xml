@@ -18,7 +18,7 @@
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
         android:background="@drawable/server_overview_item_background"
-        android:weightSum="2"
+        android:weightSum="3"
         >
         <RelativeLayout 
             android:layout_width="0dp"
@@ -72,6 +72,21 @@
 	                android:textStyle="bold"
 	                android:text="文件"/>
             </LinearLayout>
+        </RelativeLayout>
+        <RelativeLayout 
+            android:id="@+id/overview_activity_qrcode_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+           	<ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/qrcode"
+                android:layout_centerInParent="true"
+                android:paddingLeft="12dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:paddingRight="6dp"/>
         </RelativeLayout>
     </LinearLayout>	
 </RelativeLayout>

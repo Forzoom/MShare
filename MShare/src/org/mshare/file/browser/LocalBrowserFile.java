@@ -10,19 +10,19 @@ import android.util.Log;
  * @author HM
  * 
  */
-public class MShareFile implements FileBrowserFile {
-	private static final String TAG = MShareFile.class.getSimpleName();
+public class LocalBrowserFile implements FileBrowserFile {
+	private static final String TAG = LocalBrowserFile.class.getSimpleName();
 	
 	// 默认不分享
 	private boolean shared = false;
 	// 
 	private File file;
 	
-	public MShareFile(File file) {
+	public LocalBrowserFile(File file) {
 		this.file = file;
 	}
 
-	public MShareFile(String absolutePath) {
+	public LocalBrowserFile(String absolutePath) {
 		this.file = new File(absolutePath);
 	}
 	
@@ -52,11 +52,11 @@ public class MShareFile implements FileBrowserFile {
 		}
 		
 		String dir = getAbsolutePath();
-		MShareFile[] ret = new MShareFile[fileList.length];
+		LocalBrowserFile[] ret = new LocalBrowserFile[fileList.length];
 		
 		// 填充结果
 		for (int i = 0, len = fileList.length; i < len; i++) {
-			ret[i] = new MShareFile(dir + "/" + fileList[i]);
+			ret[i] = new LocalBrowserFile(dir + "/" + fileList[i]);
 		}
 		
 		return ret;
