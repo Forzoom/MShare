@@ -12,7 +12,6 @@
             android:key="port"
             android:title="端口"
             />
-        
         <CheckBoxPreference 
             android:key="secret"
             android:title="安全传输"

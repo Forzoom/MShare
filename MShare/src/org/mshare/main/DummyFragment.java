@@ -37,14 +37,10 @@ import android.view.View.OnClickListener;
  */
 public class DummyFragment extends Fragment {
 	private static final String TAG = DummyFragment.class.getSimpleName();
-	public static final String ARG_SECTION_NUMBER = "section_number";
 	
-//	private Button btftp;
-	private RelativeLayout relative;
+	public static final String ARG_SECTION_NUMBER = "section_number";
 	private ArrayList<HashMap<String, Object>> listImageItem;
     private SimpleAdapter simpleAdapter;
-    
-    private MShareFileBrowser mFileBrowser = null;
     
 	/**
 	 * 该方法的返回值就是该Fragment显示的View组件
@@ -56,14 +52,9 @@ public class DummyFragment extends Fragment {
 		Bundle args = getArguments();
 		int num = args.getInt(ARG_SECTION_NUMBER);
 		
-		String rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-		// 让文件浏览器显示扩展存储中的内容
-		mFileBrowser = new MShareFileBrowser(this.getActivity(), container, rootPath);
-		View fileBrowser = mFileBrowser.getView();
-		
 		View view2 = inflater.inflate(R.layout.ftpservice, container, false);
+		
 		// initial the view
-//		InitView(fileBrowser);
 		Button joinconn = (Button) view2.findViewById(R.id.joinconn);
 		Button newconn = (Button) view2.findViewById(R.id.newconn);
 		joinconn.setOnClickListener(new OnClickListener(){
@@ -78,25 +69,7 @@ public class DummyFragment extends Fragment {
 				startActivity(new Intent(getActivity(), NewConn.class));
 			}        
 		});
-		if(num == 2)
-			return fileBrowser;
-		else
-			return view2; 
+		return view2; 
 	}  
 
-	@Override  
-    public void onStart() {
-		
-		mFileBrowser.refresh();  
-        super.onStart();  
-    }
-	
-	/**
-	 * 为了MainActivity能够获得FileBrowser
-	 * TODO 将DummyFragment移动到MainActivity中作为内部类？
-	 * @return
-	 */
-	public MShareFileBrowser getFileBrowser() {
-		return mFileBrowser;
-	}
 }

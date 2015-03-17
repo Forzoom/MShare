@@ -8,16 +8,22 @@ import android.util.Log;
 public class SettingsButton extends CanvasElement {
 	private static final String TAG = SettingsButton.class.getSimpleName();
 	
+	// padding也在点击的返回之内
+	private int paddingLeft;
+	private int paddingTop;
+	private int paddingRight;
+	private int paddingBottom;
 	private int x;
 	private int y;
 	private Bitmap solidIconBitmap;
 
-	private int alpha;
+	private int alpha = 255;
 	
 	private AlphaAnimation alphaAnimation;
 	
 	public SettingsButton(Bitmap bitmap) {
 		this.solidIconBitmap = bitmap;
+		setClickable(true);
 	}
 	
 	@Override
@@ -26,8 +32,13 @@ public class SettingsButton extends CanvasElement {
 			Log.e(TAG, "solidIconBitmap is null");
 			return false;
 		}
-		
-		if (x <= clickX && clickX <= (x + solidIconBitmap.getWidth()) && y <= clickY && clickY <= (y + solidIconBitmap.getHeight())) {
+		Log.d(TAG, "the click x : " + clickX + " clickY : " + clickY);
+		Log.d(TAG, "l : " + x + " r : " + (x + solidIconBitmap.getWidth()) + " t " + y + " b : " + (y + solidIconBitmap.getHeight()));
+		int leftLimit = x - paddingLeft;
+		int topLimit = y - paddingTop;
+		int rightLimit = x + solidIconBitmap.getWidth() + paddingRight;
+		int bottomLimit = y + solidIconBitmap.getHeight() + paddingBottom;
+		if (leftLimit <= clickX && clickX <= rightLimit && topLimit <= clickY && clickY <= bottomLimit) {
 			return true;
 		}
 		return false;
@@ -35,6 +46,7 @@ public class SettingsButton extends CanvasElement {
 
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
+		Log.d(TAG, "draw settings button");
 		paint.setAlpha(alpha);
 		canvas.drawBitmap(solidIconBitmap, x, y, paint);
 		paint.setAlpha(255);
@@ -64,6 +76,14 @@ public class SettingsButton extends CanvasElement {
 	
 	public AlphaAnimation getAlphaAnimation() {
 		return alphaAnimation;
+	}
+	
+	// 设置padding
+	public void setPadding(int left, int top, int right, int bottom) {
+		this.paddingLeft = left;
+		this.paddingRight = right;
+		this.paddingTop = top;
+		this.paddingBottom = bottom;
 	}
 	
 	public class AlphaAnimation extends CanvasAnimation {

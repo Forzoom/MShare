@@ -33,37 +33,24 @@ import android.widget.TextView;
 public class MShareFileAdapter extends BaseAdapter {
 	private static final String TAG = MShareFileAdapter.class.getSimpleName();
 	
+	// 上下文对象
 	private Context context = null;
-	/**
-	 * 所需要显示的文件数组
-	 */
-	private MShareFile[] files = null;
-	private MShareFileBrowser fileBrowser;
-	/**
-	 * 保存所有支持类型的图片，静态类型以提供给所有的FileAdapter实例使用，因为刷新GridView的时候将生成新的FileAdapter
-	 */
+	// 所显示的文件数组
+	private FileBrowserFile[] files = null;
+	// 所有图标
 	private static HashMap<String, Drawable> DRAWABLES = new HashMap<String, Drawable>();
-	/**
-	 * 所有的DRAWABLE是否都已经加载好了
-	 */
+	// 所有图标是否加载完毕
 	private static boolean DRAWABLE_PREPARED = false;
 	
-	/**
-	 * 
-	 * @param context 上下文对象
-	 * @param fileBrowser 文件浏览器的引用，当图标LongClick事件触发的时候，设置fileBrowser当前被选定的内容
-	 * @param files 所需要显示的内容
-	 */
-	public MShareFileAdapter(Context context, MShareFileBrowser fileBrowser, MShareFile[] files) {
+	public MShareFileAdapter(Context context, FileBrowserFile[] files) {
 		super();
 		this.context = context;
-		this.fileBrowser = fileBrowser;
 		this.files = files;
 		initDrawable(context);
 	}
 	
 	/**
-	 * 初始化所有的drawable，即所有需要在GridView中显示的图片
+	 * 初始化所有图标
 	 */
 	private static void initDrawable(Context context) {
 		if (DRAWABLE_PREPARED) {
@@ -72,10 +59,10 @@ public class MShareFileAdapter extends BaseAdapter {
 		}
 		
 		// 音乐文件
-		DRAWABLES.put(".mp3", getResourceDrawable(context, R.drawable.mp3));
-		DRAWABLES.put(".wav", getResourceDrawable(context, R.drawable.wav));
-		DRAWABLES.put(".wma", getResourceDrawable(context, R.drawable.wma));
-		DRAWABLES.put(".aac", getResourceDrawable(context, R.drawable.aac));
+		DRAWABLES.put(".mp3", getResourceDrawable(context, R.drawable.music));
+		DRAWABLES.put(".wav", getResourceDrawable(context, R.drawable.music));
+		DRAWABLES.put(".wma", getResourceDrawable(context, R.drawable.music));
+		DRAWABLES.put(".aac", getResourceDrawable(context, R.drawable.music));
 		
 		// 工作文件
 		DRAWABLES.put(".pdf", getResourceDrawable(context, R.drawable.pdf));
@@ -143,7 +130,7 @@ public class MShareFileAdapter extends BaseAdapter {
 			item.fileIcon = (ImageView)convertView.findViewById(R.id.item_file_image);
 			item.fileName = (TextView)convertView.findViewById(R.id.item_file_name);
 			item.fileName.setTextColor(Color.BLACK);
-			item.fileName.setText(item.file.getDisplayName());
+			item.fileName.setText(item.file.getName());
 			item.fileIcon.setImageDrawable(getDrawable(item.file));
 			
 			// save content
@@ -158,7 +145,7 @@ public class MShareFileAdapter extends BaseAdapter {
 	 * @param file
 	 * @return
 	 */
-	private Drawable getDrawable(MShareFile file) {
+	private Drawable getDrawable(FileBrowserFile file) {
 		if (file == null) {
 			Log.e(TAG, "file is null");
 			return null;
@@ -167,7 +154,7 @@ public class MShareFileAdapter extends BaseAdapter {
 		Drawable drawable = null;
 		
 		if (file.isFile()) {
-			String extname = file.getExtname();
+			String extname = getExtname(file.getName());
 			if (extname.equals("") || !DRAWABLES.containsKey(extname)) {
 				drawable = DRAWABLES.get("file");
 			} else {
@@ -181,6 +168,20 @@ public class MShareFileAdapter extends BaseAdapter {
 	}
 
 	/**
+	 * 获得文件的扩展名
+	 * @return
+	 */
+	public static String getExtname(String fileName) {
+		int subStart = fileName.lastIndexOf(".");
+		
+		if (subStart != -1) {
+			return fileName.substring(subStart);
+		} else {
+			return "";
+		}
+	}
+	
+	/**
 	 * GridView中的Item所包含的内容
 	 */
 	public class ItemContainer {
@@ -192,7 +193,7 @@ public class MShareFileAdapter extends BaseAdapter {
 		/**
 		 * 和TextView相对应的file文件
 		 */
-		public MShareFile file = null;
+		public FileBrowserFile file = null;
 	}
 	
 }

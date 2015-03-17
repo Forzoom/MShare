@@ -109,6 +109,17 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		viewSwitcher.addView(serverOverview, serverParams);
 		viewSwitcher.addView(clientOverview, clientParams);
 		
+		// 打开文件浏览器
+		RelativeLayout fileBrowserButton = (RelativeLayout)serverOverview.findViewById(R.id.overview_activity_file_browser_button);
+		fileBrowserButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent startFileBrowserIntent = new Intent(OverviewActivity.this, FileBrowserActivity.class);
+				startActivity(startFileBrowserIntent);
+			}
+		});
+		
 		// 创建背景颜色
 		stopColor = getResources().getColor(R.color.blue01);
 		startColor = getResources().getColor(R.color.blue08);
@@ -128,10 +139,13 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		canvasPaint.setAlpha(223);
 		
 		pictureBackground = new PictureBackground();
+		Bitmap settings = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
+		settingsButton = new SettingsButton(settings); 
 		settingsButton.setElementOnClickListener(new CanvasElement.ElementOnClickListener() {
 			
 			@Override
 			public void onClick() {
+				Log.d(TAG, "settings button clicked!");
 				CanvasAnimation alphaAnimation = settingsButton.getAlphaAnimation();
 				// 需要判断onUp才可以
 				alphaAnimation.setDuration(300);
@@ -176,8 +190,6 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 				pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), operatingColor, startTime);
 			}
 		});
-		Bitmap settings = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
-		settingsButton = new SettingsButton(settings); 
 	}
 
 	@Override
@@ -285,9 +297,10 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 		canvasElements.add(pictureBackground);
 		
 		// 设置按钮
-		int x = canvasWidth - settingsButton.getBitmap().getWidth();
+		int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
 		settingsButton.setX(x);
-		settingsButton.setY(0);
+		settingsButton.setY(12);
+		settingsButton.setPadding(12, 12, 12, 12);
 		settingsButton.setAlphaAnimation(settingsButton.new AlphaAnimation(settingsButton, 223));
 		canvasElements.add(settingsButton);
 		
@@ -322,6 +335,9 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		Log.d(TAG, "surface destoryed");
 		isSurfaceCreated = false;
+		
+		// 清空所有的elements，暂时先这样
+		canvasElements.clear();
 	}
 	
 
@@ -358,7 +374,9 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			// 调整呼吸动画
 			CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
 			// 通过设置repeatMode，当动画循环结束的时候就会自动stop
-			breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_ONCE);
+			if (breatheAnimation != null) {
+				breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_ONCE);
+			}
 		}
 		
 	}
@@ -423,9 +441,27 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			Log.d(TAG, "onDown");
+			Log.d(TAG, "onDown x : " + e.getX() + " y : " + e.getY());
 			int x = (int)e.getX(), y = (int)e.getY();
 			
+			int action = e.getAction() & MotionEvent.ACTION_MASK;
+			
+			switch (action) {
+			case MotionEvent.ACTION_DOWN:
+				Log.d(TAG, "ACTION_DOWN");
+				break;
+			case MotionEvent.ACTION_MOVE:
+				Log.d(TAG, "ACTION_MOVE");
+				break;
+			case MotionEvent.ACTION_UP:
+				Log.d(TAG, "ACTION_UP");
+				break;
+			case MotionEvent.ACTION_SCROLL:
+				Log.d(TAG, "ACTION_SCROLL");
+				break;
+			}
+			
+			Log.d(TAG, "has " + canvasElements.size() + " elements");
 			for (int index = 0, len = canvasElements.size(); index < len; index++) {
 				CanvasElement element = canvasElements.get(index);
 				element.click(x, y);
@@ -439,6 +475,8 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			
 			return super.onDown(e);
 		}
+		
+		
 		
 	}
 	
@@ -465,11 +503,11 @@ public class OverviewActivity extends Activity implements SurfaceHolder.Callback
 			
 			Log.d(TAG, "onFling");
 			// 右
-			if (velocityX > 0.0f) {
+			if (velocityX > 0.0f && Math.abs(velocityX) > 500.0f) {
 				viewSwitcher.setInAnimation(OverviewActivity.this, R.anim.slide_in_left);
 				viewSwitcher.setOutAnimation(OverviewActivity.this, R.anim.slide_out_right);
 				viewSwitcher.showPrevious();
-			} else {
+			} else if (velocityX < 0.0f && Math.abs(velocityX) > 500.0f) {
 				viewSwitcher.setInAnimation(OverviewActivity.this, R.anim.slide_in_right);
 				viewSwitcher.setOutAnimation(OverviewActivity.this, R.anim.slide_out_left);
 				viewSwitcher.showNext();

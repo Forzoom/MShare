@@ -22,7 +22,7 @@ public class ServerSettingActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		getFragmentManager().beginTransaction().replace(android.R.id.content, new ServerSettingFragment());
+		getFragmentManager().beginTransaction().replace(android.R.id.content, new ServerSettingFragment()).commit();
 	}
 	
 	@Override

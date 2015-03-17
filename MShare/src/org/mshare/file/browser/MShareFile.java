@@ -2,68 +2,28 @@ package org.mshare.file.browser;
 
 import java.io.File;
 
+import android.util.Log;
+
 /**
  * 
  * TODO 如何在刷新文件子内容和减少IO读取之间进行平衡
  * @author HM
  * 
  */
-public class MShareFile extends File {
-
+public class MShareFile implements FileBrowserFile {
 	private static final String TAG = MShareFile.class.getSimpleName();
+	
 	// 默认不分享
 	private boolean shared = false;
-	
-	// TODO 如果设置了总共有多少个子文件被共享的话，就需要在文件浏览器中进行更多的操作
-	// 但是这样是否是有必要的呢？
-	
-	/**
-	 * 用于显示在文件浏览器中的名字
-	 * TODO 可能要改名为iconName
-	 */
-	private String mDisplayName;
+	// 
+	private File file;
 	
 	public MShareFile(File file) {
-		super(file.getAbsolutePath());
+		this.file = file;
 	}
-	
-	/**
-	 * 
-	 * @param path Pass AbsolutePath such as File.getAbsolutePath()
-	 * @param hasParent
-	 */
-	public MShareFile(String path) {
-		super(path);
-	}
-	
-	/**
-	 * 获得浏览器中所显示的名字
-	 * @return 文件所显示的名字，如果设置了{@link #setDisplayName(String)}的话，将显示对应的内容
-	 */
-	public String getDisplayName() {
-		return mDisplayName == null ? getName() : mDisplayName; 
-	}
-	/**
-	 * 设置用于显示在文件浏览器中的名字
-	 * @param displayName
-	 */
-	public void setDisplayName(String displayName) {
-		this.mDisplayName = displayName;
-	}
-	
-	/**
-	 * 获得文件的扩展名
-	 * @return
-	 */
-	public String getExtname() {
-		String name = getName();
-		int subStart = name.lastIndexOf(".");
-		
-		if (subStart != -1) {
-			return name.substring(subStart);
-		} else {
-			return "";
-		}
+
+	public MShareFile(String absolutePath) {
+		this.file = new File(absolutePath);
 	}
 	
 	/**
@@ -78,36 +38,65 @@ public class MShareFile extends File {
 	 * 获得所有子文件
 	 * @return 一个MShareFile的数组, or null if the `list()` == null
 	 */
-	public MShareFile[] getFiles() {
-		// default ret
-		MShareFile[] ret = null;
+	public FileBrowserFile[] listFiles() {
+		Log.d(TAG, "list files");
 		
-		if (this.isDirectory()) { // is directory
-			int retIndex = 0;
-			String[] fileList = this.list();
-			
-			if (fileList == null) {
-				 return null;
-			}
-			
-			String dir = this.getAbsolutePath();
-			ret = new MShareFile[fileList.length];
-			
-			// fill the ret
-			for (int i = 0, len = fileList.length; i < len; i++) {
-				ret[retIndex] = new MShareFile(dir + "/" + fileList[i]);
-				retIndex++;
-			}
+		if (!isDirectory()) { // is directory
+			Log.e(TAG, "is not a directory");
+			return null;
+		}
+
+		String[] fileList = file.list();
+		if (fileList == null) {
+			 return null;
+		}
+		
+		String dir = getAbsolutePath();
+		MShareFile[] ret = new MShareFile[fileList.length];
+		
+		// 填充结果
+		for (int i = 0, len = fileList.length; i < len; i++) {
+			ret[i] = new MShareFile(dir + "/" + fileList[i]);
 		}
 		
 		return ret;
 	}
 	
 	/**
-	 * 设置文件是否是共享的
+	 * 设置文件是否共享
 	 * @param shared
 	 */
 	public void setShared(boolean shared) {
 		this.shared = shared;
+	}
+
+	@Override
+	public boolean isFile() {
+		return file.isFile();
+	}
+
+	@Override
+	public boolean isDirectory() {
+		return file.isDirectory();
+	}
+
+	@Override
+	public String getName() {
+		return file.getName();
+	}
+
+	@Override
+	public String getAbsolutePath() {
+		return file.getAbsolutePath();
+	}
+
+	@Override
+	public boolean canRead() {
+		return file.canRead();
+	}
+
+	@Override
+	public boolean canWrite() {
+		return file.canWrite();
 	}
 }

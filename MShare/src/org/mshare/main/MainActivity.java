@@ -89,7 +89,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			 */
 			@Override
 			public int getCount() {
-				return 2;
+				return 1;
 			}
 			// 该方法的返回值决定每个Fragment的标题
 			@Override
@@ -97,8 +97,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 				switch (position) {
 					case 0:
 						return "共享服务";
-					case 1:
-						return "本地文件";
 				}
 				return null;
 			}
@@ -109,12 +107,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		// 遍历pagerAdapter对象所包含的全部Fragment。
 		// 每个Fragment对应创建一个Tab标签
 		Drawable shareIcon = getResources().getDrawable(R.drawable.share);
-		Drawable fileIcon = getResources().getDrawable(R.drawable.tab_file);
-		Drawable[] icons = new Drawable[2];
-		icons[0] = shareIcon;
-		icons[1] = fileIcon;
 		for (int i = 0; i < pagerAdapter.getCount(); i++) {
-			actionBar.addTab(actionBar.newTab().setText(pagerAdapter.getPageTitle(i)).setIcon(icons[i]).setTabListener(this));
+			actionBar.addTab(actionBar.newTab().setText(pagerAdapter.getPageTitle(i)).setIcon(shareIcon).setTabListener(this));
 		}
 		
 		// 为ViewPager组件设置FragmentPagerAdapter
@@ -133,14 +127,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
+		/*
 		//被选中的文件
 		MShareFile selectFile = fragment.getFileBrowser().getSelectFile();
 		// v所代表的是GridView
 		if(mshareFileManage.getSelected() && !selectFile.isFile()) {
 			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+4, 3, "粘贴");
 			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+5, 4, "取消");
-		}
-		else {
+		} else {
 			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+1, 0, "剪切");
 			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+2, 1, "复制");
 			menu.add(GROUP_FILE_BROWSER, Menu.FIRST+3, 2, "删除");
@@ -158,11 +152,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		}
 		
 		//super.onCreateContextMenu(menu, v, menuInfo);
+		*/
 	}
 	
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		
+		/*
 		int itemId = item.getItemId();
 
 		// 获得管理员账户相关内容
@@ -180,7 +175,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
 		
 		switch (itemId) {
-			/**
+			
 			case MShareFileBrowser.CONTEXT_MENU_ITEM_ID_SHARE: // 当点击的是共享
 				
 				// 获得当前被点击的对象
@@ -216,7 +211,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 				}
 
 				break;
-			*/
+			
 			case Menu.FIRST+1:
 				mshareFileManage.copySelect(path, name, true);
 				break;
@@ -237,7 +232,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			default:
 				break;
 		}
-		
+		*/
 		return super.onContextItemSelected(item);
 	}
 	
