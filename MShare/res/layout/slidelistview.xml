@@ -27,6 +27,13 @@
 			android:background="@drawable/toolbar_newftp"
 			android:onClick="customView"
 		></Button>
+		<Button
+			android:id="@+id/btscan"
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			android:text="扫一扫"
+			android:onClick="customView"
+		></Button>
 	</LinearLayout>
 </RelativeLayout>
 

@@ -64,7 +64,7 @@ public class FtpFileManage extends Activity{
 
 	private ProgressBar mPbLoad = null;
 
-	private ListView mListView;
+	private GridView mGridFile;//原文件列表
 	private FtpFileAdapter mAdapter;
 	private List<FTPFile> mFileList = new ArrayList<FTPFile>();
 	private Object mLock = new Object();
@@ -139,7 +139,7 @@ public class FtpFileManage extends Activity{
 //		mCurrentPWD = (String) intent.getSerializableExtra("mCurrentPWD");
 //		Log.v(TAG, "测试"+mFileList.toString());
 		
-		registerForContextMenu(mListView);
+		registerForContextMenu(mGridFile);
 		
 //		if (mAdapter == null) {
 //			mAdapter = new FtpFileAdapter(this, mFileList);
@@ -184,9 +184,9 @@ public class FtpFileManage extends Activity{
 			}
 		});
 		
-		mListView = (ListView) findViewById(R.id.listviewApp);
+		mGridFile = (GridView) findViewById(R.id.gvFileBrowser);
 
-		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		mGridFile.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view,
@@ -207,7 +207,7 @@ public class FtpFileManage extends Activity{
 			}
 		});
 
-		mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+		mGridFile.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
 					@Override
 					public boolean onItemLongClick(AdapterView<?> adapterView,
@@ -217,7 +217,7 @@ public class FtpFileManage extends Activity{
 					}
 				});
 
-		mListView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+		mGridFile.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
 
 					@Override
 					public void onCreateContextMenu(ContextMenu menu, View v,
@@ -248,7 +248,7 @@ public class FtpFileManage extends Activity{
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
-		if (v.getId() == R.id.listviewApp) {
+		if (v.getId() == R.id.gvFileBrowser) {
 			menu.setHeaderTitle("文件操作");
 			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DOWNLOAD, Menu.NONE, "下载");
 			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_RENAME, Menu.NONE, "重命名");
@@ -475,7 +475,7 @@ public class FtpFileManage extends Activity{
 	private void buildOrUpdateDataset() {
 		if (mAdapter == null) {
 			mAdapter = new FtpFileAdapter(this, mFileList);
-			mListView.setAdapter(mAdapter);
+			mGridFile.setAdapter(mAdapter);
 		}
 		mAdapter.notifyDataSetChanged();
 	}

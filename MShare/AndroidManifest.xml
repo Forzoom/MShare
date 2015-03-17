@@ -111,10 +111,6 @@
             android:name="org.mshare.main.OverviewActivity"
             android:theme="@android:style/Theme.Holo.Light.NoActionBar"
             android:label="@string/app_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <!-- 测试图片显示 -->
@@ -128,6 +124,10 @@
         <activity
             android:name="org.mshare.main.MainActivity"
             android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         
         <receiver android:name="org.mshare.file.browser.MShareFileBrowser">

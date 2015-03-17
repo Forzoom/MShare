@@ -26,7 +26,7 @@ import java.util.Date;
  * 
  * @author Carlo Pelliccia
  */
-public class FTPFile implements Serializable{
+public class FTPFile implements Serializable {
 
 	/**
 	 * The value for the type "file".
