@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 /**
@@ -28,7 +29,7 @@ import android.widget.Toast;
  * @author HM
  *
  */
-public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
+public class MShareFileBrowser extends BroadcastReceiver {
 	private static final String TAG = MShareFileBrowser.class.getSimpleName();
 	
 	private Context context = null;
@@ -64,7 +65,12 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 
 	private View fileBrowserLayout;
 	
+	private RelativeLayout.LayoutParams coverLayoutParam;
+	private LinearLayout cover;
+	private RelativeLayout gridViewContainer;
+	
 	private boolean enable;
+	private boolean isWaitForRefresh = false;
 	
 	public MShareFileBrowser(Context context, ViewGroup container, FileBrowserFile rootFile) {
 		this.context = context;
@@ -87,13 +93,22 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		
 		// 面包屑导航控制器
 		crumbController = new MShareCrumbController(crumbContainer, rootFile);
-		crumbController.setOnCrumbClickListener(this);
+		if (callback != null) {
+			crumbController.setCallback(callback);
+		}
 		
 		// create grid view
-		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
+		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.file_browser_grid_view));
 		gridView.setOnItemLongClickListener(new GridViewItemLongClickListener());
 		gridView.setOnItemClickListener(new GridViewItemClickListener());
-		refresh();
+		
+		// GridView container
+		gridViewContainer = (RelativeLayout)fileBrowserLayout.findViewById(R.id.file_browser_grid_view_container);
+		cover = new LinearLayout(fileBrowserLayout.getContext());
+		
+		coverLayoutParam = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+		
+		gridViewContainer.addView(cover, coverLayoutParam);
 	}
 	
 	/**
@@ -119,26 +134,30 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	public void setEnabled(boolean enable) {
 		this.enable = enable;
 	}
-	
-	/**
-	 * 刷新用的主要方法，将根据面包屑导航的内容来填充GridView中的内容
-	 */
-	public void refresh() {
-		if (isEnabled()) {
-			refreshGridView(crumbController.getSelectedFile().listFiles());
-		} else {
-			crumbController.clean();
-			// 将GridView中的内容置空
-			refreshGridView(new FileBrowserFile[0]);
-			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
-		}
-	}
 
+	public void waitForRefresh() {
+		gridViewContainer.addView(cover, coverLayoutParam);
+		isWaitForRefresh = true;
+	}
+	
 	/**
 	 * 刷新GridView，重置适配器
 	 * @param currentFiles
 	 */
-	private void refreshGridView(FileBrowserFile[] files) {
+	public void refreshGridView(FileBrowserFile[] files) {
+		
+		if (!isEnabled()) {
+			crumbController.clean();
+			// 将GridView中的内容置空
+			files = new FileBrowserFile[0];
+			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
+		} else {
+			// 暂时先放在这里
+			if (isWaitForRefresh) {
+				gridViewContainer.removeView(cover);
+			}
+		}
+		
 		// 设置当前正在文件浏览器中的内容
 		this.currentFiles = files;
 		
@@ -183,17 +202,10 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	// 设置callback
 	public void setCallback(FileBrowserCallback callback) {
 		this.callback = callback;
-	}
-	
-	/**
-	 * 用于响应当面包屑导航中的内容被点击时的事件
-	 * @param selected
-	 * @param name
-	 */
-	@Override
-	public void onCrumbClick(int selected, String name) {
-		// 因为面包屑的内容，即面包屑中的Button已经自行维护了，所以，这里只需要刷新一下就好了
-		refresh();
+		// 暂时先这样，为了和init中无论是谁被调用的情况下，都能让crumbController被设置callback
+		if (crumbController != null) {
+			crumbController.setCallback(callback);
+		}
 	}
 
 	/**
@@ -217,7 +229,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 				
 				if (file != null && file.canRead()) { // 文件夹可以打开
 					pushCrumb(file);
-					refresh();
+//					refresh();
 				} else {
 					Log.e(TAG, "文件夹无法访问");
 				}
@@ -261,7 +273,9 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		public void onClick(View v) {
 			Log.v(TAG, "crumb item is clicked");
 			popCrumb();
-			refresh();
+			if (callback != null) {
+				callback.onBackButtonClick(crumbController.getSelectedFile());
+			}
 		}
 		
 	}
@@ -275,10 +289,10 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		String action = intent.getAction();
 		if (action.equals(Intent.ACTION_MEDIA_REMOVED)) { // 扩展卡被拔出
 			setEnabled(false);
-			refresh();
+			refreshGridView(new FileBrowserFile[0]);
 		} else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) { // 扩展卡可以使用
 			setEnabled(true);
-			refresh();
+			refreshGridView(FileBrowserActivity.listFiles(crumbController.getSelectedFile()));
 		}
 	}	
 }

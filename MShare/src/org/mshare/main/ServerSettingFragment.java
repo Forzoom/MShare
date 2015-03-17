@@ -8,7 +8,6 @@ public class ServerSettingFragment extends PreferenceFragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
 		addPreferencesFromResource(R.xml.server_settings);
 	}
 	

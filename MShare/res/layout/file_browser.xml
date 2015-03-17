@@ -27,15 +27,20 @@
             <include layout="@layout/crumb_container"/>
         </HorizontalScrollView>
     </LinearLayout>
-	<GridView
-	    android:id="@+id/grid_view"
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:numColumns="4"
-	    android:gravity="center" 
-	    android:stretchMode="columnWidth"
-	    android:verticalSpacing="10dp"
-	    android:horizontalSpacing="10dp"
-	    >
-	</GridView>
+    <RelativeLayout
+        android:id="@+id/file_browser_grid_view_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+        <GridView
+		    android:id="@+id/file_browser_grid_view"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+		    android:numColumns="4"
+		    android:gravity="center" 
+		    android:stretchMode="columnWidth"
+		    android:verticalSpacing="10dp"
+		    android:horizontalSpacing="10dp"
+		    >
+		</GridView>
+    </RelativeLayout>
 </LinearLayout>

@@ -35,34 +35,6 @@ public class LocalBrowserFile implements FileBrowserFile {
 	}
 	
 	/**
-	 * 获得所有子文件
-	 * @return 一个MShareFile的数组, or null if the `list()` == null
-	 */
-	public FileBrowserFile[] listFiles() {
-		Log.d(TAG, "list files");
-		
-		if (!isDirectory()) { // is directory
-			Log.e(TAG, "is not a directory");
-			return null;
-		}
-
-		String[] fileList = file.list();
-		if (fileList == null) {
-			 return null;
-		}
-		
-		String dir = getAbsolutePath();
-		LocalBrowserFile[] ret = new LocalBrowserFile[fileList.length];
-		
-		// 填充结果
-		for (int i = 0, len = fileList.length; i < len; i++) {
-			ret[i] = new LocalBrowserFile(dir + "/" + fileList[i]);
-		}
-		
-		return ret;
-	}
-	
-	/**
 	 * 设置文件是否共享
 	 * @param shared
 	 */
@@ -70,6 +42,10 @@ public class LocalBrowserFile implements FileBrowserFile {
 		this.shared = shared;
 	}
 
+	public File getFile() {
+		return this.file;
+	}
+	
 	@Override
 	public boolean isFile() {
 		return file.isFile();

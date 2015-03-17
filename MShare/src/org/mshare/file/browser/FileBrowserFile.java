@@ -10,8 +10,6 @@ public interface FileBrowserFile {
 	
 	public String getAbsolutePath();
 	
-	public FileBrowserFile[] listFiles();
-	
 	public boolean canRead();
 	
 	public boolean canWrite();

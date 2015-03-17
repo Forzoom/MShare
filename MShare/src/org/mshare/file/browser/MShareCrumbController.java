@@ -48,7 +48,7 @@ public class MShareCrumbController {
 	 */
 	private LinearLayout container;
 	// 面包屑被点击时的回调函数
-	private OnCrumbClickListener listener;
+	private FileBrowserCallback callback;
 	
 	public MShareCrumbController(LinearLayout container, FileBrowserFile rootFile) {
 		// 生成栈
@@ -194,10 +194,10 @@ public class MShareCrumbController {
 	
 	/**
 	 * 设置当crumb的button被点击的时候的回调函数
-	 * @param listener 所设置的回调函数，会顶替上一个回调内容
+	 * @param callback 所设置的回调函数，会顶替上一个回调内容
 	 */
-	public void setOnCrumbClickListener(OnCrumbClickListener listener) {
-		this.listener = listener;
+	public void setCallback(FileBrowserCallback callback) {
+		this.callback = callback;
 	}
 	
 	/**
@@ -219,18 +219,6 @@ public class MShareCrumbController {
 	}
 	
 	/**
-	 * 使用者所实现监听器类，来执行回调内容
-	 */
-	public interface OnCrumbClickListener {
-		/**
-		 * 当有button被点击的时候，将调用该回调函数
-		 * @param index
-		 * @param name
-		 */
-		public void onCrumbClick(int selected, String name);
-	}
-	
-	/**
 	 * 对于面包屑中的每个Button的单击监听器类
 	 */
 	private class OnClickListener implements View.OnClickListener {
@@ -243,8 +231,8 @@ public class MShareCrumbController {
 			String name = button.getText().toString();
 			unselect();
 			select(selected);
-			if (listener != null) {
-				listener.onCrumbClick(selected, name);
+			if (callback != null) {
+				callback.onCrumbClick(stack[MShareCrumbController.this.selected]);
 			}
 		}
 	}
