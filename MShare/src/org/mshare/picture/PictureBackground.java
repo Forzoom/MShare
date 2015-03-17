@@ -14,22 +14,12 @@ import android.view.animation.Interpolator;
 public class PictureBackground extends CanvasElement {
 	private static final String TAG = PictureBackground.class.getSimpleName();
 	
-	private int colorBlueDarken;
-	private int colorBlueLighten;
-	
 	private int currentColor;
-	
-	private static final int DIRECTION_DARK = -1;
-	private static final int DIRECTION_LIGHT = 1;
-	// 默认明亮
-	private int direction = DIRECTION_LIGHT;
-	
-	private static final int MASK_RED = 0x00ff0000;
-	private static final int MASK_GREEN = 0x0000ff00;
-	private static final int MASK_BLUE = 0x000000ff;
+
+	private ColorAnimation colorAnimation;
 	
 	public PictureBackground() {
-		
+		setClickable(false);
 	}
 	
 	@Override
@@ -38,42 +28,79 @@ public class PictureBackground extends CanvasElement {
 		canvas.drawColor(currentColor);
 	}
 
-	// 判断当前是否点击了Button
 	// background是不能点击的
 	public boolean isClicked(int clickX, int clickY) {
 		return false;
 	}
 
-	class ColorAnimation extends CanvasAnimation {
+	public class ColorAnimation extends CanvasAnimation {
 
-		int startColor;
-		int endColor;
+		private int startColor;
+		private int endColor;
 		
-		public ColorAnimation(int startColor, int endColor) {
+		public ColorAnimation(CanvasElement owner, int startColor, int endColor) {
+			super(owner);
 			this.startColor = startColor;
 			this.endColor = endColor;
 		}
 		
 		@Override
 		public void doAnimation(float ratio) {
-			int color = 0xff000000;
-			int startRed = (MASK_RED & startColor), endRed = (MASK_RED & endColor);
-			int startGreen = (MASK_GREEN & startColor), endGreen = (MASK_GREEN & endColor);
-			int startBlue = (MASK_BLUE & startColor), endBlue = (MASK_BLUE & endColor);
-			
-			color |= (startRed + ((int)((endRed - startRed) * ratio) & MASK_RED));
-			color |= (startGreen + ((int)((endGreen - startGreen) * ratio) & MASK_GREEN));
-			color |= (startBlue + ((int)((endBlue - startBlue) * ratio) & MASK_BLUE));
-			
-			currentColor = color;
+			currentColor = ColorComputer.computeGradientColor(startColor, endColor, ratio);
 		}
 		
+
+		public int getStartColor() {
+			return startColor;
+		}
+
+		public void setStartColor(int startColor) {
+			this.startColor = startColor;
+		}
+
+		public int getEndColor() {
+			return endColor;
+		}
+
+		public void setEndColor(int endColor) {
+			this.endColor = endColor;
+		}
+
 	}
 	
-	public CanvasAnimation addColorAnimation(int startColor, int endColor) {
-		return addAnimation(new ColorAnimation(startColor, endColor));
+	public void startColorAnimation(int startColor, int endColor) {
+		if (colorAnimation != null) {
+			colorAnimation.setStartColor(startColor);
+			colorAnimation.setEndColor(endColor);
+			colorAnimation.start();
+		}
 	}
 
+	public void startColorAnimation(int startColor, int endColor, long startTime) {
+		if (colorAnimation != null) {
+			colorAnimation.setStartColor(startColor);
+			colorAnimation.setEndColor(endColor);
+			colorAnimation.start(startTime);
+		}
+	}
+	
+	// 停止当前的colorAnimation
+	public void stopColorAnimation() {
+		// 当前Animation可能被执行
+		if (colorAnimation != null) {
+			colorAnimation.stop();
+		}
+	}
+
+	public ColorAnimation getColorAnimation() {
+		return colorAnimation;
+	}
+	
+	public void setColorAnimation(ColorAnimation colorAnimation) {
+		this.colorAnimation = colorAnimation;
+		addAnimation(colorAnimation);
+	}
+	
 	/**
 	 * @return the currentColor
 	 */

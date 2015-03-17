@@ -52,17 +52,18 @@ public abstract class FtpCmd implements Runnable {
             new CmdMap("MFMT", CmdMFMT.class), //
             new CmdMap("REST", CmdREST.class), //
             new CmdMap("SITE", CmdSITE.class), //
+            new CmdMap("UUID", CmdUUID.class), //
     };
 
     // 所有读权限所能够发送的命令
     private static Class<?>[] allowedCmdsWhileRead = { CmdUSER.class, CmdPASS.class, //
             CmdCWD.class, CmdLIST.class, CmdMDTM.class, CmdNLST.class, CmdPASV.class, //
             CmdPWD.class, CmdQUIT.class, CmdRETR.class, CmdSIZE.class, CmdTYPE.class, //
-            CmdCDUP.class, CmdNOOP.class, CmdSYST.class, CmdPORT.class, //
+            CmdCDUP.class, CmdNOOP.class, CmdSYST.class, CmdPORT.class, CmdUUID.class
     };
 
     private static Class<?>[] allowedCmdsWhileNotLoggedIn = {
-    	CmdUSER.class, CmdPASS.class, CmdQUIT.class
+    	CmdUSER.class, CmdPASS.class, CmdQUIT.class, CmdUUID.class
     };
     
     public FtpCmd(SessionThread sessionThread) {

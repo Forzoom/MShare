@@ -30,7 +30,8 @@
         android:name="org.mshare.main.MShareApp"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name" >
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Holo.Light" >
         <activity
             android:name="org.mshare.main.JoinConn"
             android:label="@string/app_name" >
@@ -118,6 +119,12 @@
             android:name="org.mshare.picture.PictureActivity"
             android:label="图片测试"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
+        </activity>
+        
+        <!-- MainActivity -->
+        <activity
+            android:name="org.mshare.main.FileBrowserActivity"
+            android:label="@string/app_name" >
         </activity>
         
         <!-- MainActivity -->

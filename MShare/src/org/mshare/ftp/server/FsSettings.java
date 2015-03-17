@@ -61,6 +61,9 @@ public class FsSettings {
     // TODO 这个路径可能会出错
     public static final String VALUE_UPLOAD_DEFAULT = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "org.mshare";
     
+    public static final String KEY_UUID = "uuid";
+    public static final String VALUE_UUID_DEFAULT = "";
+    
     /**
      * 获得用户名称
      * @return
@@ -120,6 +123,13 @@ public class FsSettings {
         return uploadPath; 
     }
     
+    public static String getUUID() {
+    	final SharedPreferences sp = getSharedPreferences();
+        String uuid = sp.getString(KEY_UUID, VALUE_UUID_DEFAULT);
+        Log.v(TAG, "uuid is " + uuid);
+        return uuid;
+    }
+    
     /**
      * 设置用户名
      * @param username
@@ -157,6 +167,13 @@ public class FsSettings {
     	final SharedPreferences sp = getSharedPreferences();
     	SharedPreferences.Editor editor = sp.edit();
     	editor.putString(KEY_UPLOAD, uploadPath);
+    	editor.commit();
+    }
+    
+    public static void setUUID(String uuid) {
+    	final SharedPreferences sp = getSharedPreferences();
+    	SharedPreferences.Editor editor = sp.edit();
+    	editor.putString(KEY_UUID, uuid);
     	editor.commit();
     }
     

@@ -31,6 +31,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.UUID;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -123,6 +124,12 @@ public class FsService extends Service implements Runnable {
             }
         }
 
+     // 创建uuid
+        if (FsSettings.getUUID().equals(FsSettings.VALUE_UUID_DEFAULT)) {
+        	String uuid = UUID.randomUUID().toString();
+        	FsSettings.setUUID(uuid);
+        }
+        
         // 创建SessionController，并绑定SessionNotifier
         sessionController = new SessionController();
         sessionNotifier = new SessionNotifier(sessionController);
@@ -134,6 +141,7 @@ public class FsService extends Service implements Runnable {
         // 设置验证器
         sessionController.setVerifier(mAccountFactory.getVerifier());
         
+        // 启动服务器线程
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
         serverThread.start();

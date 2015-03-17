@@ -1,52 +1,38 @@
 package org.mshare.file.browser;
 
-import java.io.File;
 import java.util.Map;
 
 import org.mshare.main.*;
 import org.mshare.file.browser.MShareFileAdapter.ItemContainer;
-import org.mshare.ftp.server.FsService;
-import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.R;
 
 import android.widget.AdapterView;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.os.Environment;
-import android.provider.MediaStore.Files;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
-import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import org.mshare.main.MShareUtil;
 /**
  * 文件浏览器
  * 包含GridView中图标的点击事件 {@link GridViewItemClickListener}
+ * 完成了面包屑导航中事件，当点击文件夹的时候自动进入文件夹
  * @author HM
  *
  */
 public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbController.OnCrumbClickListener {
-
 	private static final String TAG = MShareFileBrowser.class.getSimpleName();
-	// 用于ContextMenu中的groupId
-	// TODO 暂时放置在这里，使用内容在MainActivity中
-	public static final int CONTEXT_MENU_ITEM_ID_SHARE = 4;
-	public static final int CONTEXT_MENU_ITEM_ID_UNSHARE = 5;
 	
 	private Context context = null;
+	// 用于包含文件浏览器的container
 	private ViewGroup container = null;
 	/**
 	 * 面包屑导航的控制器
@@ -63,88 +49,59 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	/**
 	 * 后退按钮
 	 */
-	private Button backBtn;
+	private ImageView backButton;
 	/**
-	 * 根目录路径，即扩展存储路径
+	 * 根目录路径
 	 */
-	private MShareFile rootFile;
-	
+	private FileBrowserFile rootFile;
 	/**
-	 * 正在显示的内容
+	 * 当前显示的内容
 	 */
-	private MShareFile[] files;
+	private FileBrowserFile[] currentFiles;
 	
-	private boolean isLongClicked = false;
+	// 回调函数
+	private FileBrowserCallback callback;
+
+	private View fileBrowserLayout;
 	
 	private boolean enable;
-	/**
-	 * 当前被长按选择的内容
-	 * 需要保证得到及时的更新
-	 * TODO 在何时删除内容
-	 */
-	private MShareFile selectFile = null;
 	
-	public MShareFileBrowser(Context context, ViewGroup container, String rootPath) {
+	public MShareFileBrowser(Context context, ViewGroup container, FileBrowserFile rootFile) {
 		this.context = context;
 		this.container = container;
-		this.rootFile = new MShareFile(rootPath);
+		this.rootFile = rootFile;
+		setEnabled(true);
+		init();
 	}
 	
-	public View getView() {
+	private void init() {
 		// 文件浏览器布局
-		View fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
+		fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
 		
 		// 设置后退按钮
-		backBtn = (Button)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
-		backBtn.setOnClickListener(new BackBtnListener(context));
+		backButton = (ImageView)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
+		backButton.setOnClickListener(new BackButtonListener());
 		
 		// TODO 使用include标签
 		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
 		
 		// 面包屑导航控制器
-		crumbController = new MShareCrumbController(context, rootFile, crumbContainer);
+		crumbController = new MShareCrumbController(crumbContainer, rootFile);
 		crumbController.setOnCrumbClickListener(this);
 		
-		// 获得根目录下的文件列表
-		MShareFile[] files = crumbController.getFiles();
 		// create grid view
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.grid_view));
-		gridView.setOnItemLongClickListener(new LongListener());
-		gridView.setOnItemClickListener(new GridViewItemClickListener(context));
-		
-		
-		// 有setOnContextMenuCreateListener
-		
-		// TODO 可能并不是很好的注册ContextMenu的方法，因为需要将context作为Activity来使用
-		((Activity)context).registerForContextMenu(gridView);
-		
-		// 检测扩展存储是否可用
-		setEnabled(StatusController.getExternalStorageState() == StatusController.STATE_EXTERNAL_STORAGE_ENABLE);
-		if (!isEnabled()) {
-			Toast.makeText(context, R.string.external_storage_removed, Toast.LENGTH_SHORT).show();
-			return null;
-		} else {
-			// set adapter
-			adapter = new MShareFileAdapter(context, this, files); 
-			gridView.setAdapter(adapter);
-			return fileBrowserLayout;
-		}
+		gridView.setOnItemLongClickListener(new GridViewItemLongClickListener());
+		gridView.setOnItemClickListener(new GridViewItemClickListener());
+		refresh();
 	}
 	
 	/**
-	 * 设置当前被选中的文件内容
-	 * @param file
+	 * 将会检测SD卡是否可用，当SD卡不可用的时候，将获得null
+	 * @return
 	 */
-	public void setSelectFile(MShareFile file) {
-		selectFile = file;
-	}
-	
-	/**
-	 * 获得当前正在共享的文件，仅仅用于ContextMenu中，其他情况下不保证信息的及时性
-	 * @return 在非ContextMenu的情况下调用可能是null
-	 */
-	public MShareFile getSelectFile() {
-		return selectFile;
+	public View getView() {
+		return fileBrowserLayout;
 	}
 	
 	/**
@@ -164,59 +121,36 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	}
 	
 	/**
-	 * 刷新用的主要方法
+	 * 刷新用的主要方法，将根据面包屑导航的内容来填充GridView中的内容
 	 */
 	public void refresh() {
 		if (isEnabled()) {
-			refreshGridView();
+			refreshGridView(crumbController.getSelectedFile().listFiles());
 		} else {
-			
 			crumbController.clean();
-			// 将GridView中的内容设置为空
-			refreshGridView(new MShareFile[0]);
+			// 将GridView中的内容置空
+			refreshGridView(new FileBrowserFile[0]);
 			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
 		}
 	}
-	
-	/**
-	 * 刷新GridView，默认使用面包屑导航中的内容
-	 */
-	public void refreshGridView() {
-		refreshGridView(crumbController.getSelectedFile());
-	}
-	/**
-	 * 刷新GridView
-	 * @param file
-	 */
-	public void refreshGridView(MShareFile file) {
-		refreshGridView(file.getFiles());
-	}
-	
+
 	/**
 	 * 刷新GridView，重置适配器
-	 * 刷新的主要函数 
-	 * @param files
+	 * @param currentFiles
 	 */
-	public void refreshGridView(MShareFile[] files) {
+	private void refreshGridView(FileBrowserFile[] files) {
 		// 设置当前正在文件浏览器中的内容
-		this.files = files;
-		
-		// 设置文件是否被共享
-		for (int i = 0; i < files.length; i++) {
-			MShareFile file = files[i];
-//			file.setShared(shared)
-//			FsService.isFile
-		}
+		this.currentFiles = files;
 		
 		// 新的适配器，用于刷新GridView
-		adapter = new MShareFileAdapter(context, this, files);
+		adapter = new MShareFileAdapter(context, files);
 		gridView.setAdapter(adapter);
 		
 		// 设置导航后退按钮的样式，即是否可以被按下
 		if (!crumbController.canPop()) {
-			backBtn.setClickable(false);
+			backButton.setClickable(false);
 		} else {
-			backBtn.setClickable(true);
+			backButton.setClickable(true);
 		}
 	}
 	
@@ -224,7 +158,7 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * 向面包屑导航中添加新的导航内容
 	 * @param file 添加到面包屑导航中的新内容
 	 */
-	public void pushCrumb(MShareFile file) {
+	public void pushCrumb(FileBrowserFile file) {
 		int index = crumbController.push(file);
 		crumbController.unselect();
 		crumbController.select(index);
@@ -238,26 +172,17 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 		crumbController.select(index - 1);
 	}
 	
-	/**
-	 * 将一个文件设置为共享的
-	 * @param file
-	 */
-	public void setFileShared(MShareFile file, boolean shared) {
-		String filePath = file.getAbsolutePath();
-		// TODO 不适用SharedPreference来记录
-		// 当前登录用户的设置对象
-		SharedPreferences sp = context.getSharedPreferences("username", Context.MODE_PRIVATE);
-		// 判断当前文件路径是否是共享的
-		// 尝试获得所有的内容
-		Map<String, Boolean> map = (Map<String, Boolean>)sp.getAll();
-		
-		boolean isShared = sp.getBoolean(filePath, false);
-		
-		if (isShared != shared) {
-			Editor editor = sp.edit();
-			editor.putBoolean(filePath, shared);
-			editor.commit();
-		}
+	public GridView getGridView() {
+		return gridView;
+	}
+
+	public FileBrowserFile[] getCurrentFiles() {
+		return currentFiles;
+	}
+	
+	// 设置callback
+	public void setCallback(FileBrowserCallback callback) {
+		this.callback = callback;
 	}
 	
 	/**
@@ -267,72 +192,59 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 */
 	@Override
 	public void onCrumbClick(int selected, String name) {
-		// TODO Auto-generated method stub
-//		this.selected = selected;
-		refreshGridView();
+		// 因为面包屑的内容，即面包屑中的Button已经自行维护了，所以，这里只需要刷新一下就好了
+		refresh();
 	}
 
 	/**
-	 * 用于相应GridView中的button的响应事件
-	 * @author HM
-	 *
+	 * 用于相应GridView中Item的响应事件
 	 */
 	private class GridViewItemClickListener implements AdapterView.OnItemClickListener {
 		
-		private Context context = null;
-		
-		public GridViewItemClickListener(Context context) {
-			this.context = context;
-		}
-		
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			if (isLongClicked) {
-				Log.d(TAG, "is LongClick!");
-				isLongClicked = false;
-				return;
-			}
-			Log.d(TAG, "item click!");
+			Log.d(TAG, "onItemClick invoke!");
 			Object tag = view.getTag();
 			
-			if (tag != null) {
-				ItemContainer item = (ItemContainer)tag; 
-				MShareFile file = item.file;
-				if (file.isDirectory()) { // whether is a directory
-					
-					if (file != null && file.canRead()) { // 文件夹可以打开
-						pushCrumb(file);
-						refreshGridView(file);
-					} else {
-						// TODO 文件夹无法打开，可能是权限问题
-						Toast.makeText(context, "文件夹无法访问", Toast.LENGTH_SHORT).show();
-					}
+			if (tag == null) {
+				Log.e(TAG, "tag是null");
+				return;
+			}
+
+			ItemContainer item = (ItemContainer)tag; 
+			FileBrowserFile file = item.file;
+			if (file.isDirectory()) { // whether is a directory
+				
+				if (file != null && file.canRead()) { // 文件夹可以打开
+					pushCrumb(file);
+					refresh();
 				} else {
-					Log.d(TAG, "所点击的是一个文件");
-					// 是文件
+					Log.e(TAG, "文件夹无法访问");
 				}
 			} else {
-				Log.e(TAG, "tag是null");
-				// error
+				Log.d(TAG, "所点击的是一个文件");
+			}
+			
+			// 尝试告知File被点击了，不论是文件还是文件夹
+			if (callback != null) {
+				callback.onItemClick(file);
 			}
 		}
 	}
 	
-	private class LongListener implements AdapterView.OnItemLongClickListener {
+	private class GridViewItemLongClickListener implements AdapterView.OnItemLongClickListener {
 
+		// 设置当前被选择的文件
 		@Override
-		public boolean onItemLongClick(AdapterView<?> parent, View view,
-				int position, long id) {
-
-			// 设置所
-			MShareFile file = files[position];
-			setSelectFile(file);
+		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+			Log.d(TAG, "onItemLongClick invoke!");
+			FileBrowserFile file = currentFiles[position];
 			Log.d(TAG, "set select file : " + file.getAbsolutePath());
+
+			if (callback != null) {
+				callback.onItemLongClick(file);
+			}
 			
-			// 设置longclick，让click不被触发
-			isLongClicked = true;
-			
-			// TODO 设置成false，是这样?
 			return false;
 		}
 		
@@ -343,19 +255,13 @@ public class MShareFileBrowser extends BroadcastReceiver implements MShareCrumbC
 	 * @author HM
 	 *
 	 */
-	private class BackBtnListener implements View.OnClickListener {
+	private class BackButtonListener implements View.OnClickListener {
 
-		private Context context = null;
-		
-		public BackBtnListener(Context context) {
-			this.context = context;
-		}
-		
 		@Override
 		public void onClick(View v) {
-			Log.v(TAG, "CrumbClickListener");
+			Log.v(TAG, "crumb item is clicked");
 			popCrumb();
-			refreshGridView();
+			refresh();
 		}
 		
 	}

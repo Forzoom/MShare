@@ -23,101 +23,63 @@ import android.widget.LinearLayout.LayoutParams;
  * 
  */
 public class MShareCrumbController {
-
 	private static final String TAG = MShareCrumbController.class.getSimpleName();
 	
-	/**
-	 * 上下文对象
-	 */
-	private Context context = null;
-	/**
-	 * 
-	 */
+	// 默认的指针地址
 	private static final int POINTER_DEFAULT = -1;
+	// 初始化状态下的指针地址
 	private static final int POINTER_INIT = 0;
 	/**
-	 * 当前栈顶所对应的序号是多少
+	 * 当前栈顶对应序号
 	 */
 	private int top = POINTER_DEFAULT;
 	/**
-	 * 当前正在被选择的导航内容的序号
+	 * 当前被选择的导航内容的序号
 	 */
 	private int selected = POINTER_DEFAULT;
-	
-	/**
-	 * 最多所能够拥有的导航内容数量
-	 */
+	// 最多能拥有的导航内容数量，即最大的栈深度
 	private static final int COUNT_MAX = 10;
-	
-	/**
-	 * the stack for saving files(to be exact, directory)
-	 */
-	private MShareFile[] stack = null;
-	/**
-	 * 栈的容量
-	 */
+	// 保存文件的栈
+	private FileBrowserFile[] stack = null;
+	// 栈的最大容量
 	private int maxCount = COUNT_MAX;
-	/**
-	 * path the crumbs represent
-	 */
-	private String path = null;
 	/**
 	 * 包含在一个HorizontalScrollView中的LinearLayout，用来包含面包屑导航的内容，所有的样式都由自己控制
 	 */
 	private LinearLayout container;
-
+	// 面包屑被点击时的回调函数
 	private OnCrumbClickListener listener;
 	
-	public MShareCrumbController(Context context, MShareFile rootFile, LinearLayout container) {
-		this.context = context;
-		
+	public MShareCrumbController(LinearLayout container, FileBrowserFile rootFile) {
 		// 生成栈
-		stack = new MShareFile[maxCount];
-		
+		stack = new FileBrowserFile[maxCount];
 		// 指定container
 		this.container = container;
-		
 		// 将根目录添加到导航中
 		push(rootFile);
+		// 选择根目录
 		select(0);
 	}
 	
 	/**
-	 * 重置导航中内容，即只有根路径
+	 * 重置导航内容，为只有根路径的初始状态
 	 */
 	public void clean() {
 		this.top = this.selected = POINTER_INIT;
-		refreshPath();
 	}
-	
+	/**
+	 * 当前正在被选择的index
+	 * @return
+	 */
 	public int getSelected() {
 		return selected;
 	}
-	
 	/**
 	 * 获得选定的文件内容
 	 * @return
 	 */
-	public MShareFile getSelectedFile() {
+	public FileBrowserFile getSelectedFile() {
 		return stack[selected];
-	}
-	/**
-	 * 获得一个button对象
-	 * @return
-	 */
-	private Button getView(int index, String name) {
-		Button button = new Button(context);
-		
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		
-		button.setLayoutParams(params);
-		button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
-		button.setTextColor(context.getResources().getColorStateList(R.color.crumbs_crumb_btn));
-		
-		button.setTag(index);
-		button.setText(name);
-		button.setOnClickListener(new OnClickListener());
-		return button;
 	}
 	
 	/**
@@ -148,7 +110,7 @@ public class MShareCrumbController {
 	 * 将一个新的MShareFile入栈
 	 * @param file
 	 */
-	public int push(MShareFile file) {
+	public int push(FileBrowserFile file) {
 		// 部分内容出栈
 		if (selected != top) {
 			popUseless();
@@ -229,35 +191,6 @@ public class MShareCrumbController {
 			selected = POINTER_DEFAULT;
 		}
 	}
-	/**
-	 * get files in current maxCount level 
-	 * @return selected files or null
-	 */
-	public MShareFile[] getFiles() {
-		if (selected < maxCount && stack[selected] != null) {
-			return stack[selected].getFiles();
-		}
-		return null;
-	}
-	
-	/**
-	 * 获得当前导航所对应的文件路径
-	 * @return
-	 */
-	public String getPath() {
-		return path;
-	}
-	
-	/**
-	 * 刷新路径内容
-	 */
-	private void refreshPath() {
-		ArrayList<String> list = new ArrayList<String>();
-		for (int i = 0, len = this.selected; i <= len; i++) {
-			list.add(this.stack[i].getName());
-		}
-		this.path = TextUtils.join(File.separator, list);
-	}
 	
 	/**
 	 * 设置当crumb的button被点击的时候的回调函数
@@ -266,10 +199,27 @@ public class MShareCrumbController {
 	public void setOnCrumbClickListener(OnCrumbClickListener listener) {
 		this.listener = listener;
 	}
+	
 	/**
-	 * 实现监听器类，来执行回调内容
-	 * @author HM
-	 *
+	 * 获得一个button对象，用于面包屑的内容
+	 * @return
+	 */
+	private Button getView(int index, String name) {
+		Button button = new Button(container.getContext());
+		
+		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+		
+		button.setLayoutParams(params);
+		button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
+		
+		button.setTag(index);
+		button.setText(name);
+		button.setOnClickListener(new OnClickListener());
+		return button;
+	}
+	
+	/**
+	 * 使用者所实现监听器类，来执行回调内容
 	 */
 	public interface OnCrumbClickListener {
 		/**
@@ -281,14 +231,13 @@ public class MShareCrumbController {
 	}
 	
 	/**
-	 * 对于每个button的单击监听器类
-	 * @author HM
-	 *
+	 * 对于面包屑中的每个Button的单击监听器类
 	 */
 	private class OnClickListener implements View.OnClickListener {
 
 		@Override
 		public void onClick(View v) {
+			// 
 			Button button = (Button)v;
 			int selected = (Integer)(button.getTag());
 			String name = button.getText().toString();

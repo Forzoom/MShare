@@ -108,7 +108,7 @@ public class StatusController {
 	 * @param container 包含所有图标的View
 	 */
 	public void initial() {
-		
+		Log.d(TAG, "statusController initial!");
 		
 		setServerStatus(getServerStatus());
 		setWifiStatus(getWifiStatus());
@@ -199,7 +199,12 @@ public class StatusController {
 	
 	// 设置服务器状态
 	public void setServerStatus(int status) {
+		Log.d(TAG, "set server status : " + status);
 		this.serverStatus  = status;
+		
+		if (callback != null) {
+			callback.onServerStatusChange(status);
+		}
 	}
 	
 	public static int getWifiStatus() {

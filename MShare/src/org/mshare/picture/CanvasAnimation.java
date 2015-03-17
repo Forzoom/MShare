@@ -10,17 +10,37 @@ import android.view.animation.Interpolator;
  */
 public abstract class CanvasAnimation {
 	private static final String TAG = CanvasAnimation.class.getSimpleName();
+	// 当前动画正在运行
 	private static int STATUS_RUNNING = 1;
+	// 当前动画停止
 	private static int STATUS_STOP = 2;
+	// 当前动画状态
 	private int status = STATUS_STOP;
-	
+	// 变速器
 	private Interpolator interpolator;
-	private long START_TIME_UNSET = -1;
+	public long START_TIME_UNSET = -1;
 	// 动画的开始时间
-	private long startTime;
+	private long startTime = START_TIME_UNSET;
+
+	public static int DURATION_UNSET = -1;
+	// 动画执行时间
+	private int duration = DURATION_UNSET;
 	
-	private int duration = 500;
+	private CanvasElement owner;
 	
+	public static final int REPEAT_MODE_ONCE = 0;
+	public static final int REPEAT_MODE_INFINITE = 1;
+	
+	private int repeatMode = REPEAT_MODE_ONCE;
+	
+	public CanvasAnimation(CanvasElement owner) {
+		this.owner= owner; 
+	}
+	
+	/**
+	 * 在调用doAnimation之前使用interpolator进行变速
+	 * @param ratio
+	 */
 	public void calcAndDoAnimation(float ratio) {
 		if (ratio > 1.0f) {
 			ratio = 1.0f;
@@ -55,7 +75,7 @@ public abstract class CanvasAnimation {
 			Log.e(TAG, "already start");
 		}
 	}
-	
+	// 对应start()
 	public void onStart() {}
 	
 	public boolean isStarted() {
@@ -63,13 +83,23 @@ public abstract class CanvasAnimation {
 		return status == STATUS_RUNNING;
 	}
 	
+	// stop在CanvasElement中被remove后才调用，以保证stop调用的时候，Animation不再属于任何人
 	public void stop() {
 		Log.d(TAG, "animation stop");
 		status = STATUS_STOP;
-//		reset();
+		onStop();
 	}
-	
+	// 对应stop(),Animation就像一个新的Aniamtion
 	public void onStop() {}
+	
+	// 重置Animation的startTime和duration,没有这两个变量，Animation将无法操作
+	// 关键是无法从list中消除
+	public void reset() {
+		repeatMode = REPEAT_MODE_ONCE;
+		status = STATUS_STOP;
+		startTime = START_TIME_UNSET;
+		duration = DURATION_UNSET;
+	}
 	
 	/**
 	 * @return the interpolator
@@ -111,6 +141,14 @@ public abstract class CanvasAnimation {
 	 */
 	public void setDuration(int duration) {
 		this.duration = duration;
+	}
+
+	public int getRepeatMode() {
+		return repeatMode;
+	}
+
+	public void setRepeatMode(int repeatMode) {
+		this.repeatMode = repeatMode;
 	}
 
 }

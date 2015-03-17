@@ -20,11 +20,11 @@ public class BreatheInterpolator implements Interpolator {
 			
 			double radian = input / bound * Math.PI;
 			Log.d(TAG, "the radian : " + radian + " the result input : " + ((float)Math.cos(radian) + 1));
-			return (float)Math.cos(radian) + 1;
+			return (-(float)Math.cos(radian) + 1) / 2.0f;
 		} else if (input < 1.0f) {
 			double radian = (input - bound) / (1.0f - bound) * Math.PI;
-			Log.d(TAG, "the radian : " + radian + " the result input : " + ((float)Math.cos(radian) + 1));
-			return (float)Math.cos(Math.PI + radian) + 1;
+			Log.d(TAG, "the radian : " + radian + " the result input : " + ((float)Math.cos(Math.PI + radian) + 1) / 2.0f);
+			return (-(float)Math.cos(Math.PI + radian) + 1) / 2.0f;
 		} else {
 			// 对于其他情况，没有更好的方法
 			Log.d(TAG, "the input > 1.0");
