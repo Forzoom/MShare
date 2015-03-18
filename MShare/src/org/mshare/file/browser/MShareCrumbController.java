@@ -37,28 +37,26 @@ public class MShareCrumbController {
 	 * 当前被选择的导航内容的序号
 	 */
 	private int selected = POINTER_DEFAULT;
-	// 最多能拥有的导航内容数量，即最大的栈深度
-	private static final int COUNT_MAX = 10;
 	// 保存文件的栈
-	private FileBrowserFile[] stack = null;
-	// 栈的最大容量
-	private int maxCount = COUNT_MAX;
+	private ArrayList<FileBrowserFile> stack = new ArrayList<FileBrowserFile>();;
 	/**
 	 * 包含在一个HorizontalScrollView中的LinearLayout，用来包含面包屑导航的内容，所有的样式都由自己控制
 	 */
-	private LinearLayout container;
+	private LinearLayout layout;
 	// 面包屑被点击时的回调函数
 	private FileBrowserCallback callback;
 	
-	public MShareCrumbController(LinearLayout container, FileBrowserFile rootFile) {
-		// 生成栈
-		stack = new FileBrowserFile[maxCount];
+	private MShareFileBrowser fileBrowser;
+	
+	/**
+	 * 
+	 * @param layout
+	 * @param rootFile 存在是因为当rootFile的面包屑被点击的时候，需要相应onCrumbClick事件
+	 */
+	public MShareCrumbController(LinearLayout layout, MShareFileBrowser fileBrowser) {
+		this.fileBrowser = fileBrowser;
 		// 指定container
-		this.container = container;
-		// 将根目录添加到导航中
-		push(rootFile);
-		// 选择根目录
-		select(0);
+		this.layout = layout;
 	}
 	
 	/**
@@ -79,7 +77,7 @@ public class MShareCrumbController {
 	 * @return
 	 */
 	public FileBrowserFile getSelectedFile() {
-		return stack[selected];
+		return stack.get(selected);
 	}
 	
 	/**
@@ -87,11 +85,7 @@ public class MShareCrumbController {
 	 * @return
 	 */
 	public boolean canPop() {
-		if (selected > 0) {
-			return true;
-		} else {
-			return false;
-		}
+		return selected > 0;
 	}
 	
 	/**
@@ -123,10 +117,10 @@ public class MShareCrumbController {
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT);
 		params.weight = 1;
 		
-		Log.d(TAG, "detect the container weight sum : " + container.getWeightSum());
+		Log.d(TAG, "detect the layout weight sum : " + layout.getWeightSum());
 		
-		container.addView(button, index, params);
-		stack[index] = file;
+		layout.addView(button, index, params);
+		stack.add(index, file);
 		// 设置top
 		top = index;
 		
@@ -142,8 +136,8 @@ public class MShareCrumbController {
 
 		int index = getSelected();
 		unselect();
-		stack[index] = null;
-		container.removeViewAt(index);
+		stack.remove(index);
+		layout.removeViewAt(index);
 		
 		// 重新设置top
 		top = index - 1;
@@ -156,12 +150,13 @@ public class MShareCrumbController {
 	 */
 	public void popUseless() {
 		if (selected >= 0) { // 合理的selected的情况下
+			Log.d(TAG, "try pop useless");
 			// 将栈中的内容出栈
 			for (int i = selected + 1; i <= top; i++) {
-				stack[i] = null;
+				stack.remove(i);
 			}
 			// 将crumb中的内容退出
-			container.removeViews(selected + 1, top - selected);
+			layout.removeViews(selected + 1, top - selected);
 			
 			top = selected;
 		}
@@ -177,10 +172,10 @@ public class MShareCrumbController {
 //		if (selected != index) {
 			Log.v(TAG, "selected :" + selected);
 			Log.v(TAG, "index :" + index);
-			Button button = (Button)container.getChildAt(index);
+			Button button = (Button)layout.getChildAt(index);
 			// 将Button设置为选中
-			button.setTextColor(container.getContext().getResources().getColor(R.color.Color_White));
-			button.setBackgroundColor(container.getContext().getResources().getColor(R.color.blue08));
+			button.setTextColor(layout.getContext().getResources().getColor(R.color.Color_White));
+			button.setBackgroundColor(layout.getContext().getResources().getColor(R.color.blue08));
 			selected = index;
 //		}
 	}
@@ -189,11 +184,11 @@ public class MShareCrumbController {
 	 */
 	public void unselect() {
 		if (selected >= 0) {
-			Button button = (Button)container.getChildAt(selected);
+			Button button = (Button)layout.getChildAt(selected);
 			if (button != null) {
 				// 如何将button设置成不选中
-				button.setTextColor(container.getContext().getResources().getColor(R.color.Color_Black));
-				button.setBackgroundColor(container.getContext().getResources().getColor(R.color.Color_White));
+				button.setTextColor(layout.getContext().getResources().getColor(R.color.Color_Black));
+				button.setBackgroundColor(layout.getContext().getResources().getColor(R.color.Color_White));
 			}
 			selected = POINTER_DEFAULT;
 		}
@@ -212,10 +207,10 @@ public class MShareCrumbController {
 	 * @return
 	 */
 	private Button getView(int index, String name) {
-		Button button = new Button(container.getContext());
+		Button button = new Button(layout.getContext());
 
-		button.setTextColor(container.getContext().getResources().getColor(R.color.Color_Black));
-		button.setBackgroundColor(container.getContext().getResources().getColor(R.color.Color_White));
+		button.setTextColor(layout.getContext().getResources().getColor(R.color.Color_Black));
+		button.setBackgroundColor(layout.getContext().getResources().getColor(R.color.Color_White));
 
 		button.setTag(index);
 		button.setText(name);
@@ -237,8 +232,11 @@ public class MShareCrumbController {
 			String name = button.getText().toString();
 			unselect();
 			select(selected);
+			
+			fileBrowser.waitForRefresh();
+			
 			if (callback != null) {
-				callback.onCrumbClick(stack[MShareCrumbController.this.selected]);
+				callback.onCrumbClick(stack.get(MShareCrumbController.this.selected));
 			}
 		}
 	}

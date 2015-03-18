@@ -24,14 +24,11 @@
             android:layout_height="wrap_content"
             android:scrollbars="none" 
             >
-            <!-- <include layout="@layout/crumb_container"/> -->
             <LinearLayout
 				android:id="@+id/crumb_container"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:orientation="horizontal"
-				android:weightSum="3" 
-				>
+				android:orientation="horizontal">
 			</LinearLayout>
         </HorizontalScrollView>
     </LinearLayout>

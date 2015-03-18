@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,10 +30,11 @@ import android.widget.Toast;
  * @author HM
  *
  */
-public class MShareFileBrowser extends BroadcastReceiver {
+public class MShareFileBrowser extends LinearLayout {
 	private static final String TAG = MShareFileBrowser.class.getSimpleName();
+
+	private Context context;
 	
-	private Context context = null;
 	// 用于包含文件浏览器的container
 	private ViewGroup container = null;
 	/**
@@ -52,10 +54,6 @@ public class MShareFileBrowser extends BroadcastReceiver {
 	 */
 	private ImageView backButton;
 	/**
-	 * 根目录路径
-	 */
-	private FileBrowserFile rootFile;
-	/**
 	 * 当前显示的内容
 	 */
 	private FileBrowserFile[] currentFiles;
@@ -72,15 +70,29 @@ public class MShareFileBrowser extends BroadcastReceiver {
 	private boolean enable;
 	private boolean isWaitForRefresh = false;
 	
-	public MShareFileBrowser(Context context, ViewGroup container, FileBrowserFile rootFile) {
+	public MShareFileBrowser(Context context, AttributeSet attrs, int defStyleAttr) {
+		super(context, attrs, defStyleAttr);
 		this.context = context;
-		this.container = container;
-		this.rootFile = rootFile;
-		setEnabled(true);
-		init();
+		prepare();
+	}
+
+	public MShareFileBrowser(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		this.context = context;
+		prepare();
+	}
+
+	public MShareFileBrowser(Context context) {
+		super(context);
+		this.context = context;
+		prepare();
 	}
 	
-	private void init() {
+	// 需要手动调用
+	public void prepare() {
+		// 需要调用
+		setEnabled(true);
+		
 		// 文件浏览器布局
 		fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
 		
@@ -88,38 +100,38 @@ public class MShareFileBrowser extends BroadcastReceiver {
 		backButton = (ImageView)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backButton.setOnClickListener(new BackButtonListener());
 		
-		// TODO 使用include标签
+		// 面包屑导航布局
 		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
-		crumbContainer.setWeightSum(3);
-
-		Log.d(TAG, "the crumbContainer weight sum : " + crumbContainer.getWeightSum());
-		
 		// 面包屑导航控制器
-		crumbController = new MShareCrumbController(crumbContainer, rootFile);
+		crumbController = new MShareCrumbController(crumbContainer, this);
 		if (callback != null) {
 			crumbController.setCallback(callback);
 		}
 		
-		// create grid view
+		// 创建GridView
 		gridView = (GridView)(fileBrowserLayout.findViewById(R.id.file_browser_grid_view));
 		gridView.setOnItemLongClickListener(new GridViewItemLongClickListener());
 		gridView.setOnItemClickListener(new GridViewItemClickListener());
 		
-		// GridView container
+		// GridView的容器
 		gridViewContainer = (RelativeLayout)fileBrowserLayout.findViewById(R.id.file_browser_grid_view_container);
-		cover = new LinearLayout(fileBrowserLayout.getContext());
 		
+		// 创建cover
+		cover = new LinearLayout(context);
 		coverLayoutParam = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-		
-		gridViewContainer.addView(cover, coverLayoutParam);
+
+		// fileBrowserLayout中所有的view都处理过后再添加
+		addView(fileBrowserLayout, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 	}
 	
 	/**
-	 * 将会检测SD卡是否可用，当SD卡不可用的时候，将获得null
-	 * @return
+	 * 设置后会等待刷新
+	 * @param file
 	 */
-	public View getView() {
-		return fileBrowserLayout;
+	public void setRootFile(FileBrowserFile file) {
+		crumbController.push(file);
+		crumbController.select(0);
+		waitForRefresh();
 	}
 	
 	/**
@@ -131,7 +143,7 @@ public class MShareFileBrowser extends BroadcastReceiver {
 		return this.enable;
 	}
 	/**
-	 * 设置扩展存储是否可用
+	 * TODO 需要一个机制来设置Activity并不能使用，当扩展存储没有的时候该怎么办？
 	 * @param enable
 	 */
 	public void setEnabled(boolean enable) {
@@ -153,7 +165,6 @@ public class MShareFileBrowser extends BroadcastReceiver {
 			crumbController.clean();
 			// 将GridView中的内容置空
 			files = new FileBrowserFile[0];
-			Toast.makeText(context, "扩展存储不可用", Toast.LENGTH_SHORT).show();
 		} else {
 			// 暂时先放在这里
 			if (isWaitForRefresh) {
@@ -165,7 +176,9 @@ public class MShareFileBrowser extends BroadcastReceiver {
 		this.currentFiles = files;
 		
 		// 新的适配器，用于刷新GridView
-		adapter = new MShareFileAdapter(context, files);
+		
+		// 使用的可能是不合适的Context
+		adapter = new MShareFileAdapter(MShareApp.getAppContext(), files);
 		gridView.setAdapter(adapter);
 		
 		// 设置导航后退按钮的样式，即是否可以被按下
@@ -210,7 +223,7 @@ public class MShareFileBrowser extends BroadcastReceiver {
 			crumbController.setCallback(callback);
 		}
 	}
-
+	
 	/**
 	 * 用于相应GridView中Item的响应事件
 	 */
@@ -232,18 +245,20 @@ public class MShareFileBrowser extends BroadcastReceiver {
 				
 				if (file != null && file.canRead()) { // 文件夹可以打开
 					pushCrumb(file);
-//					refresh();
+					waitForRefresh();
+					if (callback != null) {
+						callback.onItemClick(file);
+					}
 				} else {
 					Log.e(TAG, "文件夹无法访问");
 				}
 			} else {
 				Log.d(TAG, "所点击的是一个文件");
+				if (callback != null) {
+					callback.onItemClick(file);
+				}
 			}
 			
-			// 尝试告知File被点击了，不论是文件还是文件夹
-			if (callback != null) {
-				callback.onItemClick(file);
-			}
 		}
 	}
 	
@@ -276,6 +291,7 @@ public class MShareFileBrowser extends BroadcastReceiver {
 		public void onClick(View v) {
 			Log.v(TAG, "crumb item is clicked");
 			popCrumb();
+			waitForRefresh();
 			if (callback != null) {
 				callback.onBackButtonClick(crumbController.getSelectedFile());
 			}
@@ -283,11 +299,11 @@ public class MShareFileBrowser extends BroadcastReceiver {
 		
 	}
 
+	// TODO 需要修正了
 	/**
 	 * <p>监听扩展存储的状态</p>
 	 * TODO 将来将使用{@link ExternalStorageStatusReceiver}来代替
 	 */
-	@Override
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
 		if (action.equals(Intent.ACTION_MEDIA_REMOVED)) { // 扩展卡被拔出
