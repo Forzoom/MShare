@@ -18,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -52,7 +53,7 @@ public class MShareFileBrowser extends LinearLayout {
 	/**
 	 * 后退按钮
 	 */
-	private ImageView backButton;
+	private ImageButton backButton;
 	/**
 	 * 当前显示的内容
 	 */
@@ -97,7 +98,7 @@ public class MShareFileBrowser extends LinearLayout {
 		fileBrowserLayout = LayoutInflater.from(context).inflate(R.layout.file_browser, container, false);
 		
 		// 设置后退按钮
-		backButton = (ImageView)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
+		backButton = (ImageButton)(fileBrowserLayout.findViewById(R.id.crumb_back_button));
 		backButton.setOnClickListener(new BackButtonListener());
 		
 		// 面包屑导航布局
@@ -118,6 +119,7 @@ public class MShareFileBrowser extends LinearLayout {
 		
 		// 创建cover
 		cover = new LinearLayout(context);
+		cover.setClickable(true);
 		coverLayoutParam = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
 
 		// fileBrowserLayout中所有的view都处理过后再添加
@@ -151,6 +153,10 @@ public class MShareFileBrowser extends LinearLayout {
 	}
 
 	public void waitForRefresh() {
+		if (isWaitForRefresh) {
+			Log.e(TAG, "is already waiting!");
+			return;
+		}
 		gridViewContainer.addView(cover, coverLayoutParam);
 		isWaitForRefresh = true;
 	}
@@ -166,7 +172,7 @@ public class MShareFileBrowser extends LinearLayout {
 			// 将GridView中的内容置空
 			files = new FileBrowserFile[0];
 		} else {
-			// 暂时先放在这里
+			// 除去cover
 			if (isWaitForRefresh) {
 				gridViewContainer.removeView(cover);
 			}
@@ -290,6 +296,12 @@ public class MShareFileBrowser extends LinearLayout {
 		@Override
 		public void onClick(View v) {
 			Log.v(TAG, "crumb item is clicked");
+			
+			if (!crumbController.canPop()) {
+				Log.d(TAG, "cannot pop");
+				return;
+			}
+			
 			popCrumb();
 			waitForRefresh();
 			if (callback != null) {

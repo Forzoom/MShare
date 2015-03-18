@@ -93,11 +93,7 @@ public class MShareCrumbController {
 	 * @return
 	 */
 	public boolean canPopUseless() {
-		if (selected >= 0) {
-			return true;
-		} else {
-			return false;
-		}
+		return selected > 0;
 	}
 	
 	/**

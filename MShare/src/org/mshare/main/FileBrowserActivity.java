@@ -30,8 +30,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		// ¸ùÎÄ¼þ
 		LocalBrowserFile rootFile = new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath());
-		fileBrowser.setRootFile(rootFile);
-		fileBrowser.refreshGridView(listFiles(rootFile));
+//		fileBrowser.setRootFile(rootFile);
+//		fileBrowser.refreshGridView(listFiles(rootFile));
 		
 		// ×¢²áContextMenu
 		GridView gridView = fileBrowser.getGridView();
