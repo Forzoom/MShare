@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.mshare.main.MShareApp;
 import org.mshare.main.R;
 import org.mshare.main.R.drawable;
 import org.mshare.main.R.id;
@@ -24,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
@@ -33,8 +35,7 @@ import android.widget.TextView;
 public class MShareFileAdapter extends BaseAdapter {
 	private static final String TAG = MShareFileAdapter.class.getSimpleName();
 	
-	// 上下文对象
-	private Context context = null;
+	private Context context;
 	// 所显示的文件数组
 	private FileBrowserFile[] files = null;
 	// 所有图标
@@ -46,37 +47,37 @@ public class MShareFileAdapter extends BaseAdapter {
 		super();
 		this.context = context;
 		this.files = files;
-		initDrawable(context);
+		initDrawable();
 	}
 	
 	/**
 	 * 初始化所有图标
 	 */
-	private static void initDrawable(Context context) {
+	private static void initDrawable() {
 		if (DRAWABLE_PREPARED) {
 			Log.d(TAG, "drawables have already prepared, do nothing");
 			return;
 		}
 		
 		// 音乐文件
-		DRAWABLES.put(".mp3", getResourceDrawable(context, R.drawable.music));
-		DRAWABLES.put(".wav", getResourceDrawable(context, R.drawable.music));
-		DRAWABLES.put(".wma", getResourceDrawable(context, R.drawable.music));
-		DRAWABLES.put(".aac", getResourceDrawable(context, R.drawable.music));
+		DRAWABLES.put(".mp3", getResourceDrawable(R.drawable.music));
+		DRAWABLES.put(".wav", getResourceDrawable(R.drawable.music));
+		DRAWABLES.put(".wma", getResourceDrawable(R.drawable.music));
+		DRAWABLES.put(".aac", getResourceDrawable(R.drawable.music));
 		
 		// 工作文件
-		DRAWABLES.put(".pdf", getResourceDrawable(context, R.drawable.pdf));
-		DRAWABLES.put(".doc", getResourceDrawable(context, R.drawable.doc));
-		DRAWABLES.put(".ppt", getResourceDrawable(context, R.drawable.ppt));
+		DRAWABLES.put(".pdf", getResourceDrawable(R.drawable.pdf));
+		DRAWABLES.put(".doc", getResourceDrawable(R.drawable.doc));
+		DRAWABLES.put(".ppt", getResourceDrawable(R.drawable.ppt));
 		
 		// 文本文件
-		DRAWABLES.put(".txt", getResourceDrawable(context, R.drawable.txt));
-		DRAWABLES.put(".xml", getResourceDrawable(context, R.drawable.xml));
+		DRAWABLES.put(".txt", getResourceDrawable(R.drawable.txt));
+		DRAWABLES.put(".xml", getResourceDrawable(R.drawable.xml));
 		
 		// 默认,所有其他的文件
-		DRAWABLES.put("file", getResourceDrawable(context, R.drawable.all));
+		DRAWABLES.put("file", getResourceDrawable(R.drawable.all));
 		// 文件夹
-		DRAWABLES.put("directory", getResourceDrawable(context, R.drawable.folder));
+		DRAWABLES.put("directory", getResourceDrawable(R.drawable.folder));
 		
 		Log.d(TAG, "drawables have already prepared");
 		// set the flag to true
@@ -86,8 +87,8 @@ public class MShareFileAdapter extends BaseAdapter {
 	 * 用于获得资源文件中的Drawable
 	 * @return
 	 */
-	private static Drawable getResourceDrawable(Context context, int resId) {
-		Drawable drawable = context.getResources().getDrawable(resId);
+	private static Drawable getResourceDrawable(int resId) {
+		Drawable drawable = MShareApp.getAppContext().getResources().getDrawable(resId);
 		drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
 		Log.d(TAG, "get drawable");
 		return drawable;

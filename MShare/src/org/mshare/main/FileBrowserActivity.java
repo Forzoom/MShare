@@ -22,34 +22,26 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.local_file_browser_activity);
 		
-		LocalBrowserFile rootFile = new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath());
-		fileBrowser = new MShareFileBrowser(this, null, rootFile);
-		fileBrowser.refreshGridView(listFiles(rootFile));
+		// 获得文件浏览器并设置回调函数
+		fileBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
 		fileBrowser.setCallback(this);
-		View fileBrowserView = fileBrowser.getView();
-		GridView gridView = fileBrowser.getGridView();
 		
+		// 根文件
+		LocalBrowserFile rootFile = new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath());
+		fileBrowser.setRootFile(rootFile);
+		fileBrowser.refreshGridView(listFiles(rootFile));
+		
+		// 注册ContextMenu
+		GridView gridView = fileBrowser.getGridView();
 		registerForContextMenu(gridView);
 		
-		setContentView(fileBrowserView);
 	}
 	
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v,
-			ContextMenuInfo menuInfo) {
-		
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		menu.add(0, 0, 0, "测试");
-		
-//		int position = ((GridView)v).getSelected
-
-		int position = ((GridView)v).getSelectedItemPosition();
-		Log.d(TAG, "the selected position : " + position);
-		
-		if (position != -1) {
-			String path = fileBrowser.getCurrentFiles()[position].getAbsolutePath();
-			Log.d(TAG, "selected path : " + path);
-		}
 		
 		super.onCreateContextMenu(menu, v, menuInfo);
 	}
