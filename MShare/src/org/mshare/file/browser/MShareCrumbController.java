@@ -120,7 +120,12 @@ public class MShareCrumbController {
 		
 		// 创建button
 		Button button = getView(index, file.getName());
-		container.addView(button, index);
+		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT);
+		params.weight = 1;
+		
+		Log.d(TAG, "detect the container weight sum : " + container.getWeightSum());
+		
+		container.addView(button, index, params);
 		stack[index] = file;
 		// 设置top
 		top = index;
@@ -174,7 +179,8 @@ public class MShareCrumbController {
 			Log.v(TAG, "index :" + index);
 			Button button = (Button)container.getChildAt(index);
 			// 将Button设置为选中
-			button.setBackgroundResource(R.drawable.crumbs_crumb_button_pressed);
+			button.setTextColor(container.getContext().getResources().getColor(R.color.Color_White));
+			button.setBackgroundColor(container.getContext().getResources().getColor(R.color.blue08));
 			selected = index;
 //		}
 	}
@@ -186,7 +192,8 @@ public class MShareCrumbController {
 			Button button = (Button)container.getChildAt(selected);
 			if (button != null) {
 				// 如何将button设置成不选中
-				button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
+				button.setTextColor(container.getContext().getResources().getColor(R.color.Color_Black));
+				button.setBackgroundColor(container.getContext().getResources().getColor(R.color.Color_White));
 			}
 			selected = POINTER_DEFAULT;
 		}
@@ -206,14 +213,13 @@ public class MShareCrumbController {
 	 */
 	private Button getView(int index, String name) {
 		Button button = new Button(container.getContext());
-		
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		
-		button.setLayoutParams(params);
-		button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
-		
+
+		button.setTextColor(container.getContext().getResources().getColor(R.color.Color_Black));
+		button.setBackgroundColor(container.getContext().getResources().getColor(R.color.Color_White));
+
 		button.setTag(index);
 		button.setText(name);
+		button.setSingleLine(true);
 		button.setOnClickListener(new OnClickListener());
 		return button;
 	}

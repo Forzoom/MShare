@@ -1,5 +1,9 @@
 package org.mshare.ftp.server;
 
+import org.mshare.main.MShareApp;
+
+import android.content.Context;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class CmdNINA extends FtpCmd {
@@ -12,7 +16,16 @@ public class CmdNINA extends FtpCmd {
 	@Override
 	public void run() {
 		Log.d(TAG, "CmdNINA executing");
+		
+		Context context = MShareApp.getAppContext();
+		
+		// 获得配置文件的内容
+		String nickName = PreferenceManager.getDefaultSharedPreferences(context).getString(FsSettings.KEY_NICKNAME, FsSettings.VALUE_NICKNAME_DEFAULT);
+		
+		// 如何在没有设置的情况下获得用户的名称
+				
 		sessionThread.writeString("211 " + "" + "/r/n");
+		
 		Log.d(TAG, "CmdNINA finished");
 	}
 

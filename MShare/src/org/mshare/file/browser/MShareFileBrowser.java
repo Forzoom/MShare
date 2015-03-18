@@ -90,6 +90,9 @@ public class MShareFileBrowser extends BroadcastReceiver {
 		
 		// TODO 使用include标签
 		LinearLayout crumbContainer = (LinearLayout)(fileBrowserLayout.findViewById(R.id.crumb_container));
+		crumbContainer.setWeightSum(3);
+
+		Log.d(TAG, "the crumbContainer weight sum : " + crumbContainer.getWeightSum());
 		
 		// 面包屑导航控制器
 		crumbController = new MShareCrumbController(crumbContainer, rootFile);

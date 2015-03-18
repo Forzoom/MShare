@@ -23,7 +23,10 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		fileBrowser = new MShareFileBrowser(this, null, new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath()));
+		LocalBrowserFile rootFile = new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath());
+		fileBrowser = new MShareFileBrowser(this, null, rootFile);
+		fileBrowser.refreshGridView(listFiles(rootFile));
+		fileBrowser.setCallback(this);
 		View fileBrowserView = fileBrowser.getView();
 		GridView gridView = fileBrowser.getGridView();
 		
@@ -53,24 +56,26 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 
 	@Override
 	public void onCrumbClick(FileBrowserFile file) {
+		Log.d(TAG, "onCrumbClick");
 		fileBrowser.refreshGridView(listFiles(file));
 	}
 
 	@Override
 	public void onBackButtonClick(FileBrowserFile file) {
+		Log.d(TAG, "onBackButtonClick");
 		fileBrowser.refreshGridView(listFiles(file));
 	}
 
 	@Override
 	public void onItemClick(FileBrowserFile file) {
-		// TODO Auto-generated method stub
-		
+		Log.d(TAG, "onItemClick");
+		fileBrowser.refreshGridView(listFiles(file));
 	}
 
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
-		// TODO Auto-generated method stub
-		
+		Log.d(TAG, "onItemLongClick");
+		fileBrowser.refreshGridView(listFiles(file));
 	}
 	
 	/**
