@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mshare.file.browser.FileBrowserFile;
+import org.mshare.file.browser.LocalBrowserFile;
+import org.mshare.file.browser.MShareFileBrowser;
 import org.mshare.main.UploadFileChooserAdapter.FileInfo;
 import it.sauronsoftware.ftp4j.FTPClient;
 import it.sauronsoftware.ftp4j.FTPDataTransferListener;
@@ -96,6 +99,8 @@ public class FtpFileManage extends Activity{
 	private String mFTPUser ;
 	private String mFTPPassword ;
 	
+	private String rootRemotePath;
+	
 	private static final int MAX_THREAD_NUMBER = 5;
 	private static final int MAX_DAMEON_TIME_WAIT = 2 * 1000; // millisecond
 	/** 
@@ -129,17 +134,20 @@ public class FtpFileManage extends Activity{
 	private static final int DIALOG_RENAME = MENU_OPTIONS_BASE + 41;
 	private static final int DIALOG_FTP_LOGIN = MENU_OPTIONS_BASE + 42;
 
+	private MShareFileBrowser remoteBrowser;
 	
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		initView();
+		//原来的远程文件浏览
+//		setContentView(R.layout.activity_main);
+		//原来的远程文件浏览
+//		initView();
 		Intent intent = getIntent(); 
 //		mFileList = (List<FTPFile>) intent.getSerializableExtra("mFileList");//?
 //		mCurrentPWD = (String) intent.getSerializableExtra("mCurrentPWD");
 //		Log.v(TAG, "测试"+mFileList.toString());
-		
-		registerForContextMenu(mGridFile);
+		//原来的远程文件浏览
+//		registerForContextMenu(mGridFile);
 		
 //		if (mAdapter == null) {
 //			mAdapter = new FtpFileAdapter(this, mFileList);
@@ -162,6 +170,8 @@ public class FtpFileManage extends Activity{
 		executeConnectRequest();
 	}
 	
+	/*
+	  原来的远程文件浏览
 	private void initView() {
 		
 		Button mButton = (Button) findViewById(R.id.preFolder);
@@ -227,6 +237,8 @@ public class FtpFileManage extends Activity{
 
 				});
 		
+		
+		
 //		mListView.setOnKeyListener(new OnKeyListener() {
 //			
 //			@Override
@@ -244,7 +256,7 @@ public class FtpFileManage extends Activity{
 //			}
 //		});
 	}
-	
+	*/
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
@@ -416,6 +428,13 @@ public class FtpFileManage extends Activity{
 					mDameonThread.setDaemon(true);
 					mDameonThread.start();
 				}
+				//由于连接之后才能获得远程文件的根文件，不知道在什么地方填充view，传入的根文件导致错误
+				View fileBrowserView = remoteBrowser.getView();
+				GridView gridView = remoteBrowser.getGridView();
+				
+				registerForContextMenu(gridView);
+				
+				setContentView(fileBrowserView);
 				executeLISTRequest();
 				break;
 			case MSG_CMD_CONNECT_FAILED:
@@ -638,6 +657,14 @@ public class FtpFileManage extends Activity{
 					}
 				}
 				mFTPClient.login(mFTPUser, mFTPPassword);
+				rootRemotePath = mFTPClient.currentDirectory();
+				//远程文件的根文件
+				FTPFile rootRemoteFile = new FTPFile();
+				rootRemoteFile.setAbsolutePath(rootRemotePath);
+				rootRemoteFile.setReadable(true);
+				rootRemoteFile.setWriteable(false);
+				//初始化远程文件浏览器
+				remoteBrowser = new MShareFileBrowser(FtpFileManage.this, null, rootRemoteFile);
 				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);
 			}catch (IllegalStateException illegalEx) {
 				illegalEx.printStackTrace();
