@@ -48,7 +48,7 @@ public class MShareCrumbController {
 	 */
 	private LinearLayout container;
 	// 面包屑被点击时的回调函数
-	private OnCrumbClickListener listener;
+	private FileBrowserCallback callback;
 	
 	public MShareCrumbController(LinearLayout container, FileBrowserFile rootFile) {
 		// 生成栈
@@ -120,7 +120,12 @@ public class MShareCrumbController {
 		
 		// 创建button
 		Button button = getView(index, file.getName());
-		container.addView(button, index);
+		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT);
+		params.weight = 1;
+		
+		Log.d(TAG, "detect the container weight sum : " + container.getWeightSum());
+		
+		container.addView(button, index, params);
 		stack[index] = file;
 		// 设置top
 		top = index;
@@ -174,7 +179,8 @@ public class MShareCrumbController {
 			Log.v(TAG, "index :" + index);
 			Button button = (Button)container.getChildAt(index);
 			// 将Button设置为选中
-			button.setBackgroundResource(R.drawable.crumbs_crumb_button_pressed);
+			button.setTextColor(container.getContext().getResources().getColor(R.color.Color_White));
+			button.setBackgroundColor(container.getContext().getResources().getColor(R.color.blue08));
 			selected = index;
 //		}
 	}
@@ -186,7 +192,8 @@ public class MShareCrumbController {
 			Button button = (Button)container.getChildAt(selected);
 			if (button != null) {
 				// 如何将button设置成不选中
-				button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
+				button.setTextColor(container.getContext().getResources().getColor(R.color.Color_Black));
+				button.setBackgroundColor(container.getContext().getResources().getColor(R.color.Color_White));
 			}
 			selected = POINTER_DEFAULT;
 		}
@@ -194,10 +201,10 @@ public class MShareCrumbController {
 	
 	/**
 	 * 设置当crumb的button被点击的时候的回调函数
-	 * @param listener 所设置的回调函数，会顶替上一个回调内容
+	 * @param callback 所设置的回调函数，会顶替上一个回调内容
 	 */
-	public void setOnCrumbClickListener(OnCrumbClickListener listener) {
-		this.listener = listener;
+	public void setCallback(FileBrowserCallback callback) {
+		this.callback = callback;
 	}
 	
 	/**
@@ -206,28 +213,15 @@ public class MShareCrumbController {
 	 */
 	private Button getView(int index, String name) {
 		Button button = new Button(container.getContext());
-		
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		
-		button.setLayoutParams(params);
-		button.setBackgroundResource(R.drawable.crumbs_crumb_button_normal);
-		
+
+		button.setTextColor(container.getContext().getResources().getColor(R.color.Color_Black));
+		button.setBackgroundColor(container.getContext().getResources().getColor(R.color.Color_White));
+
 		button.setTag(index);
 		button.setText(name);
+		button.setSingleLine(true);
 		button.setOnClickListener(new OnClickListener());
 		return button;
-	}
-	
-	/**
-	 * 使用者所实现监听器类，来执行回调内容
-	 */
-	public interface OnCrumbClickListener {
-		/**
-		 * 当有button被点击的时候，将调用该回调函数
-		 * @param index
-		 * @param name
-		 */
-		public void onCrumbClick(int selected, String name);
 	}
 	
 	/**
@@ -243,8 +237,8 @@ public class MShareCrumbController {
 			String name = button.getText().toString();
 			unselect();
 			select(selected);
-			if (listener != null) {
-				listener.onCrumbClick(selected, name);
+			if (callback != null) {
+				callback.onCrumbClick(stack[MShareCrumbController.this.selected]);
 			}
 		}
 	}

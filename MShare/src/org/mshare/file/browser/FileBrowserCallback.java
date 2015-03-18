@@ -2,7 +2,9 @@ package org.mshare.file.browser;
 
 public interface FileBrowserCallback {
 
-	public void onBackButtonClick();
+	public void onCrumbClick(FileBrowserFile file);
+	
+	public void onBackButtonClick(FileBrowserFile file);
 	
 	public void onItemClick(FileBrowserFile file);
 	

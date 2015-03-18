@@ -49,7 +49,7 @@ public class QRCodeConnectActivity extends Activity {
 		// TODO 当没有检测到content的时候，该怎么办
 		// 获得通过Intent发送的内容
 		Intent intent = getIntent();
-		ConnectInfo contents = (ConnectInfo)intent.getParcelableExtra(EXTRA_CONTENT);
+		ConnectInfo connectInfo = (ConnectInfo)intent.getParcelableExtra(EXTRA_CONTENT);
 		
 		// 选择所显示的二维码的宽和高s
 		WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
@@ -62,7 +62,7 @@ public class QRCodeConnectActivity extends Activity {
 		smallerDimension = smallerDimension * 7 / 8;
 		
 		// 设置所需要编码的内容
-		String contentsToEncode = contents.toString();
+		String contentsToEncode = connectInfo.toString();
 		Map<EncodeHintType,Object> hints = new EnumMap<EncodeHintType,Object>(EncodeHintType.class);  
 		hints.put(EncodeHintType.CHARACTER_SET, "GBK");
 		BitMatrix result = null;

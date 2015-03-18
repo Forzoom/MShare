@@ -44,6 +44,8 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 	private DecodeThread decodeThread;
 	private ViewfinderView viewfinderView;
 	
+	public static final String EXTRA_CONNECT_INFO = "connect_info";
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

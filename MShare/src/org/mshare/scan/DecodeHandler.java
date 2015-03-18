@@ -131,7 +131,7 @@ final class DecodeHandler extends Handler {
 		    	// TODO 如果使用ConnectInfo尝试parse失败的情况下，将再次尝试解码
 		    	// TODO 如何保证其一定是被用startActivityForResult调用的呢?
 		    	Intent intent = new Intent();
-		    	intent.putExtra("result", result);
+		    	intent.putExtra(ScanActivity.EXTRA_CONNECT_INFO, ConnectInfo.parse(result));
 		    	activity.setResult(Activity.RESULT_OK, intent);
 		    	// 结束ScanActivity
 		    	activity.finish();

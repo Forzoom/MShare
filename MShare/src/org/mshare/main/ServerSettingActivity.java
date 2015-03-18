@@ -14,9 +14,7 @@ import android.widget.Toast;
 
 public class ServerSettingActivity extends Activity {
 
-	private EditText ftpUsername;
-	private EditText ftpPassword;
-	private EditText ftpPort;
+	// 可以考虑添加电池相关内容设定
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

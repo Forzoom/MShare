@@ -64,6 +64,9 @@ public class FsSettings {
     public static final String KEY_UUID = "uuid";
     public static final String VALUE_UUID_DEFAULT = "";
     
+    public static final String KEY_NICKNAME = "nickname";
+    public static final String VALUE_NICKNAME_DEFAULT = "nickname";
+    
     /**
      * 获得用户名称
      * @return

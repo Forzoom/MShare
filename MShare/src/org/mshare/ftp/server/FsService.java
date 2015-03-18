@@ -44,10 +44,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.mshare.ftp.server.AccountFactory.Token;
@@ -124,7 +126,20 @@ public class FsService extends Service implements Runnable {
             }
         }
 
-     // 创建uuid
+        // 临时Context
+        Context context = MShareApp.getAppContext();
+        
+        // 创建nickname
+        SharedPreferences defaultSp = PreferenceManager.getDefaultSharedPreferences(context);
+        String nickName = defaultSp.getString(FsSettings.KEY_NICKNAME, FsSettings.VALUE_NICKNAME_DEFAULT);
+        if (nickName.equals("")) {// 当前nickName仍是默认的""
+        	Editor editor = defaultSp.edit();
+        	// 修改为设备名称
+        	editor.putString(FsSettings.KEY_NICKNAME, Build.MODEL);
+        	editor.commit();
+        }
+        
+        // 创建uuid
         if (FsSettings.getUUID().equals(FsSettings.VALUE_UUID_DEFAULT)) {
         	String uuid = UUID.randomUUID().toString();
         	FsSettings.setUUID(uuid);
