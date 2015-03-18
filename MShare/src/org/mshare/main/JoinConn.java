@@ -147,14 +147,11 @@ public class JoinConn extends Activity {
 		//当requestCode、resultCode同时为0是，也就是处理特定结果的结果
 		
 		if(requestCode == 0 && resultCode == Activity.RESULT_OK){
-			Bundle data = intent.getExtras();
-//			String
+
 //			mFTPPort = Integer.parseInt(editPort.getText().toString().trim());
 //			mFTPHost = editHost.getText().toString().trim();
 //			mFTPUser = editUser.getText().toString().trim();
 //			mFTPPassword = editPasword.getText().toString().trim();
-			Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
-					+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
 			
 			if (intent == null) {
 				Log.e(TAG, "the intent is null, stop!");
@@ -163,8 +160,18 @@ public class JoinConn extends Activity {
 			
 			ConnectInfo connectInfo = ConnectInfo.parse(intent.getStringExtra("result"));
 			
+			String port = connectInfo.getPort();
 			String host = connectInfo.getHost();
+			String username = connectInfo.getUsername();
+			String password = connectInfo.getPassword();
 			
+			mFTPPort = Integer.parseInt(port.trim());
+			mFTPHost = host.trim();
+			mFTPUser = username.trim();
+			mFTPPassword = password.trim();
+			
+			Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
+					+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
 			// 此处可执行登录处理
 			executeConnectRequest();
 		}
