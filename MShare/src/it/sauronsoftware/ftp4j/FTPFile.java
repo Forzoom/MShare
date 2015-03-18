@@ -238,12 +238,6 @@ public class FTPFile implements Serializable, FileBrowserFile {
 	}
 
 	@Override
-	public FileBrowserFile[] listFiles() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean canRead() {
 		// TODO Auto-generated method stub
 		return readable;

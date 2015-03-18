@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mshare.file.browser.FileBrowserCallback;
 import org.mshare.file.browser.FileBrowserFile;
 import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
@@ -54,7 +55,7 @@ import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
-public class FtpFileManage extends Activity{
+public class FtpFileManage extends Activity implements FileBrowserCallback{
 	
 	private static String TAG = FtpMainActivity.class.getName();
 	
@@ -418,6 +419,7 @@ public class FtpFileManage extends Activity{
 
 		@Override
 		public void handleMessage(Message msg) {
+			
 			logv("mHandler --->" + msg.what);
 			switch (msg.what) {
 			case MSG_CMD_CONNECT_OK:
@@ -428,12 +430,9 @@ public class FtpFileManage extends Activity{
 					mDameonThread.setDaemon(true);
 					mDameonThread.start();
 				}
-				//由于连接之后才能获得远程文件的根文件，不知道在什么地方填充view，传入的根文件导致错误
 				View fileBrowserView = remoteBrowser.getView();
 				GridView gridView = remoteBrowser.getGridView();
-				
 				registerForContextMenu(gridView);
-				
 				setContentView(fileBrowserView);
 				executeLISTRequest();
 				break;
@@ -443,7 +442,11 @@ public class FtpFileManage extends Activity{
 				break;
 			case MSG_CMD_LIST_OK:
 				toast("请求数据成功。");
-				buildOrUpdateDataset();
+				if(msg.obj != null){
+					FTPFile[] ftpFiles = (FTPFile[]) msg.obj;
+					remoteBrowser.refreshGridView(ftpFiles);
+				}
+//				buildOrUpdateDataset();
 				break;
 			case MSG_CMD_LIST_FAILED:
 				toast("请求数据失败。");
@@ -492,11 +495,11 @@ public class FtpFileManage extends Activity{
 	};
 	
 	private void buildOrUpdateDataset() {
-		if (mAdapter == null) {
-			mAdapter = new FtpFileAdapter(this, mFileList);
-			mGridFile.setAdapter(mAdapter);
-		}
-		mAdapter.notifyDataSetChanged();
+//		if (mAdapter == null) {
+//			mAdapter = new FtpFileAdapter(this, mFileList);
+//			mGridFile.setAdapter(mAdapter);
+//		}
+//		mAdapter.notifyDataSetChanged();
 	}
 
 	private void executeConnectRequest() {
@@ -665,6 +668,7 @@ public class FtpFileManage extends Activity{
 				rootRemoteFile.setWriteable(false);
 				//初始化远程文件浏览器
 				remoteBrowser = new MShareFileBrowser(FtpFileManage.this, null, rootRemoteFile);
+				remoteBrowser.setCallback(FtpFileManage.this);
 				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);
 			}catch (IllegalStateException illegalEx) {
 				illegalEx.printStackTrace();
@@ -721,12 +725,15 @@ public class FtpFileManage extends Activity{
 				mCurrentPWD = mFTPClient.currentDirectory();
 				FTPFile[] ftpFiles = mFTPClient.list();
 				logv(" Request Size  : " + ftpFiles.length);
-				synchronized (mLock) {
-					mFileList.clear();
-					mFileList.addAll(Arrays.asList(ftpFiles));
-				}
-				mHandler.sendEmptyMessage(MSG_CMD_LIST_OK);
-
+//				synchronized (mLock) {
+//					mFileList.clear();
+//					mFileList.addAll(Arrays.asList(ftpFiles));
+//				}
+				
+//				remoteBrowser.setCallback(this);
+//				mHandler.sendEmptyMessage(MSG_CMD_LIST_OK);
+				Message msg = mHandler.obtainMessage(MSG_CMD_LIST_OK, ftpFiles);
+				msg.sendToTarget();
 			} catch (Exception ex) {
 				mHandler.sendEmptyMessage(MSG_CMD_LIST_FAILED);
 				ex.printStackTrace();
@@ -1361,6 +1368,45 @@ public class FtpFileManage extends Activity{
 	            type = MIME_MapTable[i][1];  
 	    }         
 	    return type;  
+	}
+
+	@Override
+	public void onCrumbClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		Log.d(TAG, "onCrumbClick");
+		String path = file.getAbsolutePath();
+		executeCWDRequest(path);
+	}
+
+	@Override
+	public void onBackButtonClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		executeCDURequest();
+	}
+
+	@Override
+	public void onItemClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		String path = file.getAbsolutePath();
+		Log.v("Path", path);
+		if (file.isDirectory()) {
+			executeCWDRequest(path);
+		}else if(file.isFile()){
+			String fileName = file.getName();
+			if(getMIMEType(fileName).startsWith("video")){
+				showDialog(DIALOG_LOAD);
+				executeOpenRequest();
+			}else{
+				showDialog(DIALOG_LOAD);
+				new CmdOPEN().execute();
+			}
+		}
+	}
+
+	@Override
+	public void onItemLongClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		
 	}
 }
 
