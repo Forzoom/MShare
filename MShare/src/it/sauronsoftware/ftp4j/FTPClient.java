@@ -3429,8 +3429,7 @@ public class FTPClient {
 					} else if (tp == TYPE_BINARY) {
 						byte[] buffer = new byte[SEND_AND_RECEIVE_BUFFER_SIZE];
 						int l;
-						while ((l = dataTransferInputStream.read(buffer, 0,
-								buffer.length)) != -1) {
+						while ((l = dataTransferInputStream.read(buffer, 0, buffer.length)) != -1) {
 							outputStream.write(buffer, 0, l);
 							if (listener != null) {
 								listener.transferred(l);
@@ -3448,8 +3447,7 @@ public class FTPClient {
 							if (listener != null) {
 								listener.failed();
 							}
-							throw new FTPDataTransferException(
-									"I/O error in data transfer", e);
+							throw new FTPDataTransferException("I/O error in data transfer", e);
 						}
 					}
 				} finally {
@@ -3560,8 +3558,7 @@ public class FTPClient {
 	/**
 	 * This method detects the type for a file transfer.
 	 */
-	private int detectType(String fileName) throws IOException,
-			FTPIllegalReplyException, FTPException {
+	private int detectType(String fileName) throws IOException, FTPIllegalReplyException, FTPException {
 		int start = fileName.lastIndexOf('.') + 1;
 		int stop = fileName.length();
 		if (start > 0 && start < stop - 1) {

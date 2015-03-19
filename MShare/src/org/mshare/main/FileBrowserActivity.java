@@ -27,15 +27,13 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		// 获得文件浏览器并设置回调函数
 		fileBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
 		fileBrowser.setCallback(this);
+		// 允许使用多选
+		fileBrowser.setMultiSelectEnabled(true);
 		
 		// 根文件
 		LocalBrowserFile rootFile = new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath());
 		fileBrowser.setRootFile(rootFile);
 		fileBrowser.refreshGridView(listFiles(rootFile));
-		
-		// 注册ContextMenu
-		GridView gridView = fileBrowser.getGridView();
-		registerForContextMenu(gridView);
 		
 	}
 	
@@ -67,6 +65,17 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
 		Log.d(TAG, "onItemLongClick");
+		fileBrowser.refreshGridView(listFiles(file));
+	}
+
+	@Override
+	public void onGridViewClick() {
+		// 尝试退出
+		fileBrowser.quitMultiSelectMode();
+	}
+	
+	@Override
+	public void onRefreshButtonClick(FileBrowserFile file) {
 		fileBrowser.refreshGridView(listFiles(file));
 	}
 	
@@ -103,4 +112,5 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		return ret;
 	}
+
 }

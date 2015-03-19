@@ -44,8 +44,7 @@ import java.util.StringTokenizer;
  * 
  * @author Carlo Pelliccia
  */
-public class DefaultTextualExtensionRecognizer extends
-		ParametricTextualExtensionRecognizer {
+public class DefaultTextualExtensionRecognizer extends ParametricTextualExtensionRecognizer {
 
 	/**
 	 * Lock object.

@@ -40,13 +40,18 @@ public class MShareFileAdapter extends BaseAdapter {
 	private FileBrowserFile[] files = null;
 	// 所有图标
 	private static HashMap<String, Drawable> DRAWABLES = new HashMap<String, Drawable>();
+	// 所有已选择内容图标
+	private static HashMap<String, Drawable> DRAWABLES_SELECTED = new HashMap<String, Drawable>();
 	// 所有图标是否加载完毕
 	private static boolean DRAWABLE_PREPARED = false;
+	// 用于保存ItemContainer
+	private ItemContainer[] itemContainers;
 	
 	public MShareFileAdapter(Context context, FileBrowserFile[] files) {
 		super();
 		this.context = context;
 		this.files = files;
+		this.itemContainers = new ItemContainer[files.length];
 		initDrawable();
 	}
 	
@@ -78,6 +83,26 @@ public class MShareFileAdapter extends BaseAdapter {
 		DRAWABLES.put("file", getResourceDrawable(R.drawable.all));
 		// 文件夹
 		DRAWABLES.put("directory", getResourceDrawable(R.drawable.folder));
+		
+		// 音乐文件
+		DRAWABLES_SELECTED.put(".mp3", getResourceDrawable(R.drawable.music_selected));
+		DRAWABLES_SELECTED.put(".wav", getResourceDrawable(R.drawable.music_selected));
+		DRAWABLES_SELECTED.put(".wma", getResourceDrawable(R.drawable.music_selected));
+		DRAWABLES_SELECTED.put(".aac", getResourceDrawable(R.drawable.music_selected));
+		
+		// 工作文件
+		DRAWABLES_SELECTED.put(".pdf", getResourceDrawable(R.drawable.pdf));
+		DRAWABLES_SELECTED.put(".doc", getResourceDrawable(R.drawable.doc));
+		DRAWABLES_SELECTED.put(".ppt", getResourceDrawable(R.drawable.ppt));
+		
+		// 文本文件
+		DRAWABLES_SELECTED.put(".txt", getResourceDrawable(R.drawable.txt));
+		DRAWABLES_SELECTED.put(".xml", getResourceDrawable(R.drawable.xml));
+		
+		// 默认,所有其他的文件
+		DRAWABLES_SELECTED.put("file", getResourceDrawable(R.drawable.all_selected));
+		// 文件夹
+		DRAWABLES_SELECTED.put("directory", getResourceDrawable(R.drawable.folder_selected));
 		
 		Log.d(TAG, "drawables have already prepared");
 		// set the flag to true
@@ -113,17 +138,27 @@ public class MShareFileAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 
 		if (convertView != null) {
-			ItemContainer item = (ItemContainer)convertView.getTag();
-			if (item != null) {
-				// 更新内容
-				item.file = files[position];
-				item.fileName.setText(files[position].getName());
-				item.fileIcon.setImageDrawable(getDrawable(item.file));
-			}
+			// TODO 需要测试，是否可以使用？
+			int lastPosition = (Integer)convertView.getTag();
+			// 获得原本的ItemContainer
+			ItemContainer item = itemContainers[lastPosition];
+			
+			// 更新内容
+			item.file = files[position];
+			item.fileName.setText(files[position].getName());
+			// TODO 在这里的刷新是有问题的
+			item.fileIcon.setImageDrawable(getCommonDrawable(item.file));
+			
+			// 放在新的位置
+			itemContainers[lastPosition] = null;
+			itemContainers[position] = item;
+			
+			// 保存新的position
+			convertView.setTag(position);
 		} else { // 第一次使用的convertView
 			convertView = LayoutInflater.from(context).inflate(R.layout.file_browser_item, null);
 			
-			// create content
+			// 创建ItemContainer
 			ItemContainer item = new ItemContainer();
 			
 			// 设置文件内容和对应的图标
@@ -132,13 +167,26 @@ public class MShareFileAdapter extends BaseAdapter {
 			item.fileName = (TextView)convertView.findViewById(R.id.item_file_name);
 			item.fileName.setTextColor(Color.BLACK);
 			item.fileName.setText(item.file.getName());
-			item.fileIcon.setImageDrawable(getDrawable(item.file));
+			item.fileIcon.setImageDrawable(getCommonDrawable(item.file));
 			
-			// save content
-			convertView.setTag(item);
+			// 保存ItemContainer
+			itemContainers[position] = item;
+			convertView.setTag(position);
 		}
 		
 		return convertView;
+	}
+	
+	public static Drawable getCommonDrawable(FileBrowserFile file) {
+		return getDrawable(file, DRAWABLES);
+	}
+	
+	public static Drawable getUnselectedDrawable(FileBrowserFile file) {
+		return getDrawable(file, DRAWABLES);
+	}
+	
+	public static Drawable getSelectedDrawable(FileBrowserFile file) {
+		return getDrawable(file, DRAWABLES_SELECTED);
 	}
 	
 	/**
@@ -146,7 +194,7 @@ public class MShareFileAdapter extends BaseAdapter {
 	 * @param file
 	 * @return
 	 */
-	private Drawable getDrawable(FileBrowserFile file) {
+	public static Drawable getDrawable(FileBrowserFile file, HashMap<String, Drawable> drawables) {
 		if (file == null) {
 			Log.e(TAG, "file is null");
 			return null;
@@ -156,18 +204,20 @@ public class MShareFileAdapter extends BaseAdapter {
 		
 		if (file.isFile()) {
 			String extname = getExtname(file.getName());
-			if (extname.equals("") || !DRAWABLES.containsKey(extname)) {
-				drawable = DRAWABLES.get("file");
+			if (extname.equals("") || !drawables.containsKey(extname)) {
+				drawable = drawables.get("file");
 			} else {
-				drawable = DRAWABLES.get(extname);
+				drawable = drawables.get(extname);
 			}
 		} else if (file.isDirectory()) {
-			drawable = DRAWABLES.get("directory");
+			drawable = drawables.get("directory");
 		}
 		
 		return drawable; 
 	}
 
+	
+	
 	/**
 	 * 获得文件的扩展名
 	 * @return
@@ -181,7 +231,16 @@ public class MShareFileAdapter extends BaseAdapter {
 			return "";
 		}
 	}
-	
+
+	// 获得ItemContainer
+	public ItemContainer getItemContainers(int position) {
+		if (position < itemContainers.length) {
+			return itemContainers[position];
+		} else {
+			return null;
+		}
+	}
+
 	/**
 	 * GridView中的Item所包含的内容
 	 */
