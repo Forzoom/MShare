@@ -143,8 +143,9 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		setContentView(R.layout.local_file_browser_activity);
 		
 		remoteBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
-		GridView gridView = remoteBrowser.getGridView();
-		registerForContextMenu(gridView);
+		// 允许使用多选
+		remoteBrowser.setMultiSelectEnabled(true);
+
 		//原来的远程文件浏览
 //		setContentView(R.layout.activity_main);
 		//原来的远程文件浏览
@@ -1406,6 +1407,19 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		// TODO Auto-generated method stub
 		selectedFile = (FTPFile) file;
 		return;
+	}
+
+	@Override
+	public void onGridViewClick() {
+		// TODO Auto-generated method stub
+		remoteBrowser.quitMultiSelectMode();
+	}
+
+	@Override
+	public void onRefreshButtonClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		String path = file.getAbsolutePath();
+		executeCWDRequest(path);
 	}
 }
 
