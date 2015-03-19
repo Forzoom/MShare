@@ -76,7 +76,12 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	
 	@Override
 	public void onRefreshButtonClick(FileBrowserFile file) {
-		fileBrowser.refreshGridView(listFiles(file));
+		Log.d(TAG, "onRefreshButtonClick");
+//		fileBrowser.refreshGridView(listFiles(file));
+		
+		// 测试获得所有被选择的file的内容
+//		fileBrowser.getSelectFile();
+		fileBrowser.quitMultiSelectMode();
 	}
 	
 	/**

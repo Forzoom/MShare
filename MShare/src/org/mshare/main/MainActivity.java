@@ -106,9 +106,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		
 		// 遍历pagerAdapter对象所包含的全部Fragment。
 		// 每个Fragment对应创建一个Tab标签
-		Drawable shareIcon = getResources().getDrawable(R.drawable.share);
 		for (int i = 0; i < pagerAdapter.getCount(); i++) {
-			actionBar.addTab(actionBar.newTab().setText(pagerAdapter.getPageTitle(i)).setIcon(shareIcon).setTabListener(this));
+			actionBar.addTab(actionBar.newTab().setText(pagerAdapter.getPageTitle(i)).setTabListener(this));
 		}
 		
 		// 为ViewPager组件设置FragmentPagerAdapter
