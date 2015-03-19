@@ -353,7 +353,18 @@ public class MShareFileBrowser extends LinearLayout {
 	public void quitMultiSelectMode() {
 		// 当前是多选模式
 		if (this.mode == MODE_MULTI_SELECT) {
+			if (adapter == null) {
+				Log.e(TAG, "something must be wrong, the adapter is null!");
+				return;
+			}
+			
 			// 将当前已经选择的内容设置为Common
+			for (int position = 0; position < multiSelectPosition.length; position++) {
+				if (multiSelectPosition[position]) {
+					ItemContainer item = adapter.getItemContainers(position);
+					item.fileIcon.setImageDrawable(MShareFileAdapter.getCommonDrawable(item.file));
+				}
+			}
 			
 			// 调整mode
 			setMode(MODE_SINGLE_SELECT);
