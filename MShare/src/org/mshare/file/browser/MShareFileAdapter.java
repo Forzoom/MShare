@@ -71,13 +71,13 @@ public class MShareFileAdapter extends BaseAdapter {
 		DRAWABLES.put(".aac", getResourceDrawable(R.drawable.music));
 		
 		// 工作文件
-		DRAWABLES.put(".pdf", getResourceDrawable(R.drawable.pdf));
-		DRAWABLES.put(".doc", getResourceDrawable(R.drawable.doc));
-		DRAWABLES.put(".ppt", getResourceDrawable(R.drawable.ppt));
+//		DRAWABLES.put(".pdf", getResourceDrawable(R.drawable.pdf));
+//		DRAWABLES.put(".doc", getResourceDrawable(R.drawable.doc));
+//		DRAWABLES.put(".ppt", getResourceDrawable(R.drawable.ppt));
 		
 		// 文本文件
-		DRAWABLES.put(".txt", getResourceDrawable(R.drawable.txt));
-		DRAWABLES.put(".xml", getResourceDrawable(R.drawable.xml));
+//		DRAWABLES.put(".txt", getResourceDrawable(R.drawable.txt));
+//		DRAWABLES.put(".xml", getResourceDrawable(R.drawable.xml));
 		
 		// 默认,所有其他的文件
 		DRAWABLES.put("file", getResourceDrawable(R.drawable.all));
@@ -91,13 +91,13 @@ public class MShareFileAdapter extends BaseAdapter {
 		DRAWABLES_SELECTED.put(".aac", getResourceDrawable(R.drawable.music_selected));
 		
 		// 工作文件
-		DRAWABLES_SELECTED.put(".pdf", getResourceDrawable(R.drawable.pdf));
-		DRAWABLES_SELECTED.put(".doc", getResourceDrawable(R.drawable.doc));
-		DRAWABLES_SELECTED.put(".ppt", getResourceDrawable(R.drawable.ppt));
+//		DRAWABLES_SELECTED.put(".pdf", getResourceDrawable(R.drawable.pdf));
+//		DRAWABLES_SELECTED.put(".doc", getResourceDrawable(R.drawable.doc));
+//		DRAWABLES_SELECTED.put(".ppt", getResourceDrawable(R.drawable.ppt));
 		
 		// 文本文件
-		DRAWABLES_SELECTED.put(".txt", getResourceDrawable(R.drawable.txt));
-		DRAWABLES_SELECTED.put(".xml", getResourceDrawable(R.drawable.xml));
+//		DRAWABLES_SELECTED.put(".txt", getResourceDrawable(R.drawable.txt));
+//		DRAWABLES_SELECTED.put(".xml", getResourceDrawable(R.drawable.xml));
 		
 		// 默认,所有其他的文件
 		DRAWABLES_SELECTED.put("file", getResourceDrawable(R.drawable.all_selected));

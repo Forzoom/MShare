@@ -65,7 +65,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
 		Log.d(TAG, "onItemLongClick");
-		fileBrowser.refreshGridView(listFiles(file));
+		// 没有刷新要求
 	}
 
 	@Override
@@ -77,11 +77,17 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	@Override
 	public void onRefreshButtonClick(FileBrowserFile file) {
 		Log.d(TAG, "onRefreshButtonClick");
-//		fileBrowser.refreshGridView(listFiles(file));
+		fileBrowser.refreshGridView(listFiles(file));
 		
-		// 测试获得所有被选择的file的内容
-//		fileBrowser.getSelectFile();
-		fileBrowser.quitMultiSelectMode();
+		// 测试多选
+//		if (fileBrowser.getMode() == MShareFileBrowser.MODE_MULTI_SELECT) {
+//			FileBrowserFile[] files = fileBrowser.getMultiSelectedFiles();
+//			// 测试获得所有被选择的file的内容
+//			for (int i = 0; i < files.length; i++) {
+//				FileBrowserFile selectFile = files[i];
+//				Log.v(TAG, selectFile.getName());
+//			}
+//		}
 	}
 	
 	/**

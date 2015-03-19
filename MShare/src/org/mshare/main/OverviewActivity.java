@@ -1,5 +1,6 @@
 package org.mshare.main;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import org.mshare.ftp.server.FsService;
@@ -19,6 +20,7 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -32,6 +34,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.graphics.drawable.shapes.Shape;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
@@ -50,6 +54,7 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewAnimator;
 import android.widget.ViewFlipper;
 import android.widget.ViewSwitcher;
@@ -364,4 +369,19 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			startActivity(startServerSettingsIntent);
 		}
 	}
+	
+//	WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
+//	
+//	try {
+//		// 用于获得WifiConfiguration
+//		Method getWifiApConfigurationMethod = wm.getClass().getDeclaredMethod("getWifiApConfiguration");
+//		WifiConfiguration config = (WifiConfiguration)getWifiApConfigurationMethod.invoke(wm);
+//		
+//		Method setWifiApEnabledMethod = wm.getClass().getDeclaredMethod("setWifiApEnabled");
+//		setWifiApEnabledMethod.invoke(wm, config, enable);
+//		
+//	} catch (Exception e) {
+//		Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
+//		e.printStackTrace();
+//	}
 }

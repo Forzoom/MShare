@@ -8,7 +8,10 @@ public interface FileBrowserCallback {
 	
 	public void onItemClick(FileBrowserFile file);
 	
-	// 用来获得LongClick的内容
+	/**
+	 * 不要求刷新
+	 * @param file
+	 */
 	public void onItemLongClick(FileBrowserFile file);
 	
 	// 用来指明当前没有file被selected
