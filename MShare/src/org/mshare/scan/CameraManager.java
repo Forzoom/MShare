@@ -34,6 +34,8 @@ import java.io.IOException;
  * implementation encapsulates the steps needed to take preview-sized images, which are used for
  * both preview and decoding.
  *
+ * TODO –Ë“™…Ë÷√auto-focus
+ *
  * @author dswitkin@google.com (Daniel Switkin)
  */
 public final class CameraManager {
