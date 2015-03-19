@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
@@ -48,13 +49,19 @@ public class MShareCrumbController {
 	
 	private MShareFileBrowser fileBrowser;
 	
+	private HorizontalScrollView scrollView;
+	
 	/**
 	 * 
 	 * @param layout
 	 * @param rootFile 存在是因为当rootFile的面包屑被点击的时候，需要相应onCrumbClick事件
 	 */
-	public MShareCrumbController(LinearLayout layout, MShareFileBrowser fileBrowser) {
+	public MShareCrumbController(HorizontalScrollView scrollView, LinearLayout layout, MShareFileBrowser fileBrowser) {
+		
+		Log.d(TAG, scrollView + "");
+		
 		this.fileBrowser = fileBrowser;
+		this.scrollView = scrollView;
 		// 指定container
 		this.layout = layout;
 	}
@@ -110,12 +117,15 @@ public class MShareCrumbController {
 		
 		// 创建button
 		Button button = getView(index, file.getName());
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT);
-		params.weight = 1;
-		
-		Log.d(TAG, "detect the layout weight sum : " + layout.getWeightSum());
+		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		
 		layout.addView(button, index, params);
+
+		Log.d(TAG, "scrollView : " + scrollView.getWidth());
+		Log.d(TAG, "layout width : " + layout.getWidth());
+		// 尝试是否能够获得button的x信息
+		Log.d(TAG, "new button x : " + button.getX() + " and button width : " + button.getWidth());
+		
 		stack.add(index, file);
 		// 设置top
 		top = index;
@@ -131,7 +141,7 @@ public class MShareCrumbController {
 		popUseless();
 
 		int index = getSelected();
-		unselect();
+		unselectCrumb();
 		stack.remove(index);
 		layout.removeViewAt(index);
 		
@@ -163,7 +173,7 @@ public class MShareCrumbController {
 	 * 将index所对应的内容设置为选中的，其他的内容设置为不选中的
 	 * @param index 对应的序列号
 	 */
-	public void select(int index) {
+	public void selectCrumb(int index) {
 		// 要将没有被选中的内容设置为选中的
 //		if (selected != index) {
 			Log.v(TAG, "selected :" + selected);
@@ -178,13 +188,13 @@ public class MShareCrumbController {
 	/**
 	 * 将当前被选中的内容设置为不选中
 	 */
-	public void unselect() {
+	public void unselectCrumb() {
 		if (selected >= 0) {
 			Button button = (Button)layout.getChildAt(selected);
 			if (button != null) {
 				// 如何将button设置成不选中
 				button.setTextColor(layout.getContext().getResources().getColor(R.color.Color_Black));
-				button.setBackgroundColor(layout.getContext().getResources().getColor(R.color.Color_White));
+				button.setBackgroundColor(layout.getContext().getResources().getColor(R.color.color_transparent));
 			}
 			selected = POINTER_DEFAULT;
 		}
@@ -206,7 +216,7 @@ public class MShareCrumbController {
 		Button button = new Button(layout.getContext());
 
 		button.setTextColor(layout.getContext().getResources().getColor(R.color.Color_Black));
-		button.setBackgroundColor(layout.getContext().getResources().getColor(R.color.Color_White));
+		button.setBackgroundColor(layout.getContext().getResources().getColor(R.color.color_transparent));
 
 		button.setTag(index);
 		button.setText(name);
@@ -226,8 +236,15 @@ public class MShareCrumbController {
 			Button button = (Button)v;
 			int selected = (Integer)(button.getTag());
 			String name = button.getText().toString();
-			unselect();
-			select(selected);
+			unselectCrumb();
+			selectCrumb(selected);
+			
+			float measureWidthSequence = button.getPaint().measureText(button.getText(), 0, button.getText().length()) + button.getPaddingLeft() + button.getPaddingRight();
+			float measureWidth = button.getPaint().measureText(button.getText().toString()) + button.getPaddingLeft() + button.getPaddingRight();
+			Log.d(TAG, "button padding left " + button.getPaddingLeft() + " padding right : " + button.getPaddingRight());
+			Log.d(TAG, "scrollView : " + scrollView.getWidth());
+			Log.d(TAG, "try for button x : " + v.getX() + " and button width : " + v.getWidth());
+			Log.d(TAG, "widthSequence : " + measureWidthSequence + " width : " + measureWidth);
 			
 			fileBrowser.waitForRefresh();
 			

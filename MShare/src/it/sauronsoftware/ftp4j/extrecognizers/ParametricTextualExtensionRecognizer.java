@@ -30,8 +30,7 @@ import it.sauronsoftware.ftp4j.FTPTextualExtensionRecognizer;
  * @author Carlo Pelliccia
  * @see FTPClient#setTextualExtensionRecognizer(FTPTextualExtensionRecognizer)
  */
-public class ParametricTextualExtensionRecognizer implements
-		FTPTextualExtensionRecognizer {
+public class ParametricTextualExtensionRecognizer implements FTPTextualExtensionRecognizer {
 
 	/**
 	 * Extension list.
@@ -48,8 +47,7 @@ public class ParametricTextualExtensionRecognizer implements
 	/**
 	 * It builds the recognizer with an initial extension list.
 	 * 
-	 * @param exts
-	 *            The initial extension list.
+	 * @param exts The initial extension list.
 	 */
 	public ParametricTextualExtensionRecognizer(String[] exts) {
 		for (int i = 0; i < exts.length; i++) {
@@ -60,8 +58,7 @@ public class ParametricTextualExtensionRecognizer implements
 	/**
 	 * It builds the recognizer with an initial extension list.
 	 * 
-	 * @param exts
-	 *            The initial extension list.
+	 * @param exts The initial extension list.
 	 */
 	public ParametricTextualExtensionRecognizer(ArrayList exts) {
 		int size = exts.size();
@@ -77,8 +74,7 @@ public class ParametricTextualExtensionRecognizer implements
 	/**
 	 * This method adds an extension to the recognizer.
 	 * 
-	 * @param ext
-	 *            The extension.
+	 * @param ext The extension.
 	 */
 	public void addExtension(String ext) {
 		synchronized (exts) {
@@ -90,8 +86,7 @@ public class ParametricTextualExtensionRecognizer implements
 	/**
 	 * This method removes an extension to the recognizer.
 	 * 
-	 * @param ext
-	 *            The extension to be removed.
+	 * @param ext The extension to be removed.
 	 */
 	public void removeExtension(String ext) {
 		synchronized (exts) {

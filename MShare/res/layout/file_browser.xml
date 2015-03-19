@@ -2,7 +2,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
-    <LinearLayout 
+    <RelativeLayout 
         android:id="@+id/crumb_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,8 +20,10 @@
             />
         <HorizontalScrollView
             android:id="@+id/crumb_scroller"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/file_browser_refresh_button_container"
+            android:layout_toRightOf="@id/crumb_back_button"
             android:scrollbars="none" 
             >
             <LinearLayout
@@ -31,7 +33,23 @@
 				android:orientation="horizontal">
 			</LinearLayout>
         </HorizontalScrollView>
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/file_browser_refresh_button_container" 
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:background="@color/blue08">
+            <ImageButton
+	            android:id="@+id/file_browser_refresh_button"
+	            android:layout_width="wrap_content" 
+	            android:layout_height="wrap_content"
+	            android:src="@drawable/refresh"
+	            android:background="@color/color_transparent"
+	            android:text="@string/crumb_back"
+	            android:padding="12dp"
+	            />
+        </LinearLayout>
+    </RelativeLayout>
     <RelativeLayout
         android:id="@+id/file_browser_grid_view_container"
         android:layout_width="match_parent"
@@ -47,7 +65,5 @@
 		    android:horizontalSpacing="10dp"
 		    >
 		</GridView>
-		<LinearLayout android:layout_width="match_parent"
-        android:layout_height="match_parent"></LinearLayout>
     </RelativeLayout>
 </LinearLayout>
