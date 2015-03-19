@@ -57,7 +57,7 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class FtpFileManage extends Activity implements FileBrowserCallback{
 	
-	private static String TAG = FtpMainActivity.class.getName();
+	private static String TAG = FtpFileManage.class.getName();
 	
 	private CmdFactory mCmdFactory;
 	private FTPClient mFTPClient;
@@ -72,7 +72,6 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	private FtpFileAdapter mAdapter;
 	private List<FTPFile> mFileList = new ArrayList<FTPFile>();
 	private Object mLock = new Object();
-	private int mSelectedPosistion = -1;
 
 	private String mCurrentPWD; // 当前远程目录
 	private static final String OLIVE_DIR_NAME = "MShareDownload";
@@ -136,9 +135,16 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	private static final int DIALOG_FTP_LOGIN = MENU_OPTIONS_BASE + 42;
 
 	private MShareFileBrowser remoteBrowser;
+	private FTPFile selectedFile;
 	
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
+		
+		setContentView(R.layout.local_file_browser_activity);
+		
+		remoteBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
+		GridView gridView = remoteBrowser.getGridView();
+		registerForContextMenu(gridView);
 		//原来的远程文件浏览
 //		setContentView(R.layout.activity_main);
 		//原来的远程文件浏览
@@ -271,14 +277,14 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if (mSelectedPosistion < 0 || mFileList.size() < 0) {
+		if (selectedFile == null) {
 			return false;
 		}
 		AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
 				.getMenuInfo();
 		switch (item.getItemId()) {
 		case MENU_OPTIONS_DOWNLOAD:
-			if (mFileList.get(mSelectedPosistion).getType() == FTPFile.TYPE_FILE) {
+			if (selectedFile.isFile()) {
 				showDialog(DIALOG_LOAD);
 				new CmdDownLoad().execute();
 			} else {
@@ -289,10 +295,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			showDialog(DIALOG_RENAME);
 			break;
 		case MENU_OPTIONS_DELETE:
-			executeDELERequest(
-					mFileList.get(mSelectedPosistion).getName(),
-					mFileList.get(mSelectedPosistion).getType() == FTPFile.TYPE_DIRECTORY);
-
+			executeDELERequest(selectedFile.getName(),selectedFile.isDirectory());
 			break;
 		default:
 			return super.onContextItemSelected(item);
@@ -430,10 +433,14 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 					mDameonThread.setDaemon(true);
 					mDameonThread.start();
 				}
-				View fileBrowserView = remoteBrowser.getView();
-				GridView gridView = remoteBrowser.getGridView();
-				registerForContextMenu(gridView);
-				setContentView(fileBrowserView);
+				//远程文件的根文件
+				FTPFile rootRemoteFile = new FTPFile();
+				rootRemoteFile.setAbsolutePath(rootRemotePath);
+				rootRemoteFile.setReadable(true);
+				rootRemoteFile.setWriteable(false);
+				//初始化远程文件浏览器
+				remoteBrowser.setRootFile(rootRemoteFile);
+				remoteBrowser.setCallback(FtpFileManage.this);
 				executeLISTRequest();
 				break;
 			case MSG_CMD_CONNECT_FAILED:
@@ -444,6 +451,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				toast("请求数据成功。");
 				if(msg.obj != null){
 					FTPFile[] ftpFiles = (FTPFile[]) msg.obj;
+					Log.d(TAG, "start refresh views");
 					remoteBrowser.refreshGridView(ftpFiles);
 				}
 //				buildOrUpdateDataset();
@@ -661,14 +669,6 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				}
 				mFTPClient.login(mFTPUser, mFTPPassword);
 				rootRemotePath = mFTPClient.currentDirectory();
-				//远程文件的根文件
-				FTPFile rootRemoteFile = new FTPFile();
-				rootRemoteFile.setAbsolutePath(rootRemotePath);
-				rootRemoteFile.setReadable(true);
-				rootRemoteFile.setWriteable(false);
-				//初始化远程文件浏览器
-				remoteBrowser = new MShareFileBrowser(FtpFileManage.this, null, rootRemoteFile);
-				remoteBrowser.setCallback(FtpFileManage.this);
 				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);
 			}catch (IllegalStateException illegalEx) {
 				illegalEx.printStackTrace();
@@ -782,7 +782,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	public class CmdOPEN extends AsyncTask<Void, Integer, Boolean> {
 		
 		String localPath = getParentCachePath() + File.separator
-				+ mFileList.get(mSelectedPosistion).getName();
+				+ selectedFile.getName();
 		
 		File cacheFile = new File(localPath);
 		
@@ -795,9 +795,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 			try {
 				mFTPClient.download(
-						mFileList.get(mSelectedPosistion).getName(),cacheFile,
-						new DownloadFTPDataTransferListener(mFileList.get(
-								mSelectedPosistion).getSize()));
+						selectedFile.getName(),cacheFile,
+						new DownloadFTPDataTransferListener(selectedFile.getSize()));
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return false;
@@ -829,7 +828,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			FileOutputStream out = null;
 			try {
 				InputStream is =  mFTPClient.openStream(
-						mFileList.get(mSelectedPosistion).getName());
+						selectedFile.getName());
 			    byte buf[] = new byte[4 * 1024];
 	            
 	            File cacheFile = new File(cachePath);  
@@ -932,7 +931,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		@Override
 		public void run() {
 			try {
-				mFTPClient.rename(mFileList.get(mSelectedPosistion).getName(),
+				mFTPClient.rename(selectedFile.getName(),
 						newPath);
 				mHandler.sendEmptyMessage(MSG_CMD_RENAME_OK);
 			} catch (Exception ex) {
@@ -952,12 +951,11 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		protected Boolean doInBackground(Void... params) {
 			try {
 				String localPath = getParentRootPath() + File.separator
-						+ mFileList.get(mSelectedPosistion).getName();
+						+ selectedFile.getName();
 				mFTPClient.download(
-						mFileList.get(mSelectedPosistion).getName(),
+						selectedFile.getName(),
 						new File(localPath),
-						new DownloadFTPDataTransferListener(mFileList.get(
-								mSelectedPosistion).getSize()));
+						new DownloadFTPDataTransferListener(selectedFile.getSize()));
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return false;
@@ -1387,12 +1385,12 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	@Override
 	public void onItemClick(FileBrowserFile file) {
 		// TODO Auto-generated method stub
-		String path = file.getAbsolutePath();
-		Log.v("Path", path);
+		selectedFile = (FTPFile) file;
+		String fileName = file.getName();
+		Log.v("Path", fileName);
 		if (file.isDirectory()) {
-			executeCWDRequest(path);
+			executeCWDRequest(fileName);
 		}else if(file.isFile()){
-			String fileName = file.getName();
 			if(getMIMEType(fileName).startsWith("video")){
 				showDialog(DIALOG_LOAD);
 				executeOpenRequest();
@@ -1406,7 +1404,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
 		// TODO Auto-generated method stub
-		
+		selectedFile = (FTPFile) file;
+		return;
 	}
 }
 
