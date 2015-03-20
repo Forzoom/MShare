@@ -7,6 +7,7 @@ import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.mshare.main.JoinConn.CmdRENAME;
 import org.mshare.main.JoinConn.DameonFtpConnector;
 import org.mshare.main.JoinConn.FtpCmd;
 import org.mshare.main.StatusController.StatusCallback;
+import org.mshare.picture.CircleAvater;
 import org.mshare.picture.SettingsButton;
 import org.mshare.picture.CanvasAnimation;
 import org.mshare.picture.CanvasElement;
@@ -43,6 +45,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
@@ -57,6 +60,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.graphics.drawable.shapes.Shape;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -112,6 +117,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private ServerOverviewSurfaceView surfaceView;
 	
 	private PictureBackground pictureBackground;
+	private CircleAvater circleAvater;
 	private RingButton serverButton;
 	private SettingsButton settingsButton;
 	
@@ -207,6 +213,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// 背景
 		pictureBackground = new PictureBackground();
 		surfaceView.setPictureBackground(pictureBackground);
+		
+		// 头像
+		circleAvater = new CircleAvater();
+		surfaceView.setCircleAvater(circleAvater);
 		
 		// 设置按钮
 		Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
@@ -746,4 +756,19 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			startActivity(startServerSettingsIntent);
 		}
 	}
+	
+//	WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
+//	
+//	try {
+//		// 用于获得WifiConfiguration
+//		Method getWifiApConfigurationMethod = wm.getClass().getDeclaredMethod("getWifiApConfiguration");
+//		WifiConfiguration config = (WifiConfiguration)getWifiApConfigurationMethod.invoke(wm);
+//		
+//		Method setWifiApEnabledMethod = wm.getClass().getDeclaredMethod("setWifiApEnabled");
+//		setWifiApEnabledMethod.invoke(wm, config, enable);
+//		
+//	} catch (Exception e) {
+//		Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
+//		e.printStackTrace();
+//	}
 }

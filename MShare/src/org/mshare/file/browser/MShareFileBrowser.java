@@ -371,19 +371,80 @@ public class MShareFileBrowser extends LinearLayout {
 		}
 	}
 
+	// 获得当前文件浏览器在什么模式下
+	public int getMode() {
+		return mode;
+	}
+	
 	private void setMode(int mode) {
+		int currentMode = this.mode;
+		if (mode == currentMode) {
+			Log.w(TAG, "the same mode, and do nothing!");
+			return;
+		}
+		
 		if (mode == MODE_MULTI_SELECT) {
 			if (isMultiSelectEnabled()) {
+				// 清空选择内容
+				selectPosition = -1;
+				
+				// 设置为多选
 				this.mode = mode;
 			} else {
-				Log.e(TAG, "多选被禁用");
+				Log.e(TAG, "multiSelect mode is disabled");
 				return;
 			}
 		} else if (mode == MODE_SINGLE_SELECT) {
+			// 清空选择内容
+			multiSelectPosition = null;
+			
+			// 设置为单选
 			this.mode = mode;
 		}
 	}
 	
+	// 将状态设置为选中，仅仅支持在多选模式下
+	public boolean selectFile(int position) {
+		if (getMode() == MODE_SINGLE_SELECT) {
+			Log.w(TAG, "cannot invoke select in single select mode");
+			return false;
+		}
+		if (multiSelectPosition[position]) {
+			Log.w(TAG, "the file is already select! do nothing");
+			return false;
+		}
+		
+		// TODO 判断使用正确的tag/需要判断adapter是否是null?
+		ItemContainer item = adapter.getItemContainers(position);
+		FileBrowserFile file = item.file;
+		ImageView fileIcon = item.fileIcon;
+		
+		fileIcon.setImageDrawable(MShareFileAdapter.getSelectedDrawable(file));
+		multiSelectPosition[position] = true;
+		return true;
+	}
+	
+	// 将状态设置为未选中，仅仅支持在多选模式下
+	public boolean unselectFile(int position) {
+		if (getMode() == MODE_SINGLE_SELECT) {
+			Log.w(TAG, "cannot invoke unselect in single select mode");
+			return false;
+		}
+		if (!multiSelectPosition[position]) {
+			Log.w(TAG, "the file is already unselect! do nothing");
+			return false;
+		}
+		
+		// TODO 判断使用正确的tag/需要判断adapter是否是null?
+		ItemContainer item = adapter.getItemContainers(position);
+		FileBrowserFile file = item.file;
+		ImageView fileIcon = item.fileIcon;
+		
+		fileIcon.setImageDrawable(MShareFileAdapter.getUnselectedDrawable(file));
+		multiSelectPosition[position] = false;
+		return true;
+	}
+		
 	/**
 	 * 用于相应GridView中Item的响应事件
 	 */
@@ -396,22 +457,13 @@ public class MShareFileBrowser extends LinearLayout {
 			FileBrowserFile file = currentFiles[position];
 			
 			if (isMultiSelectEnabled() && mode == MODE_MULTI_SELECT) {
-
-				// 判断使用正确的tag
-				// TODO 需要判断adapter是否是null?
-				ItemContainer item = adapter.getItemContainers(position);
-				ImageView fileIcon = item.fileIcon;
-				
-				// 应该如何退出MultiSelectedMode呢
 				
 				if (multiSelectPosition[position]) {
 					// 文件已经被选中，所以将其设置为未选中，并从ArrayList中移除
-					fileIcon.setImageDrawable(MShareFileAdapter.getUnselectedDrawable(file));
-					multiSelectPosition[position] = false;
+					selectFile(position);
 				} else {
 					// 文件未被选中，所以将其设置为选中，加入ArrayList
-					fileIcon.setImageDrawable(MShareFileAdapter.getSelectedDrawable(file));
-					multiSelectPosition[position] = true;
+					unselectFile(position);
 				}
 
 			} else {
@@ -458,11 +510,17 @@ public class MShareFileBrowser extends LinearLayout {
 					// 记录被选择情况
 					multiSelectPosition[position] = true;
 				} else if (mode == MODE_MULTI_SELECT) {
-					// do nothing..
+					
+					if (multiSelectPosition[position]) {
+						unselectFile(position);
+					} else {
+						selectFile(position);
+					}
 				}
 				
-			} else {
-				// 不允许MultiSelected
+			} else {// 不允许MultiSelected
+				
+				// TODO 这里设置的selectPosition好像没有用,OnItemClick的情况下也要修改selectPosition
 				selectPosition = position;
 				if (callback != null) {
 					callback.onItemLongClick(longClickFile);

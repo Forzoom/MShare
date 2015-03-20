@@ -1,7 +1,5 @@
 package org.mshare.file.browser;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.mshare.main.MShareApp;
@@ -10,22 +8,15 @@ import org.mshare.main.R.drawable;
 import org.mshare.main.R.id;
 import org.mshare.main.R.layout;
 
-
-import android.R.color;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.text.TextPaint;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
@@ -71,13 +62,13 @@ public class MShareFileAdapter extends BaseAdapter {
 		DRAWABLES.put(".aac", getResourceDrawable(R.drawable.music));
 		
 		// 工作文件
-		DRAWABLES.put(".pdf", getResourceDrawable(R.drawable.pdf));
-		DRAWABLES.put(".doc", getResourceDrawable(R.drawable.doc));
-		DRAWABLES.put(".ppt", getResourceDrawable(R.drawable.ppt));
+//		DRAWABLES.put(".pdf", getResourceDrawable(R.drawable.pdf));
+//		DRAWABLES.put(".doc", getResourceDrawable(R.drawable.doc));
+//		DRAWABLES.put(".ppt", getResourceDrawable(R.drawable.ppt));
 		
 		// 文本文件
-		DRAWABLES.put(".txt", getResourceDrawable(R.drawable.txt));
-		DRAWABLES.put(".xml", getResourceDrawable(R.drawable.xml));
+//		DRAWABLES.put(".txt", getResourceDrawable(R.drawable.txt));
+//		DRAWABLES.put(".xml", getResourceDrawable(R.drawable.xml));
 		
 		// 默认,所有其他的文件
 		DRAWABLES.put("file", getResourceDrawable(R.drawable.all));
@@ -91,13 +82,13 @@ public class MShareFileAdapter extends BaseAdapter {
 		DRAWABLES_SELECTED.put(".aac", getResourceDrawable(R.drawable.music_selected));
 		
 		// 工作文件
-		DRAWABLES_SELECTED.put(".pdf", getResourceDrawable(R.drawable.pdf));
-		DRAWABLES_SELECTED.put(".doc", getResourceDrawable(R.drawable.doc));
-		DRAWABLES_SELECTED.put(".ppt", getResourceDrawable(R.drawable.ppt));
+//		DRAWABLES_SELECTED.put(".pdf", getResourceDrawable(R.drawable.pdf));
+//		DRAWABLES_SELECTED.put(".doc", getResourceDrawable(R.drawable.doc));
+//		DRAWABLES_SELECTED.put(".ppt", getResourceDrawable(R.drawable.ppt));
 		
 		// 文本文件
-		DRAWABLES_SELECTED.put(".txt", getResourceDrawable(R.drawable.txt));
-		DRAWABLES_SELECTED.put(".xml", getResourceDrawable(R.drawable.xml));
+//		DRAWABLES_SELECTED.put(".txt", getResourceDrawable(R.drawable.txt));
+//		DRAWABLES_SELECTED.put(".xml", getResourceDrawable(R.drawable.xml));
 		
 		// 默认,所有其他的文件
 		DRAWABLES_SELECTED.put("file", getResourceDrawable(R.drawable.all_selected));
@@ -138,23 +129,26 @@ public class MShareFileAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 
 		if (convertView != null) {
+			
 			// TODO 需要测试，是否可以使用？
 			int lastPosition = (Integer)convertView.getTag();
 			// 获得原本的ItemContainer
 			ItemContainer item = itemContainers[lastPosition];
 			
-			// 更新内容
-			item.file = files[position];
-			item.fileName.setText(files[position].getName());
-			// TODO 在这里的刷新是有问题的
-			item.fileIcon.setImageDrawable(getCommonDrawable(item.file));
-			
-			// 放在新的位置
-			itemContainers[lastPosition] = null;
-			itemContainers[position] = item;
-			
-			// 保存新的position
-			convertView.setTag(position);
+			if (item != null) {
+				// 更新内容
+				item.file = files[position];
+				item.fileName.setText(files[position].getName());
+				// TODO 在这里的刷新是有问题的
+				item.fileIcon.setImageDrawable(getCommonDrawable(item.file));
+				
+				// 放在新的位置
+				itemContainers[lastPosition] = null;
+				itemContainers[position] = item;
+				
+				// 保存新的position
+				convertView.setTag(position);
+			}
 		} else { // 第一次使用的convertView
 			convertView = LayoutInflater.from(context).inflate(R.layout.file_browser_item, null);
 			
@@ -171,6 +165,7 @@ public class MShareFileAdapter extends BaseAdapter {
 			
 			// 保存ItemContainer
 			itemContainers[position] = item;
+			
 			convertView.setTag(position);
 		}
 		

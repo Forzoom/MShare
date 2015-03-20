@@ -7,7 +7,16 @@
         android:id="@+id/local_file_browser"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@+id/local_menus"
         android:orientation="vertical">
     </org.mshare.file.browser.MShareFileBrowser>
-
+	
+    <LinearLayout
+        android:id="@+id/local_menus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true">    
+    </LinearLayout>
+    
 </RelativeLayout>
