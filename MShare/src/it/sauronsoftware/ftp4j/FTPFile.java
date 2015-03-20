@@ -21,12 +21,22 @@ package it.sauronsoftware.ftp4j;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.mshare.file.browser.FileBrowserFile;
+
 /**
  * The instances of this class represents the files in a remote FTP directory.
  * 
  * @author Carlo Pelliccia
  */
-public class FTPFile implements Serializable{
+public class FTPFile implements Serializable, FileBrowserFile {
+
+	private String absolutePath;
+	private boolean readable;
+	private boolean writeable;
+	
+	public void setAbsolutePath(String absolutePath) {
+		this.absolutePath = absolutePath;
+	}
 
 	/**
 	 * The value for the type "file".
@@ -203,6 +213,50 @@ public class FTPFile implements Serializable{
 		buffer.append(modifiedDate);
 		buffer.append("]");
 		return buffer.toString();
+	}
+
+	@Override
+	public boolean isFile() {
+		// TODO Auto-generated method stub
+		if (type == TYPE_FILE) 
+			return true;
+		return false;
+	}
+
+	@Override
+	public boolean isDirectory() {
+		// TODO Auto-generated method stub
+		if (type == TYPE_DIRECTORY) 
+			return true;
+		return false;
+	}
+
+	@Override
+	public String getAbsolutePath() {
+		// TODO Auto-generated method stub
+		return absolutePath;
+	}
+
+	@Override
+	public boolean canRead() {
+		// TODO Auto-generated method stub
+		return readable;
+	}
+
+	@Override
+	public boolean canWrite() {
+		// TODO Auto-generated method stub
+		return writeable;
+	}
+
+
+	public void setReadable(boolean readable) {
+		this.readable = readable;
+	}
+
+
+	public void setWriteable(boolean writeable) {
+		this.writeable = writeable;
 	}
 
 }

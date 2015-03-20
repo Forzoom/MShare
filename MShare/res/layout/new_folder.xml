@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/newFolder"
+	android:orientation="vertical"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	>
+	<LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal"
+	    >
+	    <TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="文件夹名称:"
+			android:textSize="10pt"	
+			/>
+		<!-- 输入文件夹名字的文本框 -->		
+		<EditText
+		    android:id="@+id/editNewFolder"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:hint="新文件夹..."
+			android:singleLine="true"
+			/>
+	</LinearLayout>
+
+</TableLayout>

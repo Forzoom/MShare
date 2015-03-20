@@ -1,10 +1,31 @@
 package org.mshare.main;
 
+import it.sauronsoftware.ftp4j.FTPClient;
+import it.sauronsoftware.ftp4j.FTPException;
+import it.sauronsoftware.ftp4j.FTPFile;
+import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
+
+import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
+import org.mshare.main.JoinConn.CmdCWD;
+import org.mshare.main.JoinConn.CmdConnect;
+import org.mshare.main.JoinConn.CmdDELE;
+import org.mshare.main.JoinConn.CmdDisConnect;
+import org.mshare.main.JoinConn.CmdFactory;
+import org.mshare.main.JoinConn.CmdLIST;
+import org.mshare.main.JoinConn.CmdPWD;
+import org.mshare.main.JoinConn.CmdRENAME;
+import org.mshare.main.JoinConn.DameonFtpConnector;
+import org.mshare.main.JoinConn.FtpCmd;
 import org.mshare.main.StatusController.StatusCallback;
 import org.mshare.picture.CircleAvater;
 import org.mshare.picture.SettingsButton;
@@ -14,6 +35,7 @@ import org.mshare.picture.PictureBackground;
 import org.mshare.picture.RingButton;
 import org.mshare.picture.RefreshHandler;
 import org.mshare.picture.ServerOverviewSurfaceView;
+import org.mshare.scan.ScanActivity;
 
 import android.animation.ArgbEvaluator;
 
@@ -21,9 +43,12 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -39,9 +64,11 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Looper;
 import android.os.Message;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -52,8 +79,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.FrameLayout.LayoutParams;
+import android.widget.LinearLayout;
+import android.widget.SimpleAdapter.ViewBinder;
+import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.SimpleAdapter;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
@@ -83,6 +120,41 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private CircleAvater circleAvater;
 	private RingButton serverButton;
 	private SettingsButton settingsButton;
+	
+	//连接参数
+	private GridView gridview;
+	private LinearLayout btftp, btscan;
+	private ArrayList<HashMap<String, Object>> listImageItem;  
+    private SimpleAdapter simpleAdapter;
+    
+    private ListView mListView;
+    private String mSdcardRootPath;
+    private Object mLock = new Object();
+	private int mSelectedPosistion = -1;
+
+	private String mCurrentPWD; // 当前远程目录
+    
+    private CmdFactory mCmdFactory;
+	private FTPClient mFTPClient;
+	private ExecutorService mThreadPool;
+	
+	private String mFTPHost ;
+	private int mFTPPort ;
+	private String mFTPUser ;
+	private String mFTPPassword ;
+	
+	private Thread mDameonThread = null ;
+	private boolean mDameonRunning = true;
+	
+	private FtpFileAdapter mAdapter;
+	private List<FTPFile> mFileList = new ArrayList<FTPFile>();
+	
+	private static final int MAX_THREAD_NUMBER = 5;
+	private static final int MAX_DAMEON_TIME_WAIT = 2 * 1000; // millisecond
+
+	private static final int MENU_OPTIONS_BASE = 0;
+	private static final int MSG_CMD_CONNECT_OK = MENU_OPTIONS_BASE + 1;
+	private static final int MSG_CMD_CONNECT_FAILED = MENU_OPTIONS_BASE + 2;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -156,6 +228,315 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		serverButton = new RingButton();
 		serverButton.setElementOnClickListener(new ServerButtonListener());
 		surfaceView.setServerButton(serverButton);
+		
+		// 添加加入链接的组件
+		gridview = (GridView) findViewById(R.id.gridview);
+//		gridview.
+		
+	    btftp = (LinearLayout) findViewById(R.id.btftp);
+	    btscan = (LinearLayout) findViewById(R.id.btscan);
+	    listImageItem = new ArrayList<HashMap<String, Object>>();  
+	    
+	    mSdcardRootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+		mCmdFactory = new CmdFactory();
+		mFTPClient = new FTPClient();
+		mThreadPool = Executors.newFixedThreadPool(MAX_THREAD_NUMBER);
+      
+	    simpleAdapter = new SimpleAdapter(  
+	            this, listImageItem,  
+	            R.layout.labelicon, new String[] {  
+	                    "ItemImage", "ItemText" }, new int[] { R.id.imageview,  
+	                    R.id.textview });  
+	    
+	    btftp.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				customView();
+				
+			}
+		});
+	    
+	    btscan.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				Intent intent =new Intent(OverviewActivity.this, ScanActivity.class);
+				startActivityForResult(intent, 0);
+			}
+		});
+	}
+	
+	public void onActivityResult(int requestCode, int resultCode, Intent intent){
+		//当requestCode、resultCode同时为0是，也就是处理特定结果的结果
+		
+		if(requestCode == 0 && resultCode == Activity.RESULT_OK){
+
+//			mFTPPort = Integer.parseInt(editPort.getText().toString().trim());
+//			mFTPHost = editHost.getText().toString().trim();
+//			mFTPUser = editUser.getText().toString().trim();
+//			mFTPPassword = editPasword.getText().toString().trim();
+			
+			if (intent == null) {
+				Log.e(TAG, "the intent is null, stop!");
+				return;
+			}
+			
+			ConnectInfo connectInfo = ConnectInfo.parse(intent.getStringExtra("result"));
+			
+			String port = connectInfo.getPort();
+			String host = connectInfo.getHost();
+			String username = connectInfo.getUsername();
+			String password = connectInfo.getPassword();
+			
+			mFTPPort = Integer.parseInt(port.trim());
+			mFTPHost = host.trim();
+			mFTPUser = username.trim();
+			mFTPPassword = password.trim();
+			
+			Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
+					+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
+			// 此处可执行登录处理
+			executeConnectRequest();
+		}
+	}
+	
+	public void customView()
+	{
+		//装载/res/layout/login.xml界面布局
+		TableLayout loginForm = (TableLayout)getLayoutInflater()
+			.inflate( R.layout.login, null);	
+		final EditText editHost = (EditText) loginForm.findViewById(R.id.editFTPHost);
+		editHost.setText("192.168.0.101");
+		final EditText editPort= (EditText) loginForm.findViewById(R.id.editFTPPort);
+		editPort.setText("3721");
+		final EditText editUser = (EditText) loginForm.findViewById(R.id.editFTPUser);
+		editUser.setText("123");
+		final EditText editPasword= (EditText) loginForm.findViewById(R.id.editPassword);
+		editPasword.setText("abc");
+		new AlertDialog.Builder(this)
+			// 设置对话框的图标
+			.setIcon(R.drawable.app_default_icon)
+			// 设置对话框的标题
+			.setTitle("新建FTP服务器")
+			// 设置对话框显示的View对象
+			.setView(loginForm)
+			// 为对话框设置一个“确定”按钮
+			.setPositiveButton("确定" , new OnClickListener()
+			{
+				@Override
+				public void onClick(DialogInterface dialog,
+						int which)
+				{
+					if (TextUtils.isEmpty(editHost.getText()) || 
+							TextUtils.isEmpty(editPort.getText()) || 
+							TextUtils.isEmpty(editUser.getText()) ||
+							TextUtils.isEmpty(editUser.getText())) {
+						  toast("请将资料填写完整");
+//						  JoinConn.this.finish();
+						  return ;
+					}
+					try{
+					    mFTPPort = Integer.parseInt(editPort.getText().toString().trim());
+					}
+					catch(NumberFormatException nfEx){
+						nfEx.printStackTrace();
+						toast("端口输入有误，请重试");
+						return ;
+					}
+					mFTPHost = editHost.getText().toString().trim();
+					mFTPUser = editUser.getText().toString().trim();
+					mFTPPassword = editPasword.getText().toString().trim();
+					Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
+							+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
+					// 此处可执行登录处理
+					executeConnectRequest();
+				}
+			})
+			// 为对话框设置一个“取消”按钮
+			.setNegativeButton("取消", new OnClickListener()
+			{
+				@Override
+				public void onClick(DialogInterface dialog,
+						int which)
+				{
+					// 取消登录，不做任何事情。
+				}
+			})
+			// 创建、并显示对话框
+			.create()
+			.show();
+	}
+	
+	private void buildOrUpdateDataset() {
+		HashMap<String, Object> map = new HashMap<String, Object>();  
+		map.put("ItemImage", R.drawable.folder);// 添加图像资源的ID  
+        map.put("ItemText", mFTPHost);// 按FTPHost做ItemText  
+        listImageItem.add(map);
+        
+	    //添加图片绑定  
+	    simpleAdapter.setViewBinder(new ViewBinder() {  
+	        public boolean setViewValue(View view, Object data,  
+	                String textRepresentation) {  
+	            if (view instanceof ImageView && data instanceof Drawable) {  
+	                ImageView iv = (ImageView) view;  
+	                iv.setImageDrawable((Drawable) data);  
+	                return true;  
+	            } else  
+	                return false;  
+	        }  
+	    });  
+	    gridview.setAdapter(simpleAdapter);
+	    gridview.setOnItemClickListener(new OnItemClickListener(){
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position,
+					long id) {
+				// TODO Auto-generated method stub
+				Log.v(TAG,"test onItemSelected");
+				Intent intent = new Intent(view.getContext(), FtpFileManage.class);
+				Bundle data=new Bundle();
+				data.putSerializable("mFileList", (Serializable) mFileList);
+				data.putSerializable("mCurrentPWD", mCurrentPWD);
+				data.putSerializable("mFTPHost",mFTPHost);
+				data.putSerializable("mFTPPort",mFTPPort);
+				data.putSerializable("mFTPUser",mFTPUser);
+				data.putSerializable("mFTPPassword",mFTPPassword);
+                intent.putExtras(data);
+                view.getContext().startActivity(intent);
+			}
+	    	
+	    });
+	}
+	
+	private void executeConnectRequest() {
+		if(mThreadPool==null)
+			Log.v(TAG, "mThreadPool is null");
+		if(mCmdFactory==null)
+			Log.v(TAG, "mCmdFactory is null");
+		mThreadPool.execute(mCmdFactory.createCmdConnect());
+	}
+	
+	private void logv(String log) {
+		Log.v(TAG, log);
+	}
+	
+	private void toast(String hint) {
+		Toast.makeText(this, hint, Toast.LENGTH_SHORT).show();
+	}
+	
+	private Handler mHandler = new Handler() {
+
+		@Override
+		public void handleMessage(Message msg) {
+			logv("mHandler --->" + msg.what);
+			switch (msg.what) {
+			case MSG_CMD_CONNECT_OK:
+				toast("FTP服务器连接成功");
+				if(mDameonThread == null){
+					//启动守护进程。
+					mDameonThread = new Thread(new DameonFtpConnector());
+					mDameonThread.setDaemon(true);
+					mDameonThread.start();
+				}
+				buildOrUpdateDataset();
+				break;
+			case MSG_CMD_CONNECT_FAILED:
+				toast("FTP服务器连接失败，正在重新连接");
+				executeConnectRequest();
+				break;
+			default:
+				break;
+			}
+		}
+	};
+	
+	public class DameonFtpConnector implements Runnable {
+
+		@Override
+		public void run() {
+			Log.v(TAG, "DameonFtpConnector ### run");
+			while (mDameonRunning) {
+				if (mFTPClient != null && !mFTPClient.isConnected()) {
+					try {
+						mFTPClient.connect(mFTPHost, mFTPPort);
+						mFTPClient.login(mFTPUser, mFTPPassword);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+				try {
+					Thread.sleep(MAX_DAMEON_TIME_WAIT);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public abstract class FtpCmd implements Runnable {
+
+		public abstract void run();
+
+	}
+
+	public class CmdConnect extends FtpCmd {
+		@Override
+		public void run() {
+			boolean errorAndRetry = false ;  //根据不同的异常类型，是否重新捕获
+			try {
+				String[] welcome = mFTPClient.connect(mFTPHost, mFTPPort);
+				if (welcome != null) {
+					for (String value : welcome) {
+						logv("connect " + value);
+					}
+				}
+				mFTPClient.login(mFTPUser, mFTPPassword);
+				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);
+			}catch (IllegalStateException illegalEx) {
+				illegalEx.printStackTrace();
+				errorAndRetry = true ;
+			}catch (IOException ex) {
+				ex.printStackTrace();
+				errorAndRetry = true ;
+			}catch (FTPIllegalReplyException e) {
+				e.printStackTrace();
+			}catch (FTPException e) {
+				e.printStackTrace();
+				errorAndRetry = true ;
+			}
+			if(errorAndRetry && mDameonRunning){
+				mHandler.sendEmptyMessageDelayed(MSG_CMD_CONNECT_FAILED, 2000);
+			}
+		}
+	}
+
+	public class CmdDisConnect extends FtpCmd {
+
+		@Override
+		public void run() {
+			if (mFTPClient != null) {
+				try {
+					mFTPClient.disconnect(true);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public class CmdFactory {
+
+		public FtpCmd createCmdConnect() {
+			return new CmdConnect();
+		}
+
+		public FtpCmd createCmdDisConnect() {
+			return new CmdDisConnect();
+		}
+
 	}
 
 	@Override

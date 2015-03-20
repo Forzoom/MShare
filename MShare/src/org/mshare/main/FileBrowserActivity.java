@@ -7,19 +7,28 @@ import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.LinearLayout;
+import android.widget.TableLayout;
 
 public class FileBrowserActivity extends Activity implements FileBrowserCallback {
 	private static final String TAG = FileBrowserActivity.class.getSimpleName();
 	
 	private MShareFileBrowser fileBrowser;
+	
+	private Context context;
 	
 	private LinearLayout linearLayout;
 	
@@ -31,6 +40,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.local_file_browser_activity);
+		this.context = this;
 		
 		// 获得文件浏览器并设置回调函数
 		fileBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
@@ -80,6 +90,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	public void onItemLongClick(FileBrowserFile file) {
 		Log.d(TAG, "onItemLongClick");
 		// 没有刷新要求
+		mshareFileMenu1.hideAnimation();
+		mshareFileMenu2.showAnimation();
 	}
 
 	@Override
@@ -141,9 +153,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	private void setMenu1() {
 		this.mshareFileMenu1 = new MshareFileMenu(this, this.linearLayout);
 		MenuNewFolder menuNewFolder = new MenuNewFolder();
-		MenuRefresh menuRefresh = new MenuRefresh();
 		this.mshareFileMenu1.addButton(R.drawable.account, "新建文件夹", menuNewFolder);		
-		this.mshareFileMenu1.addButton(R.drawable.account, "刷新", menuRefresh);
 	}
 	
 	//设置第二菜单
@@ -177,18 +187,28 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		@Override
 		public void onClick(View arg0) {
-			mshareFileMenu1.hideAnimation();
-			mshareFileMenu2.showAnimation();
-			
-		}
-	}
-	
-	//刷新
-	class MenuRefresh implements View.OnClickListener {
-		
-		@Override
-		public void onClick(View arg0) {
-			
+			TableLayout loginForm = (TableLayout)getLayoutInflater()
+					.inflate( R.layout.new_folder, null);	
+				new AlertDialog.Builder(context)
+					// 设置对话框的标题
+					.setTitle("新建文件夹")
+					// 设置对话框显示的View对象
+					.setView(loginForm)
+					// 为对话框设置一个“确定”按钮
+					.setPositiveButton("确定" , new OnClickListener()
+					{
+						@Override
+						public void onClick(DialogInterface dialog,
+								int which)
+						{
+							
+						}
+					})
+					// 为对话框设置一个“取消”按钮
+					.setNegativeButton("取消", null)
+					// 创建、并显示对话框
+					.create()
+					.show();		
 		}
 	}
 	

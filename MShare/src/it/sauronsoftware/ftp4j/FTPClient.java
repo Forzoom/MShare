@@ -3496,6 +3496,64 @@ public class FTPClient {
 			}
 		}
 	}
+	
+	public InputStream openStream(String fileName)
+			throws IllegalStateException, IOException,
+			FTPIllegalReplyException, FTPException, FTPDataTransferException,
+			FTPAbortedException {
+		synchronized (lock) {
+			// Is this client connected?
+			if (!connected) {
+				throw new IllegalStateException("Client not connected");
+			}
+			// Is this client authenticated?
+			if (!authenticated) {
+				throw new IllegalStateException("Client not authenticated");
+			}
+			// Select the type of contents.
+			int tp = type;
+			if (tp == TYPE_AUTO) {
+				tp = detectType(fileName);
+			}
+			if (tp == TYPE_TEXTUAL) {
+				communication.sendFTPCommand("TYPE A");
+			} else if (tp == TYPE_BINARY) {
+				communication.sendFTPCommand("TYPE I");
+			}
+			FTPReply r = communication.readFTPReply();
+			touchAutoNoopTimer();
+			if (!r.isSuccessCode()) {
+				throw new FTPException(r);
+			}
+			// Prepares the connection for the data transfer.
+			FTPDataTransferConnectionProvider provider = openDataTransferChannel();
+			// Local abort state.
+			boolean wasAborted = false;
+			// Send the RETR command.
+			communication.sendFTPCommand("RETR " + fileName);
+			
+			Socket dtConnection;
+			try {
+				dtConnection = provider.openDataTransferConnection();
+			} finally {
+				provider.dispose();
+			}
+			// Change the operation status.
+			synchronized (abortLock) {
+				ongoingDataTransfer = true;
+				aborted = false;
+				consumeAborCommandReply = false;
+			}
+			// open the stream.
+			// Opens the data transfer connection.
+			dataTransferInputStream = dtConnection.getInputStream();
+			// MODE Z enabled?
+			if (modezEnabled) {
+				dataTransferInputStream = new InflaterInputStream(dataTransferInputStream);
+			}
+			return dataTransferInputStream;			
+		}
+	}
 
 	/**
 	 * This method detects the type for a file transfer.

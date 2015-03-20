@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 public class UnixListParser implements FTPListParser {
 
 	private static final Pattern PATTERN = Pattern
-			.compile("^([dl\\-])[r\\-][w\\-][xSs\\-][r\\-][w\\-][xSs\\-][r\\-][w\\-][xTt\\-]\\s+"
+			.compile("^([dl\\-])[r\\-][w\\-][xSs\\-]([r\\-][w\\-][xSs\\-])[r\\-][w\\-][xTt\\-]\\s+"
 					+ "(?:\\d+\\s+)?\\S+\\s*\\S+\\s+(\\d+)\\s+(?:(\\w{3})\\s+(\\d{1,2}))\\s+"
 					+ "(?:(\\d{4})|(?:(\\d{1,2}):(\\d{1,2})))\\s+"
 					+ "([^\\\\*?\"<>|]+)(?: -> ([^\\\\*?\"<>|]+))?$");
@@ -73,14 +73,30 @@ public class UnixListParser implements FTPListParser {
 				ret[i] = new FTPFile();
 				// Retrieve the data.
 				String typeString = m.group(1);
-				String sizeString = m.group(2);
-				String monthString = m.group(3);
-				String dayString = m.group(4);
-				String yearString = m.group(5);
-				String hourString = m.group(6);
-				String minuteString = m.group(7);
-				String nameString = m.group(8);
-				String linkedString = m.group(9);
+				// 添加权限字段
+				String permissionString = m.group(2);
+				String sizeString = m.group(3);
+				String monthString = m.group(4);
+				String dayString = m.group(5);
+				String yearString = m.group(6);
+				String hourString = m.group(7);
+				String minuteString = m.group(8);
+				String nameString = m.group(9);
+				String linkedString = m.group(10);
+				
+				// 根据权限字段来设置FTP文件的读写权限
+				if(permissionString.charAt(0) == 'r'){
+					ret[i].setReadable(true);
+				} else if(permissionString.charAt(0) == '-'){
+					ret[i].setReadable(false);
+				}
+				
+				if(permissionString.charAt(1) == 'w'){
+					ret[i].setWriteable(true);
+				} else if(permissionString.charAt(1) == '-'){
+					ret[i].setWriteable(false);
+				}
+				
 				// Parse the data.
 				if (typeString.equals("-")) {
 					ret[i].setType(FTPFile.TYPE_FILE);

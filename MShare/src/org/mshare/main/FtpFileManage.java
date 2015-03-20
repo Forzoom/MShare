@@ -1,13 +1,27 @@
 package org.mshare.main;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mshare.file.MshareFileMenu;
+import org.mshare.file.browser.FileBrowserCallback;
+import org.mshare.file.browser.FileBrowserFile;
+import org.mshare.file.browser.LocalBrowserFile;
+import org.mshare.file.browser.MShareFileBrowser;
+import org.mshare.main.FileBrowserActivity.MenuCancel;
+import org.mshare.main.FileBrowserActivity.MenuCopy;
+import org.mshare.main.FileBrowserActivity.MenuCut;
+import org.mshare.main.FileBrowserActivity.MenuDelete;
+import org.mshare.main.FileBrowserActivity.MenuNewFolder;
+import org.mshare.main.FileBrowserActivity.MenuPaste;
+import org.mshare.main.FileBrowserActivity.MenuRename;
 import org.mshare.main.UploadFileChooserAdapter.FileInfo;
 import it.sauronsoftware.ftp4j.FTPClient;
 import it.sauronsoftware.ftp4j.FTPDataTransferListener;
@@ -17,6 +31,7 @@ import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -41,17 +56,20 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
-public class FtpFileManage extends Activity{
+public class FtpFileManage extends Activity implements FileBrowserCallback{
 	
-	private static String TAG = FtpMainActivity.class.getName();
+	private static String TAG = FtpFileManage.class.getName();
+	private Context context;
 	
 	private CmdFactory mCmdFactory;
 	private FTPClient mFTPClient;
@@ -62,11 +80,10 @@ public class FtpFileManage extends Activity{
 
 	private ProgressBar mPbLoad = null;
 
-	private ListView mListView;
+	private GridView mGridFile;//原文件列表
 	private FtpFileAdapter mAdapter;
 	private List<FTPFile> mFileList = new ArrayList<FTPFile>();
 	private Object mLock = new Object();
-	private int mSelectedPosistion = -1;
 
 	private String mCurrentPWD; // 当前远程目录
 	private static final String OLIVE_DIR_NAME = "MShareDownload";
@@ -94,8 +111,14 @@ public class FtpFileManage extends Activity{
 	private String mFTPUser ;
 	private String mFTPPassword ;
 	
+	private String rootRemotePath;
+	
 	private static final int MAX_THREAD_NUMBER = 5;
 	private static final int MAX_DAMEON_TIME_WAIT = 2 * 1000; // millisecond
+	/** 
+     * 定义了初始缓存区的大小，当视频加载到初始缓存区满的时候，播放器开始播放， 
+     */  
+    private static final int READY_BUFF = 1316 * 1024*10;
 
 	private static final int MENU_OPTIONS_BASE = 0;
 	private static final int MSG_CMD_CONNECT_OK = MENU_OPTIONS_BASE + 1;
@@ -112,7 +135,8 @@ public class FtpFileManage extends Activity{
 	private static final int MSG_CMD_CDU_FAILED = MENU_OPTIONS_BASE + 12;
 	private static final int MSG_CMD_OPEN_OK = MENU_OPTIONS_BASE + 13;
 	private static final int MSG_CMD_OPEN_FAILED = MENU_OPTIONS_BASE + 14;
-	 
+	private static final int CACHE_VIDEO_READY = MENU_OPTIONS_BASE + 15;
+	
 	private static final int MENU_OPTIONS_DOWNLOAD = MENU_OPTIONS_BASE + 20;
 	private static final int MENU_OPTIONS_RENAME = MENU_OPTIONS_BASE + 21;
 	private static final int MENU_OPTIONS_DELETE = MENU_OPTIONS_BASE + 22;
@@ -122,17 +146,38 @@ public class FtpFileManage extends Activity{
 	private static final int DIALOG_RENAME = MENU_OPTIONS_BASE + 41;
 	private static final int DIALOG_FTP_LOGIN = MENU_OPTIONS_BASE + 42;
 
+	private MShareFileBrowser remoteBrowser;
+	private FTPFile selectedFile;
+	
+	private LinearLayout menuLayout;
+	private MshareFileMenu mshareFileMenu1;
+	private MshareFileMenu mshareFileMenu2;
+	private MshareFileMenu mshareFileMenu3;
 	
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		initView();
+		this.context = this;
+		setContentView(R.layout.local_file_browser_activity);
+		
+		remoteBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
+		// 允许使用多选
+		remoteBrowser.setMultiSelectEnabled(true);
+		//添加菜单栏
+		menuLayout = (LinearLayout)this.findViewById(R.id.local_menus);
+		setMenu1();
+		setMenu2();
+		setMenu3();
+
+		//原来的远程文件浏览
+//		setContentView(R.layout.activity_main);
+		//原来的远程文件浏览
+//		initView();
 		Intent intent = getIntent(); 
 //		mFileList = (List<FTPFile>) intent.getSerializableExtra("mFileList");//?
 //		mCurrentPWD = (String) intent.getSerializableExtra("mCurrentPWD");
 //		Log.v(TAG, "测试"+mFileList.toString());
-		
-		registerForContextMenu(mListView);
+		//原来的远程文件浏览
+//		registerForContextMenu(mGridFile);
 		
 //		if (mAdapter == null) {
 //			mAdapter = new FtpFileAdapter(this, mFileList);
@@ -155,6 +200,8 @@ public class FtpFileManage extends Activity{
 		executeConnectRequest();
 	}
 	
+	/*
+	  原来的远程文件浏览
 	private void initView() {
 		
 		Button mButton = (Button) findViewById(R.id.preFolder);
@@ -177,9 +224,9 @@ public class FtpFileManage extends Activity{
 			}
 		});
 		
-		mListView = (ListView) findViewById(R.id.listviewApp);
+		mGridFile = (GridView) findViewById(R.id.gvFileBrowser);
 
-		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		mGridFile.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view,
@@ -188,13 +235,19 @@ public class FtpFileManage extends Activity{
 					executeCWDRequest(mFileList.get(positioin).getName());
 				}else if(mFileList.get(positioin).getType() == FTPFile.TYPE_FILE){
 					mSelectedPosistion = positioin;
-					showDialog(DIALOG_LOAD);
-					new CmdOPEN().execute();
+					String fileName = mFileList.get(mSelectedPosistion).getName();
+					if(getMIMEType(fileName).startsWith("video")){
+						showDialog(DIALOG_LOAD);
+						executeOpenRequest();
+					}else{
+						showDialog(DIALOG_LOAD);
+						new CmdOPEN().execute();
+					}
 				}
 			}
 		});
 
-		mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+		mGridFile.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
 					@Override
 					public boolean onItemLongClick(AdapterView<?> adapterView,
@@ -204,7 +257,7 @@ public class FtpFileManage extends Activity{
 					}
 				});
 
-		mListView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+		mGridFile.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
 
 					@Override
 					public void onCreateContextMenu(ContextMenu menu, View v,
@@ -213,6 +266,8 @@ public class FtpFileManage extends Activity{
 					}
 
 				});
+		
+		
 		
 //		mListView.setOnKeyListener(new OnKeyListener() {
 //			
@@ -231,11 +286,11 @@ public class FtpFileManage extends Activity{
 //			}
 //		});
 	}
-	
+	*/
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
-		if (v.getId() == R.id.listviewApp) {
+		if (v.getId() == R.id.gvFileBrowser) {
 			menu.setHeaderTitle("文件操作");
 			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DOWNLOAD, Menu.NONE, "下载");
 			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_RENAME, Menu.NONE, "重命名");
@@ -245,14 +300,14 @@ public class FtpFileManage extends Activity{
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		if (mSelectedPosistion < 0 || mFileList.size() < 0) {
+		if (selectedFile == null) {
 			return false;
 		}
 		AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
 				.getMenuInfo();
 		switch (item.getItemId()) {
 		case MENU_OPTIONS_DOWNLOAD:
-			if (mFileList.get(mSelectedPosistion).getType() == FTPFile.TYPE_FILE) {
+			if (selectedFile.isFile()) {
 				showDialog(DIALOG_LOAD);
 				new CmdDownLoad().execute();
 			} else {
@@ -263,10 +318,7 @@ public class FtpFileManage extends Activity{
 			showDialog(DIALOG_RENAME);
 			break;
 		case MENU_OPTIONS_DELETE:
-			executeDELERequest(
-					mFileList.get(mSelectedPosistion).getName(),
-					mFileList.get(mSelectedPosistion).getType() == FTPFile.TYPE_DIRECTORY);
-
+			executeDELERequest(selectedFile.getName(),selectedFile.isDirectory());
 			break;
 		default:
 			return super.onContextItemSelected(item);
@@ -356,7 +408,13 @@ public class FtpFileManage extends Activity{
 			File cacheFile = new File(cachePath);
 			if(cacheFile.exists()){
 				cacheFile.delete();
-				cachePath = null;
+				if(cachePath.endsWith("1.mp4")){  
+					cachePath = cachePath.replace("1.mp4", "2.mp4");    
+                }else if(cachePath.endsWith("2.mp4")){  
+                	cachePath = cachePath.replace("2.mp4", "3.mp4");  
+                }else{  
+                	cachePath = cachePath.replace("3.mp4", "1.mp4");  
+                }
 			}
 		}
 	}
@@ -387,6 +445,7 @@ public class FtpFileManage extends Activity{
 
 		@Override
 		public void handleMessage(Message msg) {
+			
 			logv("mHandler --->" + msg.what);
 			switch (msg.what) {
 			case MSG_CMD_CONNECT_OK:
@@ -397,6 +456,14 @@ public class FtpFileManage extends Activity{
 					mDameonThread.setDaemon(true);
 					mDameonThread.start();
 				}
+				//远程文件的根文件
+				FTPFile rootRemoteFile = new FTPFile();
+				rootRemoteFile.setAbsolutePath(rootRemotePath);
+				rootRemoteFile.setReadable(true);
+				rootRemoteFile.setWriteable(false);
+				//初始化远程文件浏览器
+				remoteBrowser.setRootFile(rootRemoteFile);
+				remoteBrowser.setCallback(FtpFileManage.this);
 				executeLISTRequest();
 				break;
 			case MSG_CMD_CONNECT_FAILED:
@@ -405,7 +472,12 @@ public class FtpFileManage extends Activity{
 				break;
 			case MSG_CMD_LIST_OK:
 				toast("请求数据成功。");
-				buildOrUpdateDataset();
+				if(msg.obj != null){
+					FTPFile[] ftpFiles = (FTPFile[]) msg.obj;
+					Log.d(TAG, "start refresh views");
+					remoteBrowser.refreshGridView(ftpFiles);
+				}
+//				buildOrUpdateDataset();
 				break;
 			case MSG_CMD_LIST_FAILED:
 				toast("请求数据失败。");
@@ -444,6 +516,9 @@ public class FtpFileManage extends Activity{
 			case MSG_CMD_OPEN_FAILED:
 				toast("请求数据失败。");
 				break;
+			case CACHE_VIDEO_READY:
+				openFile(new File(cachePath));  
+				break;
 			default:
 				break;
 			}
@@ -451,11 +526,11 @@ public class FtpFileManage extends Activity{
 	};
 	
 	private void buildOrUpdateDataset() {
-		if (mAdapter == null) {
-			mAdapter = new FtpFileAdapter(this, mFileList);
-			mListView.setAdapter(mAdapter);
-		}
-		mAdapter.notifyDataSetChanged();
+//		if (mAdapter == null) {
+//			mAdapter = new FtpFileAdapter(this, mFileList);
+//			mGridFile.setAdapter(mAdapter);
+//		}
+//		mAdapter.notifyDataSetChanged();
 	}
 
 	private void executeConnectRequest() {
@@ -490,6 +565,9 @@ public class FtpFileManage extends Activity{
 		mThreadPool.execute(mCmdFactory.createCmdRENAME(newPath));
 	}
 
+	private void executeOpenRequest() {
+		mThreadPool.execute(mCmdFactory.createCmdOpenVideo());
+	}
 	
 	private void logv(String log) {
 		Log.v(TAG, log);
@@ -566,6 +644,10 @@ public class FtpFileManage extends Activity{
 		public FtpCmd createCmdRENAME(String newPath) {
 			return new CmdRENAME(newPath);
 		}
+		
+		public FtpCmd createCmdOpenVideo() {
+			return new CmdOpenVideo();
+		}
 	}
 	public class DameonFtpConnector implements Runnable {
 
@@ -609,6 +691,7 @@ public class FtpFileManage extends Activity{
 					}
 				}
 				mFTPClient.login(mFTPUser, mFTPPassword);
+				rootRemotePath = mFTPClient.currentDirectory();
 				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);
 			}catch (IllegalStateException illegalEx) {
 				illegalEx.printStackTrace();
@@ -664,13 +747,19 @@ public class FtpFileManage extends Activity{
 			try {
 				mCurrentPWD = mFTPClient.currentDirectory();
 				FTPFile[] ftpFiles = mFTPClient.list();
-				logv(" Request Size  : " + ftpFiles.length);
-				synchronized (mLock) {
-					mFileList.clear();
-					mFileList.addAll(Arrays.asList(ftpFiles));
+				for(int i=0; i<ftpFiles.length; i++){
+					ftpFiles[i].setAbsolutePath(mCurrentPWD + File.separator + ftpFiles[i].getName());
 				}
-				mHandler.sendEmptyMessage(MSG_CMD_LIST_OK);
-
+				logv(" Request Size  : " + ftpFiles.length);
+//				synchronized (mLock) {
+//					mFileList.clear();
+//					mFileList.addAll(Arrays.asList(ftpFiles));
+//				}
+				
+//				remoteBrowser.setCallback(this);
+//				mHandler.sendEmptyMessage(MSG_CMD_LIST_OK);
+				Message msg = mHandler.obtainMessage(MSG_CMD_LIST_OK, ftpFiles);
+				msg.sendToTarget();
 			} catch (Exception ex) {
 				mHandler.sendEmptyMessage(MSG_CMD_LIST_FAILED);
 				ex.printStackTrace();
@@ -719,7 +808,7 @@ public class FtpFileManage extends Activity{
 	public class CmdOPEN extends AsyncTask<Void, Integer, Boolean> {
 		
 		String localPath = getParentCachePath() + File.separator
-				+ mFileList.get(mSelectedPosistion).getName();
+				+ selectedFile.getName();
 		
 		File cacheFile = new File(localPath);
 		
@@ -732,9 +821,8 @@ public class FtpFileManage extends Activity{
 
 			try {
 				mFTPClient.download(
-						mFileList.get(mSelectedPosistion).getName(),cacheFile,
-						new DownloadFTPDataTransferListener(mFileList.get(
-								mSelectedPosistion).getSize()));
+						selectedFile.getName(),cacheFile,
+						new DownloadFTPDataTransferListener(selectedFile.getSize()));
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return false;
@@ -751,6 +839,84 @@ public class FtpFileManage extends Activity{
 			cacheFile.deleteOnExit();
 			toast(result ? "打开成功" : "打开失败");
 			progressDialog.dismiss();
+		}
+	}
+	
+	public class CmdOpenVideo extends FtpCmd {
+
+		@Override
+		public void run() {
+			String localPath = getParentCachePath() + File.separator
+					+ "VideoCache" + File.separator;
+			if (cachePath == null) {  
+				cachePath = localPath + "1.mp4";  
+            }
+			FileOutputStream out = null;
+			try {
+				InputStream is =  mFTPClient.openStream(
+						selectedFile.getName());
+			    byte buf[] = new byte[4 * 1024];
+	            
+	            File cacheFile = new File(cachePath);  
+	            
+                if (!cacheFile.exists()) {  
+                    cacheFile.getParentFile().mkdirs();  
+                    cacheFile.createNewFile();  
+                } 
+                
+                out = new FileOutputStream(cacheFile, true);
+				
+                int size = 0, readSize = 0, fileNum=0;
+                
+				while ((size = is.read(buf)) != -1) {
+					if (size > 0) {  
+                        try {  
+                            if(readSize>=READY_BUFF){  
+                                fileNum++;  
+                                  
+                                switch(fileNum%3){  
+                                    case 0:  
+                                        out=new FileOutputStream(localPath+"1.mp4");  
+                                        break;  
+                                    case 1:  
+                                        out=new FileOutputStream(localPath+"2.mp4");  
+                                        break;  
+                                    case 2:  
+                                        out=new FileOutputStream(localPath+"3.mp4");  
+                                        break;  
+                                }  
+                                  
+                                readSize=0;   
+                                mHandler.sendEmptyMessage(CACHE_VIDEO_READY);  
+                            }  
+                            out.write(buf, 0, size);  
+                            out.flush();  
+                            readSize += size;  
+                            size = 0;// 循环接收  
+                              
+                              
+                        } catch (Exception e) {  
+                            Log.e(TAG, "出现异常0",e);  
+                        }  
+                          
+                  }else{  
+                      Log.i(TAG, "TS流停止发送数据");  
+                  }
+                }} catch (Exception e) {  
+                    Log.e(TAG, "出现异常",e);  
+                } finally {  
+                    if (out != null) {  
+                        try {  
+                            out.close();  
+                            progressDialog.dismiss();
+                        } catch (IOException e) {  
+                            //  
+                            Log.e(TAG, "出现异常1",e);  
+                        }  
+                    }  
+  
+//				mHandler.sendEmptyMessage(MSG_CMD_CDU_OK);
+			} 
 		}
 	}
 	
@@ -791,7 +957,7 @@ public class FtpFileManage extends Activity{
 		@Override
 		public void run() {
 			try {
-				mFTPClient.rename(mFileList.get(mSelectedPosistion).getName(),
+				mFTPClient.rename(selectedFile.getName(),
 						newPath);
 				mHandler.sendEmptyMessage(MSG_CMD_RENAME_OK);
 			} catch (Exception ex) {
@@ -810,13 +976,12 @@ public class FtpFileManage extends Activity{
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			try {
-				String localPath = getParentCachePath() + File.separator
-						+ mFileList.get(mSelectedPosistion).getName();
+				String localPath = getParentRootPath() + File.separator
+						+ selectedFile.getName();
 				mFTPClient.download(
-						mFileList.get(mSelectedPosistion).getName(),
+						selectedFile.getName(),
 						new File(localPath),
-						new DownloadFTPDataTransferListener(mFileList.get(
-								mSelectedPosistion).getSize()));
+						new DownloadFTPDataTransferListener(selectedFile.getSize()));
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return false;
@@ -830,7 +995,7 @@ public class FtpFileManage extends Activity{
 		}
 
 		protected void onPostExecute(Boolean result) {
-			toast(result ? "打开成功" : "打开失败");
+			toast(result ? "下载成功，文件保存至/MShareDownload" : "下载失败");
 			progressDialog.dismiss();
 		}
 	}
@@ -1138,7 +1303,277 @@ public class FtpFileManage extends Activity{
 	            type = MIME_MapTable[i][1];  
 	    }         
 	    return type;  
-	}  
+	}
+	
+	private String getMIMEType(String fName) {  
+		final String[][] MIME_MapTable={
+				//{后缀名，	MIME类型}
+				{".3gp",	"video/3gpp"},
+				{".apk",	"application/vnd.android.package-archive"},
+				{".asf",	"video/x-ms-asf"},
+				{".avi",	"video/x-msvideo"},
+				{".bin",	"application/octet-stream"},
+				{".bmp",  	"image/bmp"},
+				{".c",	"text/plain"},
+				{".class",	"application/octet-stream"},
+				{".conf",	"text/plain"},
+				{".cpp",	"text/plain"},
+				{".doc",	"application/msword"},
+				{".docx",	"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+				{".xls",	"application/vnd.ms-excel"}, 
+				{".xlsx",	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+				{".exe",	"application/octet-stream"},
+				{".gif",	"image/gif"},
+				{".gtar",	"application/x-gtar"},
+				{".gz",	"application/x-gzip"},
+				{".h",	"text/plain"},
+				{".htm",	"text/html"},
+				{".html",	"text/html"},
+				{".jar",	"application/java-archive"},
+				{".java",	"text/plain"},
+				{".jpeg",	"image/jpeg"},
+				{".jpg",	"image/jpeg"},
+				{".js",	"application/x-javascript"},
+				{".log",	"text/plain"},
+				{".m3u",	"audio/x-mpegurl"},
+				{".m4a",	"audio/mp4a-latm"},
+				{".m4b",	"audio/mp4a-latm"},
+				{".m4p",	"audio/mp4a-latm"},
+				{".m4u",	"video/vnd.mpegurl"},
+				{".m4v",	"video/x-m4v"},	
+				{".m4v",	"video/x-matroska"},
+				{".mov",	"video/quicktime"},
+				{".mp2",	"audio/x-mpeg"},
+				{".mp3",	"audio/x-mpeg"},
+				{".mp4",	"video/mp4"},
+				{".mpc",	"application/vnd.mpohun.certificate"},		
+				{".mpe",	"video/mpeg"},	
+				{".mpeg",	"video/mpeg"},	
+				{".mpg",	"video/mpeg"},	
+				{".mpg4",	"video/mp4"},	
+				{".mpga",	"audio/mpeg"},
+				{".msg",	"application/vnd.ms-outlook"},
+				{".ogg",	"audio/ogg"},
+				{".pdf",	"application/pdf"},
+				{".png",	"image/png"},
+				{".pps",	"application/vnd.ms-powerpoint"},
+				{".ppt",	"application/vnd.ms-powerpoint"},
+				{".pptx",	"application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+				{".prop",	"text/plain"},
+				{".rc",	"text/plain"},
+				{".rmvb",	"audio/x-pn-realaudio"},
+				{".rtf",	"application/rtf"},
+				{".sh",	"text/plain"},
+				{".tar",	"application/x-tar"},	
+				{".tgz",	"application/x-compressed"}, 
+				{".txt",	"text/plain"},
+				{".wav",	"audio/x-wav"},
+				{".wma",	"audio/x-ms-wma"},
+				{".wmv",	"audio/x-ms-wmv"},
+				{".wps",	"application/vnd.ms-works"},
+				{".xml",	"text/plain"},
+				{".z",	"application/x-compress"},
+				{".zip",	"application/x-zip-compressed"},
+				{"",		"*/*"}	
+			};
+	      
+	    String type="*/*";   
+	    //获取后缀名前的分隔符"."在fName中的位置。  
+	    int dotIndex = fName.lastIndexOf(".");  
+	    if(dotIndex < 0){  
+	        return type;  
+	    }  
+	    /* 获取文件的后缀名 */  
+	    String end=fName.substring(dotIndex,fName.length()).toLowerCase();  
+	    if(end=="")return type;  
+	    //在MIME和文件类型的匹配表中找到对应的MIME类型。  
+	    for(int i=0;i<MIME_MapTable.length;i++){ //MIME_MapTable??在这里你一定有疑问，这个MIME_MapTable是什么？  
+	        if(end.equals(MIME_MapTable[i][0]))  
+	            type = MIME_MapTable[i][1];  
+	    }         
+	    return type;  
+	}
+
+	@Override
+	public void onCrumbClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		Log.d(TAG, "onCrumbClick" + file.getName());
+		String path = file.getAbsolutePath();
+		executeCWDRequest(path);
+	}
+
+	@Override
+	public void onBackButtonClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		executeCDURequest();
+	}
+
+	@Override
+	public void onItemClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		selectedFile = (FTPFile) file;
+		String fileName = file.getName();
+		Log.v("Path", fileName);
+		if (file.isDirectory()) {
+			executeCWDRequest(fileName);
+		}else if(file.isFile()){
+			if(getMIMEType(fileName).startsWith("video")){
+				showDialog(DIALOG_LOAD);
+				executeOpenRequest();
+			}else{
+				showDialog(DIALOG_LOAD);
+				new CmdOPEN().execute();
+			}
+		}
+	}
+
+	@Override
+	public void onItemLongClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		Log.d(TAG, "onItemLongClick");
+		selectedFile = (FTPFile) file;
+		mshareFileMenu1.hideAnimation();
+		mshareFileMenu2.showAnimation();
+		return;
+	}
+
+	@Override
+	public void onGridViewClick() {
+		// TODO Auto-generated method stub
+		remoteBrowser.quitMultiSelectMode();
+	}
+
+	@Override
+	public void onRefreshButtonClick(FileBrowserFile file) {
+		// TODO Auto-generated method stub
+		String path = file.getAbsolutePath();
+		executeCWDRequest(path);
+	}
+	
+	//设置第一菜单
+		private void setMenu1() {
+			this.mshareFileMenu1 = new MshareFileMenu(this, this.menuLayout);
+			MenuUpload menuUpload = new MenuUpload();	
+			this.mshareFileMenu1.addButton(R.drawable.account, "上传文件", menuUpload);	
+		}
+		
+		//设置第二菜单
+		private void setMenu2() {
+			this.mshareFileMenu2 = new MshareFileMenu(this, this.menuLayout);
+			MenuCopy menuCopy = new MenuCopy();
+			MenuCut menuCut = new MenuCut();
+			MenuRename menuRename = new MenuRename();
+			MenuDelete menuDelete = new MenuDelete();
+			MenuCancel menuCancel = new MenuCancel();
+			this.mshareFileMenu2.addButton(R.drawable.account, "复制", menuCopy);
+			this.mshareFileMenu2.addButton(R.drawable.account, "剪切", menuCut);
+			this.mshareFileMenu2.addButton(R.drawable.account, "重命名", menuRename);
+			this.mshareFileMenu2.addButton(R.drawable.account, "删除", menuDelete);
+			this.mshareFileMenu2.addButton(R.drawable.account, "撤消", menuCancel);
+			this.mshareFileMenu2.hide();
+		}
+		
+		//设置第三菜单
+		private void setMenu3() {
+			this.mshareFileMenu3 = new MshareFileMenu(this, this.menuLayout);
+			MenuPaste menuPaste = new MenuPaste();
+			MenuCancel menuCancel = new MenuCancel();
+			this.mshareFileMenu3.addButton(R.drawable.account, "粘贴", menuPaste);
+			this.mshareFileMenu3.addButton(R.drawable.account, "取消", menuCancel);
+			this.mshareFileMenu3.hide();
+		}
+		
+		//新建文件夹
+		class MenuNewFolder implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				TableLayout loginForm = (TableLayout)getLayoutInflater()
+						.inflate( R.layout.new_folder, null);	
+					new AlertDialog.Builder(context)
+						// 设置对话框的标题
+						.setTitle("新建文件夹")
+						// 设置对话框显示的View对象
+						.setView(loginForm)
+						// 为对话框设置一个“确定”按钮
+						.setPositiveButton("确定" , new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which)
+							{
+								
+							}
+						})
+						// 为对话框设置一个“取消”按钮
+						.setNegativeButton("取消", null)
+						// 创建、并显示对话框
+						.create()
+						.show();		
+			}
+		}
+		
+		//复制
+		class MenuCopy implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		//剪切
+		class MenuCut implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//重命名
+		class MenuRename implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				showDialog(DIALOG_RENAME);
+			}
+		}
+		
+		//删除
+		class MenuDelete implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//取消
+		class MenuCancel implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//粘贴
+		class MenuPaste implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//取消
+		class MenuUpload implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				openFileDialog();
+			}
+		}
 }
 
 

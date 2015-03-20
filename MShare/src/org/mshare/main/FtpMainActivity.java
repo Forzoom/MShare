@@ -131,7 +131,7 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initView() {
-		mListView = (ListView) findViewById(R.id.listviewApp);
+//		mListView = (ListView) findViewById(R.id.listviewApp);
 
 		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -168,12 +168,12 @@ public class FtpMainActivity extends Activity implements OnClickListener {
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
-		if (v.getId() == R.id.listviewApp) {
-			menu.setHeaderTitle("文件操作");
-			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DOWNLOAD, Menu.NONE, "下载");
-			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_RENAME, Menu.NONE, "重命名");
-			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DELETE, Menu.NONE, "删除");
-		}
+//		if (v.getId() == R.id.listviewApp) {
+//			menu.setHeaderTitle("文件操作");
+//			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DOWNLOAD, Menu.NONE, "下载");
+//			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_RENAME, Menu.NONE, "重命名");
+//			menu.add(MENU_DEFAULT_GROUP, MENU_OPTIONS_DELETE, Menu.NONE, "删除");
+//		}
 	}
 
 	@Override

@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 
 import org.mshare.main.R;
 import org.mshare.main.FtpMainActivity.CmdFactory;
+import org.mshare.scan.ScanActivity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -49,7 +50,7 @@ public class JoinConn extends Activity {
 	private static String TAG = FtpMainActivity.class.getName();
 	
 	private GridView gridview;
-	private Button btftp;
+	private Button btftp, btscan;
 	private ArrayList<HashMap<String, Object>> listImageItem;  
     private SimpleAdapter simpleAdapter;
     
@@ -104,6 +105,7 @@ public class JoinConn extends Activity {
 		setContentView(R.layout.slidelistview);
 		gridview = (GridView) findViewById(R.id.gridview);
 	    btftp = (Button) findViewById(R.id.btnewftp);
+	    btscan = (Button) findViewById(R.id.btscan);
 	    listImageItem = new ArrayList<HashMap<String, Object>>();  
 	    
 	    mSdcardRootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -116,6 +118,16 @@ public class JoinConn extends Activity {
 	            R.layout.labelicon, new String[] {  
 	                    "ItemImage", "ItemText" }, new int[] { R.id.imageview,  
 	                    R.id.textview });  
+	    
+	    btscan.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				Intent intent =new Intent(JoinConn.this, ScanActivity.class);
+				startActivityForResult(intent, 0);
+			}
+		});
 	    //添加图片绑定  
 //	    simpleAdapter.setViewBinder(new ViewBinder() {  
 //	        public boolean setViewValue(View view, Object data,  
@@ -131,11 +143,44 @@ public class JoinConn extends Activity {
 //	    gridview.setAdapter(simpleAdapter); 
 	}
 	
+	public void onActivityResult(int requestCode, int resultCode, Intent intent){
+		//当requestCode、resultCode同时为0是，也就是处理特定结果的结果
+		
+		if(requestCode == 0 && resultCode == Activity.RESULT_OK){
+
+//			mFTPPort = Integer.parseInt(editPort.getText().toString().trim());
+//			mFTPHost = editHost.getText().toString().trim();
+//			mFTPUser = editUser.getText().toString().trim();
+//			mFTPPassword = editPasword.getText().toString().trim();
+			
+			if (intent == null) {
+				Log.e(TAG, "the intent is null, stop!");
+				return;
+			}
+			
+			ConnectInfo connectInfo = ConnectInfo.parse(intent.getStringExtra("result"));
+			
+			String port = connectInfo.getPort();
+			String host = connectInfo.getHost();
+			String username = connectInfo.getUsername();
+			String password = connectInfo.getPassword();
+			
+			mFTPPort = Integer.parseInt(port.trim());
+			mFTPHost = host.trim();
+			mFTPUser = username.trim();
+			mFTPPassword = password.trim();
+			
+			Log.v(TAG, "mFTPHost #" + mFTPHost + " mFTPPort #" + mFTPPort 
+					+ " mFTPUser #" + mFTPUser + " mFTPPassword #" + mFTPPassword);
+			// 此处可执行登录处理
+			executeConnectRequest();
+		}
+	}
+	
 	public void customView(View source)
 	{
 		//装载/res/layout/login.xml界面布局
-		TableLayout loginForm = (TableLayout)getLayoutInflater()
-			.inflate( R.layout.login, null);	
+		TableLayout loginForm = (TableLayout)getLayoutInflater().inflate( R.layout.login, null);	
 		final EditText editHost = (EditText) loginForm.findViewById(R.id.editFTPHost);
 		editHost.setText("192.168.0.101");
 		final EditText editPort= (EditText) loginForm.findViewById(R.id.editFTPPort);
