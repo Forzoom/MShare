@@ -10,10 +10,18 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mshare.file.MshareFileMenu;
 import org.mshare.file.browser.FileBrowserCallback;
 import org.mshare.file.browser.FileBrowserFile;
 import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
+import org.mshare.main.FileBrowserActivity.MenuCancel;
+import org.mshare.main.FileBrowserActivity.MenuCopy;
+import org.mshare.main.FileBrowserActivity.MenuCut;
+import org.mshare.main.FileBrowserActivity.MenuDelete;
+import org.mshare.main.FileBrowserActivity.MenuNewFolder;
+import org.mshare.main.FileBrowserActivity.MenuPaste;
+import org.mshare.main.FileBrowserActivity.MenuRename;
 import org.mshare.main.UploadFileChooserAdapter.FileInfo;
 import it.sauronsoftware.ftp4j.FTPClient;
 import it.sauronsoftware.ftp4j.FTPDataTransferListener;
@@ -23,6 +31,7 @@ import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -47,9 +56,11 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
@@ -58,6 +69,7 @@ import android.widget.AdapterView.OnItemClickListener;
 public class FtpFileManage extends Activity implements FileBrowserCallback{
 	
 	private static String TAG = FtpFileManage.class.getName();
+	private Context context;
 	
 	private CmdFactory mCmdFactory;
 	private FTPClient mFTPClient;
@@ -137,14 +149,24 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	private MShareFileBrowser remoteBrowser;
 	private FTPFile selectedFile;
 	
+	private LinearLayout menuLayout;
+	private MshareFileMenu mshareFileMenu1;
+	private MshareFileMenu mshareFileMenu2;
+	private MshareFileMenu mshareFileMenu3;
+	
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
-		
+		this.context = this;
 		setContentView(R.layout.local_file_browser_activity);
 		
 		remoteBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
 		// 允许使用多选
 		remoteBrowser.setMultiSelectEnabled(true);
+		//添加菜单栏
+		menuLayout = (LinearLayout)this.findViewById(R.id.local_menus);
+		setMenu1();
+		setMenu2();
+		setMenu3();
 
 		//原来的远程文件浏览
 //		setContentView(R.layout.activity_main);
@@ -725,6 +747,9 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			try {
 				mCurrentPWD = mFTPClient.currentDirectory();
 				FTPFile[] ftpFiles = mFTPClient.list();
+				for(int i=0; i<ftpFiles.length; i++){
+					ftpFiles[i].setAbsolutePath(mCurrentPWD + File.separator + ftpFiles[i].getName());
+				}
 				logv(" Request Size  : " + ftpFiles.length);
 //				synchronized (mLock) {
 //					mFileList.clear();
@@ -1372,7 +1397,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	@Override
 	public void onCrumbClick(FileBrowserFile file) {
 		// TODO Auto-generated method stub
-		Log.d(TAG, "onCrumbClick");
+		Log.d(TAG, "onCrumbClick" + file.getName());
 		String path = file.getAbsolutePath();
 		executeCWDRequest(path);
 	}
@@ -1405,7 +1430,10 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
 		// TODO Auto-generated method stub
+		Log.d(TAG, "onItemLongClick");
 		selectedFile = (FTPFile) file;
+		mshareFileMenu1.hideAnimation();
+		mshareFileMenu2.showAnimation();
 		return;
 	}
 
@@ -1421,6 +1449,131 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		String path = file.getAbsolutePath();
 		executeCWDRequest(path);
 	}
+	
+	//设置第一菜单
+		private void setMenu1() {
+			this.mshareFileMenu1 = new MshareFileMenu(this, this.menuLayout);
+			MenuUpload menuUpload = new MenuUpload();	
+			this.mshareFileMenu1.addButton(R.drawable.account, "上传文件", menuUpload);	
+		}
+		
+		//设置第二菜单
+		private void setMenu2() {
+			this.mshareFileMenu2 = new MshareFileMenu(this, this.menuLayout);
+			MenuCopy menuCopy = new MenuCopy();
+			MenuCut menuCut = new MenuCut();
+			MenuRename menuRename = new MenuRename();
+			MenuDelete menuDelete = new MenuDelete();
+			MenuCancel menuCancel = new MenuCancel();
+			this.mshareFileMenu2.addButton(R.drawable.account, "复制", menuCopy);
+			this.mshareFileMenu2.addButton(R.drawable.account, "剪切", menuCut);
+			this.mshareFileMenu2.addButton(R.drawable.account, "重命名", menuRename);
+			this.mshareFileMenu2.addButton(R.drawable.account, "删除", menuDelete);
+			this.mshareFileMenu2.addButton(R.drawable.account, "撤消", menuCancel);
+			this.mshareFileMenu2.hide();
+		}
+		
+		//设置第三菜单
+		private void setMenu3() {
+			this.mshareFileMenu3 = new MshareFileMenu(this, this.menuLayout);
+			MenuPaste menuPaste = new MenuPaste();
+			MenuCancel menuCancel = new MenuCancel();
+			this.mshareFileMenu3.addButton(R.drawable.account, "粘贴", menuPaste);
+			this.mshareFileMenu3.addButton(R.drawable.account, "取消", menuCancel);
+			this.mshareFileMenu3.hide();
+		}
+		
+		//新建文件夹
+		class MenuNewFolder implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				TableLayout loginForm = (TableLayout)getLayoutInflater()
+						.inflate( R.layout.new_folder, null);	
+					new AlertDialog.Builder(context)
+						// 设置对话框的标题
+						.setTitle("新建文件夹")
+						// 设置对话框显示的View对象
+						.setView(loginForm)
+						// 为对话框设置一个“确定”按钮
+						.setPositiveButton("确定" , new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which)
+							{
+								
+							}
+						})
+						// 为对话框设置一个“取消”按钮
+						.setNegativeButton("取消", null)
+						// 创建、并显示对话框
+						.create()
+						.show();		
+			}
+		}
+		
+		//复制
+		class MenuCopy implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		//剪切
+		class MenuCut implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//重命名
+		class MenuRename implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				showDialog(DIALOG_RENAME);
+			}
+		}
+		
+		//删除
+		class MenuDelete implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//取消
+		class MenuCancel implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//粘贴
+		class MenuPaste implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				
+			}
+		}
+		
+		//取消
+		class MenuUpload implements View.OnClickListener {
+			
+			@Override
+			public void onClick(View arg0) {
+				openFileDialog();
+			}
+		}
 }
 
 
