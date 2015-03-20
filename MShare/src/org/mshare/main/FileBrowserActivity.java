@@ -1,5 +1,6 @@
 package org.mshare.main;
 
+import org.mshare.file.MshareFileMenu;
 import org.mshare.file.browser.FileBrowserCallback;
 import org.mshare.file.browser.FileBrowserFile;
 import org.mshare.file.browser.LocalBrowserFile;
@@ -13,11 +14,18 @@ import android.view.ContextMenu;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 
 public class FileBrowserActivity extends Activity implements FileBrowserCallback {
 	private static final String TAG = FileBrowserActivity.class.getSimpleName();
 	
 	private MShareFileBrowser fileBrowser;
+	
+	private LinearLayout linearLayout;
+	
+	private MshareFileMenu mshareFileMenu1;
+	private MshareFileMenu mshareFileMenu2;
+	private MshareFileMenu mshareFileMenu3;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +42,12 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		LocalBrowserFile rootFile = new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath());
 		fileBrowser.setRootFile(rootFile);
 		fileBrowser.refreshGridView(listFiles(rootFile));
+		
+		//添加菜单栏
+		linearLayout = (LinearLayout)this.findViewById(R.id.local_menus);
+		setMenu1();
+		setMenu2();
+		setMenu3();
 		
 	}
 	
@@ -123,5 +137,111 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		return ret;
 	}
-
+	//设置第一菜单
+	private void setMenu1() {
+		this.mshareFileMenu1 = new MshareFileMenu(this, this.linearLayout);
+		MenuNewFolder menuNewFolder = new MenuNewFolder();
+		MenuRefresh menuRefresh = new MenuRefresh();
+		this.mshareFileMenu1.addButton(R.drawable.account, "新建文件夹", menuNewFolder);		
+		this.mshareFileMenu1.addButton(R.drawable.account, "刷新", menuRefresh);
+	}
+	
+	//设置第二菜单
+	private void setMenu2() {
+		this.mshareFileMenu2 = new MshareFileMenu(this, this.linearLayout);
+		MenuCopy menuCopy = new MenuCopy();
+		MenuCut menuCut = new MenuCut();
+		MenuRename menuRename = new MenuRename();
+		MenuDelete menuDelete = new MenuDelete();
+		MenuCancel menuCancel = new MenuCancel();
+		this.mshareFileMenu2.addButton(R.drawable.account, "复制", menuCopy);
+		this.mshareFileMenu2.addButton(R.drawable.account, "剪切", menuCut);
+		this.mshareFileMenu2.addButton(R.drawable.account, "重命名", menuRename);
+		this.mshareFileMenu2.addButton(R.drawable.account, "删除", menuDelete);
+		this.mshareFileMenu2.addButton(R.drawable.account, "撤消", menuCancel);
+		this.mshareFileMenu2.hide();
+	}
+	
+	//设置第三菜单
+	private void setMenu3() {
+		this.mshareFileMenu3 = new MshareFileMenu(this, this.linearLayout);
+		MenuPaste menuPaste = new MenuPaste();
+		MenuCancel menuCancel = new MenuCancel();
+		this.mshareFileMenu3.addButton(R.drawable.account, "粘贴", menuPaste);
+		this.mshareFileMenu3.addButton(R.drawable.account, "取消", menuCancel);
+		this.mshareFileMenu3.hide();
+	}
+	
+	//新建文件夹
+	class MenuNewFolder implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			mshareFileMenu1.hideAnimation();
+			mshareFileMenu2.showAnimation();
+			
+		}
+	}
+	
+	//刷新
+	class MenuRefresh implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			
+		}
+	}
+	
+	//复制
+	class MenuCopy implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			
+		}
+	}
+	//剪切
+	class MenuCut implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			
+		}
+	}
+	
+	//重命名
+	class MenuRename implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			
+		}
+	}
+	
+	//删除
+	class MenuDelete implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			
+		}
+	}
+	
+	//取消
+	class MenuCancel implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			
+		}
+	}
+	
+	//粘贴
+	class MenuPaste implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			
+		}
+	}
 }

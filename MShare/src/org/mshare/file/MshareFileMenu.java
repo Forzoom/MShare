@@ -16,9 +16,10 @@ public class MshareFileMenu {
 	Context context;//对应的Activity
 	
 	
-	public MshareFileMenu(Context c) { //构造函数 创建新菜单
+	public MshareFileMenu(Context c, LinearLayout l) { //构造函数 创建新菜单
 		this.context = c;
 		this.linearLayout = (LinearLayout)LayoutInflater.from(this.context).inflate(R.layout.menu, null);
+		l.addView(this.linearLayout);
 	}
 	
 	public void addButton(int src, String str, View.OnClickListener listener) { //添加一个新按钮
@@ -35,7 +36,7 @@ public class MshareFileMenu {
 		
 		this.linearLayout.setWeightSum(this.linearLayout.getWeightSum()+1);
 		this.linearLayout.addView(view, lp);
-		this.linearLayout.setOnClickListener(listener);
+		view.setOnClickListener(listener);
 	}
 	
 	public void removeButton() { //删除所有按钮（貌似没用到）
@@ -48,6 +49,7 @@ public class MshareFileMenu {
 		aa.setDuration(500);
 		aa.setFillAfter(true);
 		this.linearLayout.startAnimation(aa);
+		this.linearLayout.setVisibility(View.GONE);
 	}
 	
 	public void showAnimation() { //动画显示菜单
@@ -55,6 +57,7 @@ public class MshareFileMenu {
 		aa.setDuration(500);
 		aa.setFillAfter(true);
 		this.linearLayout.startAnimation(aa);
+		this.linearLayout.setVisibility(View.VISIBLE);
 	}
 	
 	public void hide() { //隐藏菜单
