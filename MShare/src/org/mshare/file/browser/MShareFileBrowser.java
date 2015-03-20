@@ -38,6 +38,8 @@ import android.widget.Toast;
  * 
  * 该如何退出multi_select_mode的时候将所有的fileIcon都还原呢？
  * 
+ * 目前对于单选择来说并没有合适的方法，可能只需要几个回调方法就可以了
+ * 
  * @author HM
  *
  */
@@ -509,6 +511,11 @@ public class MShareFileBrowser extends LinearLayout {
 					item.fileIcon.setImageDrawable(MShareFileAdapter.getSelectedDrawable(longClickFile));
 					// 记录被选择情况
 					multiSelectPosition[position] = true;
+					
+					// 回调函数
+					if (callback != null) {
+						callback.onItemLongClick(currentFiles[position]);
+					}
 				} else if (mode == MODE_MULTI_SELECT) {
 					
 					if (multiSelectPosition[position]) {

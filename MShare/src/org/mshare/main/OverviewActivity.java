@@ -122,7 +122,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private SettingsButton settingsButton;
 	
 	//连接参数
-	private GridView gridview;
+	private ServerListGridView gridview;
 	private LinearLayout btftp, btscan;
 	private ArrayList<HashMap<String, Object>> listImageItem;  
     private SimpleAdapter simpleAdapter;
@@ -230,8 +230,8 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		surfaceView.setServerButton(serverButton);
 		
 		// 添加加入链接的组件
-		gridview = (GridView) findViewById(R.id.gridview);
-//		gridview.
+		gridview = (ServerListGridView) findViewById(R.id.gridview);
+		gridview.setGestureDetector(gestureDetector);
 		
 	    btftp = (LinearLayout) findViewById(R.id.btftp);
 	    btscan = (LinearLayout) findViewById(R.id.btscan);
