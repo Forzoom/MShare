@@ -180,8 +180,7 @@ public class JoinConn extends Activity {
 	public void customView(View source)
 	{
 		//装载/res/layout/login.xml界面布局
-		TableLayout loginForm = (TableLayout)getLayoutInflater()
-			.inflate( R.layout.login, null);	
+		TableLayout loginForm = (TableLayout)getLayoutInflater().inflate( R.layout.login, null);	
 		final EditText editHost = (EditText) loginForm.findViewById(R.id.editFTPHost);
 		editHost.setText("192.168.0.101");
 		final EditText editPort= (EditText) loginForm.findViewById(R.id.editFTPPort);
