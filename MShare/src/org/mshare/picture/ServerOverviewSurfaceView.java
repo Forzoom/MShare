@@ -3,6 +3,7 @@ package org.mshare.picture;
 import java.util.ArrayList;
 
 import org.mshare.ftp.server.FsService;
+import org.mshare.main.MShareApp;
 import org.mshare.main.OverviewActivity;
 import org.mshare.main.R;
 import org.mshare.main.ServerSettingActivity;
@@ -14,10 +15,14 @@ import org.mshare.picture.SettingsButton.AlphaAnimation;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Bitmap.Config;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -53,6 +58,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	private int stopColor;
 	private int startColor;
 	private int operatingColor;
+	private int transparentColor;
 	
 	// 所设置的缩小的内半径
 	private int serverInnerRadius;
@@ -63,6 +69,8 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	private StatusController statusController;
 
 	private PictureBackground pictureBackground;
+	private CircleAvater circleAvater;
+
 	private RingButton serverButton;
 	private SettingsButton settingsButton;
 	
@@ -100,6 +108,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		stopColor = getResources().getColor(R.color.blue01);
 		startColor = getResources().getColor(R.color.blue08);
 		operatingColor = getResources().getColor(R.color.blue00);
+		transparentColor = getResources().getColor(R.color.color_transparent);
 	}
 	
 	@Override
@@ -132,7 +141,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 			break;
 		}
 		pictureBackground.setColorAnimation(pictureBackground.new ColorAnimation(pictureBackground, pictureBackground.getCurrentColor(), pictureBackground.getCurrentColor()));
-		canvasElements.add(pictureBackground);
+//		canvasElements.add(pictureBackground);
 		
 		// 设置按钮
 		int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
@@ -142,7 +151,26 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		AlphaAnimation alphaAnimation = settingsButton.new AlphaAnimation(settingsButton, 223);
 		alphaAnimation.setDuration(300);
 		settingsButton.setAlphaAnimation(alphaAnimation);
-		canvasElements.add(settingsButton);
+//		canvasElements.add(settingsButton);
+		
+		Context context = MShareApp.getAppContext();
+		int avaterRadius = canvas.getWidth() / 4;
+		Bitmap originAvater = BitmapFactory.decodeResource(context.getResources(), R.drawable.avater_1);
+		Bitmap avater = Bitmap.createScaledBitmap(originAvater, avaterRadius * 2, avaterRadius * 2, false);
+		Bitmap bitmap = Bitmap.createBitmap(avater.getWidth(), avater.getHeight(), Config.ARGB_8888);
+		Canvas bitmapCanvas = new Canvas(bitmap);
+		
+		Paint bitmapPaint = new Paint();
+		bitmapPaint.setAntiAlias(true);
+		bitmapCanvas.drawColor(transparentColor);
+		bitmapPaint.setColor(operatingColor);
+		bitmapCanvas.drawCircle(avater.getWidth() / 2, avater.getHeight() / 2, avater.getWidth() / 2, bitmapPaint);
+		bitmapPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+		bitmapCanvas.drawBitmap(avater, 0, 0, bitmapPaint);
+		circleAvater.setCx(canvas.getWidth() / 2);
+		circleAvater.setCy(canvas.getHeight() / 2);
+		circleAvater.setRadius(avaterRadius);
+		circleAvater.setAvater(bitmap);
 		
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
 		// 圆环
@@ -154,7 +182,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		serverButton.setOuterRadius(canvasWidth / 4);
 		serverButton.setBounceAnimation(serverButton.new BounceAnimation(serverButton, serverInnerRadius));
 		serverButton.setBreatheAnimation(serverButton.new OuterRadiusBreatheAnimation(serverButton, serverOuterRadius));
-		canvasElements.add(serverButton);
+//		canvasElements.add(serverButton);
 		
 		// 绘制基本内容
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
@@ -179,7 +207,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		isSurfaceCreated = false;
 		isLooping = false;
 		// 清空所有的elements，暂时先这样
-		canvasElements.clear();
+//		canvasElements.clear();
 	}
 
 	@Override
@@ -309,6 +337,14 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 
 	public void setServerOuterRadius(int serverOuterRadius) {
 		this.serverOuterRadius = serverOuterRadius;
+	}
+	
+	public CircleAvater getCircleAvater() {
+		return circleAvater;
+	}
+	public void setCircleAvater(CircleAvater circleAvater) {
+		this.circleAvater = circleAvater;
+		addElement(circleAvater);
 	}
 	
 	class GestureListener extends GestureDetector.SimpleOnGestureListener {

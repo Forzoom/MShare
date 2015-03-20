@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.StatusController.StatusCallback;
+import org.mshare.picture.CircleAvater;
 import org.mshare.picture.SettingsButton;
 import org.mshare.picture.CanvasAnimation;
 import org.mshare.picture.CanvasElement;
@@ -79,6 +80,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private ServerOverviewSurfaceView surfaceView;
 	
 	private PictureBackground pictureBackground;
+	private CircleAvater circleAvater;
 	private RingButton serverButton;
 	private SettingsButton settingsButton;
 	
@@ -139,6 +141,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// ±≥æ∞
 		pictureBackground = new PictureBackground();
 		surfaceView.setPictureBackground(pictureBackground);
+		
+		// Õ∑œÒ
+		circleAvater = new CircleAvater();
+		surfaceView.setCircleAvater(circleAvater);
 		
 		// …Ë÷√∞¥≈•
 		Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
