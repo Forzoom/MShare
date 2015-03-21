@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mshare.file.MshareFileMenu;
 import org.mshare.ftp.server.FsService;
 import org.mshare.ftp.server.FsSettings;
 import org.mshare.main.JoinConn.CmdCWD;
@@ -109,13 +110,20 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 
 	// 判断Fling的GestureDetector
 	private GestureDetector gestureDetector;
-	
+	// 用于切换的ViewSwitcher
 	private ViewSwitcher viewSwitcher;
 	
+	// 状态控制器
 	private StatusController statusController;
 	
+	// 服务器UI SurfaceView
 	private ServerOverviewSurfaceView surfaceView;
+	// 服务器菜单
+	private LinearLayout serverMenu;
+	private MshareFileMenu menuInStop;
+	private MshareFileMenu menuInStart;
 	
+	// 所需要在Canvas中绘制的内容
 	private PictureBackground pictureBackground;
 	private CircleAvater circleAvater;
 	private RingButton serverButton;
@@ -172,36 +180,28 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// 设置ViewSwitcher
 		viewSwitcher = (ViewSwitcher)findViewById(R.id.view_switcher);
 		FrameLayout.LayoutParams serverParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-		ViewGroup serverOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_flat, null);
+		ViewGroup serverOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_server, null);
 		FrameLayout.LayoutParams clientParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-		ViewGroup clientOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_other, null);
+		ViewGroup clientOverview = (ViewGroup)LayoutInflater.from(this).inflate(R.layout.overview_activity_client, null);
 		viewSwitcher.addView(serverOverview, serverParams);
 		viewSwitcher.addView(clientOverview, clientParams);
 		
-		// 
+		// 设置状态控制器
 		statusController = new StatusController();
 		statusController.setCallback(this);
 		
-		// 打开文件浏览器的回调函数
-		RelativeLayout fileBrowserButton = (RelativeLayout)serverOverview.findViewById(R.id.overview_activity_file_browser_button);
-		fileBrowserButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Intent startFileBrowserIntent = new Intent(OverviewActivity.this, FileBrowserActivity.class);
-				startActivity(startFileBrowserIntent);
-			}
-		});
+		// 服务器菜单
+		serverMenu = (LinearLayout)serverOverview.findViewById(R.id.server_overview_menu);
+		// 服务器停止状态下的Menu
+		menuInStop = new MshareFileMenu(this, serverMenu);
+		// 本地文件浏览器按钮
+		menuInStop.addButton(R.drawable.icon_folder, new LocalFileBrowserListener());
+		// 服务器启动状态下的Menu
+		menuInStart = new MshareFileMenu(this, serverMenu);
 		
-		// 打开文件浏览器的回调函数
-		RelativeLayout qrcodeButton = (RelativeLayout)serverOverview.findViewById(R.id.overview_activity_qrcode_button);
-		qrcodeButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Intent startQrcodeIntent = new Intent(OverviewActivity.this, QRCodeConnectActivity.class);
-				startQrcodeIntent.putExtra(QRCodeConnectActivity.EXTRA_CONTENT, new ConnectInfo("192.168.1.1", "2121", "username", "password"));
-				startActivity(startQrcodeIntent);
-			}
-		});
+		// 二维码按钮
+		menuInStart.addButton(R.drawable.icon_folder, new LocalFileBrowserListener());
+		menuInStart.addButton(R.drawable.qrcode, new QrcodeViewListener());
 		
 		// 设置surfaceView
 		surfaceView = (ServerOverviewSurfaceView)findViewById(R.id.server_overview_surface_view);
@@ -582,6 +582,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		Log.d(TAG, "onServerStatus");
 		// 可以将operating的颜色变化放在这里
 		if (status == StatusController.STATUS_SERVER_STARTED) {
+			// 处理SurfaceView中的动画效果
 			long startTime = System.currentTimeMillis();
 			
 			pictureBackground.stopColorAnimation();
@@ -599,6 +600,9 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			}
 			serverButton.startBreatheAnimation(surfaceView.getServerOuterRadius(), startTime);
 			
+			// 处理菜单动画效果
+			menuInStop.hideAnimation();
+			menuInStart.showAnimation();
 		} else if (status == StatusController.STATUS_SERVER_STOPPED) {
 			// 调整背景颜色
 			pictureBackground.stopColorAnimation();
@@ -614,6 +618,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			if (breatheAnimation != null) {
 				breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_ONCE);
 			}
+			
+			// 处理菜单动画
+			menuInStart.hideAnimation();
+			menuInStop.showAnimation();
 		}
 		
 	}
@@ -757,6 +765,39 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		}
 	}
 	
+	private class LocalFileBrowserListener implements View.OnClickListener {
+		@Override
+		public void onClick(View v) {
+			Intent startFileBrowserIntent = new Intent(OverviewActivity.this, FileBrowserActivity.class);
+			startActivity(startFileBrowserIntent);
+		}
+	}
+	
+	private class QrcodeViewListener implements View.OnClickListener {
+		@Override
+		public void onClick(View v) {
+			Intent startQrcodeIntent = new Intent(OverviewActivity.this, QRCodeConnectActivity.class);
+			
+			// 暂时在这里判断服务器是否正在运行，只有当服务器争取额运行的时候才能够打开qrcode
+			if (FsService.isRunning()) {
+				String host = FsService.getLocalInetAddress().toString();
+				String port = String.valueOf(FsSettings.getPort());
+				String username = FsSettings.getUsername();
+				String password = FsSettings.getPassword();
+				
+				ConnectInfo connectInfo = new ConnectInfo(host, port, username, password);
+				
+				startQrcodeIntent.putExtra(QRCodeConnectActivity.EXTRA_CONTENT, connectInfo);
+				startActivity(startQrcodeIntent);
+			} else {
+				// do nothing..
+				Log.e(TAG, "try to view qrcode, but the ftp service is not running!");
+			}
+			
+		}
+	}
+	
+	/* 通过反射机制调用AP开启功能 */
 //	WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
 //	
 //	try {

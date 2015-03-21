@@ -48,9 +48,10 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		// 允许使用多选
 		fileBrowser.setMultiSelectEnabled(true);
 		
+		
 		// 根文件
 		LocalBrowserFile rootFile = new LocalBrowserFile(Environment.getExternalStorageDirectory().getAbsolutePath());
-		fileBrowser.setRootFile(rootFile);
+		fileBrowser.setRootFile(rootFile, "SD卡");
 		fileBrowser.refreshGridView(listFiles(rootFile));
 		
 		//添加菜单栏

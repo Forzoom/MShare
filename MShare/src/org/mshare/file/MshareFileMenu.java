@@ -39,6 +39,25 @@ public class MshareFileMenu {
 		view.setOnClickListener(listener);
 	}
 	
+	/**
+	 * 添加不带文字的按钮
+	 * @param resId
+	 * @param listener
+	 */
+	public void addButton(int resId, View.OnClickListener listener) { //添加一个新按钮
+		View menuItem = LayoutInflater.from(this.context).inflate(R.layout.menu_button_no_text, null);
+		
+		ImageView imageView = (ImageView)menuItem.findViewById(R.id.menu_image);
+		imageView.setBackgroundResource(resId);
+		
+		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+		lp.weight = 1;
+		
+		this.linearLayout.setWeightSum(this.linearLayout.getWeightSum() + 1);
+		this.linearLayout.addView(menuItem, lp);
+		menuItem.setOnClickListener(listener);
+	}
+	
 	public void removeButton() { //删除所有按钮（貌似没用到）
 		this.linearLayout.removeAllViews();
 		this.linearLayout.setWeightSum(0);

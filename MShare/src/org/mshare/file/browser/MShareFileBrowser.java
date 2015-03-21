@@ -172,7 +172,12 @@ public class MShareFileBrowser extends LinearLayout {
 	 * @param file
 	 */
 	public void setRootFile(FileBrowserFile file) {
-		crumbController.push(file);
+		setRootFile(file, file.getName());
+	}
+	
+	// 设置自定的名字
+	public void setRootFile(FileBrowserFile file, String fileRootName) {
+		crumbController.push(file, fileRootName);
 		crumbController.selectCrumb(0);
 		waitForRefresh();
 	}
@@ -460,12 +465,13 @@ public class MShareFileBrowser extends LinearLayout {
 			
 			if (isMultiSelectEnabled() && mode == MODE_MULTI_SELECT) {
 				
+				Log.d(TAG, "operate multi select mode");
 				if (multiSelectPosition[position]) {
 					// 文件已经被选中，所以将其设置为未选中，并从ArrayList中移除
-					selectFile(position);
+					unselectFile(position);
 				} else {
 					// 文件未被选中，所以将其设置为选中，加入ArrayList
-					unselectFile(position);
+					selectFile(position);
 				}
 
 			} else {
@@ -549,12 +555,6 @@ public class MShareFileBrowser extends LinearLayout {
 		@Override
 		public void onClick(View v) {
 			Log.v(TAG, "crumb item is clicked");
-			
-			// TODO 暂时将这里的去掉
-//			if (!crumbController.canPop()) {
-//				Log.d(TAG, "cannot pop");
-//				return;
-//			}
 			
 			popCrumb();
 			waitForRefresh();
