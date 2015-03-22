@@ -148,6 +148,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	private MShareFileBrowser remoteBrowser;
 	private FTPFile selectedFile;
+	private ArrayList<FTPFile> selectedFileList;
 	
 	private LinearLayout menuLayout;
 	private MshareFileMenu mshareFileMenu1;
@@ -158,7 +159,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		super.onCreate(savedInstanceState);
 		this.context = this;
 		setContentView(R.layout.local_file_browser_activity);
-		
+		selectedFileList = new ArrayList<FTPFile>();
 		remoteBrowser = (MShareFileBrowser)findViewById(R.id.local_file_browser);
 		// 允许使用多选
 		remoteBrowser.setMultiSelectEnabled(true);
@@ -976,12 +977,14 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			try {
-				String localPath = getParentRootPath() + File.separator
-						+ selectedFile.getName();
-				mFTPClient.download(
-						selectedFile.getName(),
-						new File(localPath),
-						new DownloadFTPDataTransferListener(selectedFile.getSize()));
+				for(int i=0; i<selectedFileList.size(); i++){
+					String localPath = getParentRootPath() + File.separator
+							+ selectedFileList.get(i).getName();
+					mFTPClient.download(
+							selectedFileList.get(i).getName(),
+							new File(localPath),
+							new DownloadFTPDataTransferListener(selectedFileList.get(i).getSize()));
+				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return false;
@@ -1432,6 +1435,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onItemLongClick");
 		selectedFile = (FTPFile) file;
+		selectedFileList.add(selectedFile);
 		mshareFileMenu1.hideAnimation();
 		mshareFileMenu2.showAnimation();
 		return;
@@ -1460,13 +1464,13 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		//设置第二菜单
 		private void setMenu2() {
 			this.mshareFileMenu2 = new MshareFileMenu(this, this.menuLayout);
-			MenuCopy menuCopy = new MenuCopy();
-			MenuCut menuCut = new MenuCut();
+//			MenuCopy menuCopy = new MenuCopy();
+//			MenuCut menuCut = new MenuCut();
+			MenuCut menuDownload = new MenuCut();
 			MenuRename menuRename = new MenuRename();
 			MenuDelete menuDelete = new MenuDelete();
 			MenuCancel menuCancel = new MenuCancel();
-			this.mshareFileMenu2.addButton(R.drawable.account, "复制", menuCopy);
-			this.mshareFileMenu2.addButton(R.drawable.account, "剪切", menuCut);
+			this.mshareFileMenu2.addButton(R.drawable.account, "下载", menuDownload);
 			this.mshareFileMenu2.addButton(R.drawable.account, "重命名", menuRename);
 			this.mshareFileMenu2.addButton(R.drawable.account, "删除", menuDelete);
 			this.mshareFileMenu2.addButton(R.drawable.account, "撤消", menuCancel);
@@ -1513,6 +1517,21 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			}
 		}
 		
+		//下载
+		class MenuDownload implements View.OnClickListener {
+					
+			@Override
+			public void onClick(View arg0) {
+				for(int i=0; i<selectedFileList.size(); i++){
+					if(selectedFileList.get(i).isDirectory()){
+						toast("只能下载文件");
+						return;
+					}
+				}
+				new CmdDownLoad().execute();
+			}
+		}
+		
 		//复制
 		class MenuCopy implements View.OnClickListener {
 			
@@ -1544,7 +1563,10 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			
 			@Override
 			public void onClick(View arg0) {
-				
+				for(int i=0; i<selectedFileList.size(); i++){
+					executeDELERequest(selectedFileList.get(i).getName(),
+							selectedFileList.get(i).isDirectory());
+				}
 			}
 		}
 		
@@ -1553,7 +1575,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			
 			@Override
 			public void onClick(View arg0) {
-				
+				mshareFileMenu2.showAnimation();
+				mshareFileMenu1.hideAnimation();
 			}
 		}
 		
