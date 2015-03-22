@@ -289,10 +289,11 @@ public class MShareFileBrowser extends LinearLayout {
 	// 设置是否启动
 	public void setMultiSelectEnabled(boolean isMultiSelectEnabled) {
 		
-		// 当前正在多选模式
-		if (isMultiSelectEnabled() && mode == MODE_MULTI_SELECT) {
-			// 退出多选模式
-			multiSelectPosition = null;
+		// 当前正在多选模式,将退出多选模式
+		if (isMultiSelectEnabled == false && mode == MODE_MULTI_SELECT) {
+			for (int i = 0, len = multiSelectPosition.length; i < len; i++) {
+				multiSelectPosition[i] = false;
+			}
 		}
 		
 		this.isMultiSelectEnabled = isMultiSelectEnabled;
@@ -406,7 +407,10 @@ public class MShareFileBrowser extends LinearLayout {
 			}
 		} else if (mode == MODE_SINGLE_SELECT) {
 			// 清空选择内容
-			multiSelectPosition = null;
+			// 暂时先这样清空
+			for (int i = 0; i < multiSelectPosition.length; i++) {
+				multiSelectPosition[i] = false;
+			}
 			
 			// 设置为单选
 			this.mode = mode;

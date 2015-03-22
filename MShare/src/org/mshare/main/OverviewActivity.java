@@ -576,7 +576,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		try {
 			// 先启动RTSP服务器
 			if (rtspServer == null) {
-				rtspServer = new RtspServer(8080, rtspVideoEncoder);
+				rtspServer = new RtspServer(5544, rtspVideoEncoder);
 				new Thread(rtspServer).start();
 			}
 		} catch (IOException e) {
