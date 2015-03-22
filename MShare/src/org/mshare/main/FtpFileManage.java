@@ -987,6 +987,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 							new File(localPath),
 							new DownloadFTPDataTransferListener(((FTPFile) files[i]).getSize()));
 				}
+				
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return false;
@@ -1002,6 +1003,9 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		protected void onPostExecute(Boolean result) {
 			toast(result ? "下载成功，文件保存至/MShareDownload" : "下载失败");
 			progressDialog.dismiss();
+			mshareFileMenu2.hideAnimation();
+			mshareFileMenu1.showAnimation();
+			remoteBrowser.quitMultiSelectMode();
 		}
 	}
 
@@ -1533,6 +1537,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 						return;
 					}
 				}
+				showDialog(DIALOG_LOAD);
 				new CmdDownLoad().execute();
 			}
 		}
@@ -1559,7 +1564,12 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			
 			@Override
 			public void onClick(View arg0) {
-				showDialog(DIALOG_RENAME);
+				if (remoteBrowser.getMultiSelectedFiles().length < 2) {
+					showDialog(DIALOG_RENAME);
+				}else{
+					toast("暂不支持批量重命名！");
+				}
+				
 			}
 		}
 		

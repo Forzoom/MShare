@@ -1,5 +1,6 @@
 package org.mshare.file.browser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.mshare.main.MShareApp;
@@ -27,6 +28,7 @@ public class MShareFileAdapter extends BaseAdapter {
 	private static final String TAG = MShareFileAdapter.class.getSimpleName();
 	
 	private Context context;
+	private MShareFileBrowser fileBrowser;
 	// 所显示的文件数组
 	private FileBrowserFile[] files = null;
 	// 所有图标
@@ -36,13 +38,14 @@ public class MShareFileAdapter extends BaseAdapter {
 	// 所有图标是否加载完毕
 	private static boolean DRAWABLE_PREPARED = false;
 	// 用于保存ItemContainer
-	private ItemContainer[] itemContainers;
+	private ArrayList<ItemContainer> itemContainers;
 	
-	public MShareFileAdapter(Context context, FileBrowserFile[] files) {
+	public MShareFileAdapter(Context context, MShareFileBrowser fileBrowser) {
 		super();
 		this.context = context;
-		this.files = files;
-		this.itemContainers = new ItemContainer[files.length];
+		this.fileBrowser = fileBrowser;
+		this.files = fileBrowser.getCurrentFiles();
+		this.itemContainers = new ArrayList<ItemContainer>();
 		initDrawable();
 	}
 	
@@ -131,47 +134,58 @@ public class MShareFileAdapter extends BaseAdapter {
 		if (convertView != null) {
 			
 			// TODO 需要测试，是否可以使用？
-			int lastPosition = (Integer)convertView.getTag();
+			ItemContainer item = (ItemContainer)convertView.getTag();
 			// 获得原本的ItemContainer
-			ItemContainer item = itemContainers[lastPosition];
+
+			int lastPosition = item.position;
+			FileBrowserFile file = files[position];
 			
-			Log.d(TAG, "lastPosition : " + lastPosition);
-			Log.d(TAG, "position : " + position);
-			
-//			if (item != null) {
+			if (lastPosition != position) {
+
 				// 更新内容
-				item.file = files[position];
-				item.fileName.setText(files[position].getName());
-				// TODO 在这里的刷新是有问题的
-				item.fileIcon.setImageDrawable(getCommonDrawable(item.file));
-				
-				// 放在新的位置
-				itemContainers[lastPosition] = null;
-				itemContainers[position] = item;
-				
-				// 保存新的position
-				convertView.setTag(position);
-//			}
+				item.position = position;
+				item.fileName.setText(file.getName());
+
+				// 刷新
+				if (fileBrowser.getMode() == MShareFileBrowser.MODE_MULTI_SELECT) {
+					if (fileBrowser.isFileSelected(position)) {
+						item.fileIcon.setImageDrawable(getSelectedDrawable(file));
+					} else {
+						item.fileIcon.setImageDrawable(getUnselectedDrawable(file));
+					}
+				} else {
+					item.fileIcon.setImageDrawable(getCommonDrawable(file));
+				}
+			}
+
 		} else { // 第一次使用的convertView
 			convertView = LayoutInflater.from(context).inflate(R.layout.file_browser_item, null);
 			
 			// 创建ItemContainer
 			ItemContainer item = new ItemContainer();
+			FileBrowserFile file = files[position];
 			
 			// 设置文件内容和对应的图标
-			item.file = files[position];
+			item.position = position;
 			item.fileIcon = (ImageView)convertView.findViewById(R.id.item_file_image);
 			item.fileName = (TextView)convertView.findViewById(R.id.item_file_name);
 			item.fileName.setTextColor(Color.BLACK);
-			item.fileName.setText(item.file.getName());
-			item.fileIcon.setImageDrawable(getCommonDrawable(item.file));
-			
-			// 保存ItemContainer
-			itemContainers[position] = item;
-			
-			Log.d(TAG, "position : " + position);
-			
-			convertView.setTag(position);
+			item.fileName.setText(file.getName());
+			// 刷新
+			if (fileBrowser.getMode() == MShareFileBrowser.MODE_MULTI_SELECT) {
+				if (fileBrowser.isFileSelected(position)) {
+					item.fileIcon.setImageDrawable(getSelectedDrawable(file));
+				} else {
+					item.fileIcon.setImageDrawable(getUnselectedDrawable(file));
+				}
+			} else {
+				item.fileIcon.setImageDrawable(getCommonDrawable(file));
+			}
+
+			// 保存ItemContainer，在containers中保存副本
+			itemContainers.add(item);
+			convertView.setTag(item);
+
 		}
 		
 		return convertView;
@@ -234,11 +248,13 @@ public class MShareFileAdapter extends BaseAdapter {
 
 	// 获得ItemContainer
 	public ItemContainer getItemContainers(int position) {
-		if (position < itemContainers.length) {
-			return itemContainers[position];
-		} else {
-			return null;
+		// 判断position正确
+		for (int i = 0, len = itemContainers.size(); i < len; i++) {
+			if (itemContainers.get(i).position == position) {
+				return itemContainers.get(i);
+			}
 		}
+		return null;
 	}
 
 	/**
@@ -253,7 +269,7 @@ public class MShareFileAdapter extends BaseAdapter {
 		/**
 		 * 和TextView相对应的file文件
 		 */
-		public FileBrowserFile file = null;
+		public int position = -1;
 	}
 	
 }

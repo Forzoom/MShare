@@ -122,14 +122,11 @@ public class MShareCrumbController {
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		crumbItemContainer.addView(button, index, params);
 	
-		Log.d(TAG, "scrollView : " + scrollView.getWidth());
-		Log.d(TAG, "crumbItemContainer width : " + crumbItemContainer.getWidth());
-		// 尝试是否能够获得button的x信息
-		Log.d(TAG, "new button x : " + button.getX() + " and button width : " + button.getWidth());
-		
 		stack.add(index, file);
 		// 设置top
 		top = index;
+		
+		Log.d(TAG, "new crumb! in index : " + index);
 		
 		return index;
 	}
@@ -158,13 +155,16 @@ public class MShareCrumbController {
 	public void popUseless() {
 		if (selected >= 0) { // 合理的selected的情况下
 			Log.d(TAG, "try pop useless");
+			int removeIndex = selected + 1;
 			// 将栈中的内容出栈
 			for (int i = selected + 1; i <= top; i++) {
-				stack.remove(i);
+				stack.remove(removeIndex);
 			}
+			
 			// 将crumb中的内容退出
 			crumbItemContainer.removeViews(selected + 1, top - selected);
 			
+			// 删除后top为selected
 			top = selected;
 		}
 	}
@@ -242,11 +242,14 @@ public class MShareCrumbController {
 			
 			float measureWidthSequence = button.getPaint().measureText(button.getText(), 0, button.getText().length()) + button.getPaddingLeft() + button.getPaddingRight();
 			float measureWidth = button.getPaint().measureText(button.getText().toString()) + button.getPaddingLeft() + button.getPaddingRight();
+			
+			// 测试：是有可能自动滑动面包屑内容的
 			Log.d(TAG, "button padding left " + button.getPaddingLeft() + " padding right : " + button.getPaddingRight());
 			Log.d(TAG, "scrollView : " + scrollView.getWidth());
 			Log.d(TAG, "try for button x : " + v.getX() + " and button width : " + v.getWidth());
 			Log.d(TAG, "widthSequence : " + measureWidthSequence + " width : " + measureWidth);
 			
+			// 因为需要refresh数据，所以这里不再设置mode
 			fileBrowser.waitForRefresh();
 			
 			if (callback != null) {
