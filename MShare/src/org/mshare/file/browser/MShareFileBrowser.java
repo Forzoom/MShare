@@ -236,6 +236,8 @@ public class MShareFileBrowser extends LinearLayout {
 		
 		// 重置multiSelect的内容
 		multiSelectPosition = new boolean[files.length];
+		// 重置mode
+		setMode(MODE_SINGLE_SELECT);
 		
 		// 新的适配器，用于刷新GridView
 		// 使用的可能是不合适的Context

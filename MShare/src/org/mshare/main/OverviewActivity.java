@@ -38,6 +38,10 @@ import org.mshare.picture.RefreshHandler;
 import org.mshare.picture.ServerOverviewSurfaceView;
 import org.mshare.scan.ScanActivity;
 
+import de.kp.net.rtsp.RtspConstants;
+import de.kp.net.rtsp.server.RtspServer;
+import de.kp.rtspcamera.MediaConstants;
+
 import android.animation.ArgbEvaluator;
 
 import android.animation.ObjectAnimator;
@@ -116,6 +120,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	// 状态控制器
 	private StatusController statusController;
 	
+	/* RTSP服务器 */
+	private RtspServer rtspServer;
+	
+	/* FTP服务器 */
 	// 服务器UI SurfaceView
 	private ServerOverviewSurfaceView surfaceView;
 	// 服务器菜单
@@ -560,6 +568,21 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	protected void onResume() {
 		Log.d(TAG, "onResume");
 		statusController.initial();
+		
+		// 视频编码器？
+		RtspConstants.VideoEncoder rtspVideoEncoder = (MediaConstants.H264_CODEC == true) ? RtspConstants.VideoEncoder.H264_ENCODER
+				: RtspConstants.VideoEncoder.H263_ENCODER;
+		
+		try {
+			// 先启动RTSP服务器
+			if (rtspServer == null) {
+				rtspServer = new RtspServer(8080, rtspVideoEncoder);
+				new Thread(rtspServer).start();
+			}
+		} catch (IOException e) {
+			Log.e(TAG, "something wrong happen! start rtsp server failed");
+			e.printStackTrace();
+		}
 		
 		super.onResume();
 	}
