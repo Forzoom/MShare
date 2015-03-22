@@ -28,7 +28,7 @@ import org.mshare.file.browser.FileBrowserFile;
  * 
  * @author Carlo Pelliccia
  */
-public class FTPFile implements Serializable, FileBrowserFile {
+public class FTPFile implements FileBrowserFile {
 
 	private String absolutePath;
 	private boolean readable;

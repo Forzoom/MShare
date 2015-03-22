@@ -135,7 +135,10 @@ public class MShareFileAdapter extends BaseAdapter {
 			// 获得原本的ItemContainer
 			ItemContainer item = itemContainers[lastPosition];
 			
-			if (item != null) {
+			Log.d(TAG, "lastPosition : " + lastPosition);
+			Log.d(TAG, "position : " + position);
+			
+//			if (item != null) {
 				// 更新内容
 				item.file = files[position];
 				item.fileName.setText(files[position].getName());
@@ -148,7 +151,7 @@ public class MShareFileAdapter extends BaseAdapter {
 				
 				// 保存新的position
 				convertView.setTag(position);
-			}
+//			}
 		} else { // 第一次使用的convertView
 			convertView = LayoutInflater.from(context).inflate(R.layout.file_browser_item, null);
 			
@@ -165,6 +168,8 @@ public class MShareFileAdapter extends BaseAdapter {
 			
 			// 保存ItemContainer
 			itemContainers[position] = item;
+			
+			Log.d(TAG, "position : " + position);
 			
 			convertView.setTag(position);
 		}
