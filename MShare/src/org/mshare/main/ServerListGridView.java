@@ -22,7 +22,7 @@ public class ServerListGridView extends GridView {
 	public ServerListGridView(Context context) {
 		super(context);
 	}
-	
+	// 为了能够检测到在GridView上发生了onFling事件
 	public void setGestureDetector(GestureDetector gestureDetector) {
 		this.gestureDetector = gestureDetector;
 	}
