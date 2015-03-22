@@ -241,7 +241,7 @@ public class MShareFileBrowser extends LinearLayout {
 		
 		// 新的适配器，用于刷新GridView
 		// 使用的可能是不合适的Context
-		adapter = new MShareFileAdapter(MShareApp.getAppContext(), files);
+		adapter = new MShareFileAdapter(MShareApp.getAppContext(), this);
 		gridView.setAdapter(adapter);
 		
 		// 设置导航后退按钮的样式，即是否可以被按下
@@ -352,6 +352,7 @@ public class MShareFileBrowser extends LinearLayout {
 			}
 			
 		} else if (mode == MODE_SINGLE_SELECT) {
+			// TODO 对于单选确实不知道该怎么办才好,或者说将多选和单选合并
 			return position == selectPosition;
 		} else {
 			Log.e(TAG, "unknown mode");
@@ -371,7 +372,7 @@ public class MShareFileBrowser extends LinearLayout {
 			for (int position = 0; position < multiSelectPosition.length; position++) {
 				if (multiSelectPosition[position]) {
 					ItemContainer item = adapter.getItemContainers(position);
-					item.fileIcon.setImageDrawable(MShareFileAdapter.getCommonDrawable(item.file));
+					item.fileIcon.setImageDrawable(MShareFileAdapter.getCommonDrawable(currentFiles[position]));
 				}
 			}
 			
@@ -425,7 +426,7 @@ public class MShareFileBrowser extends LinearLayout {
 		
 		// TODO 判断使用正确的tag/需要判断adapter是否是null?
 		ItemContainer item = adapter.getItemContainers(position);
-		FileBrowserFile file = item.file;
+		FileBrowserFile file = currentFiles[position];
 		ImageView fileIcon = item.fileIcon;
 		
 		fileIcon.setImageDrawable(MShareFileAdapter.getSelectedDrawable(file));
@@ -446,7 +447,7 @@ public class MShareFileBrowser extends LinearLayout {
 		
 		// TODO 判断使用正确的tag/需要判断adapter是否是null?
 		ItemContainer item = adapter.getItemContainers(position);
-		FileBrowserFile file = item.file;
+		FileBrowserFile file = currentFiles[position];
 		ImageView fileIcon = item.fileIcon;
 		
 		fileIcon.setImageDrawable(MShareFileAdapter.getUnselectedDrawable(file));

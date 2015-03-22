@@ -105,10 +105,10 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	public void onRefreshButtonClick(FileBrowserFile file) {
 		Log.d(TAG, "onRefreshButtonClick");
 		
-		fileBrowser.refreshGridView(listFiles(file));
+//		fileBrowser.refreshGridView(listFiles(file));
 		
 		// ≤‚ ‘ÕÀ≥ˆ
-//		fileBrowser.quitMultiSelectMode();
+		fileBrowser.quitMultiSelectMode();
 		
 		// ≤‚ ‘∂‡—°
 //		if (fileBrowser.getMode() == MShareFileBrowser.MODE_MULTI_SELECT) {
