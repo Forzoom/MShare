@@ -12,7 +12,7 @@
 			android:layout_height="wrap_content"
 			android:layout_centerInParent="true"
 			android:src="@drawable/background_user"/>
-        <GridView
+        <org.mshare.main.ServerListGridView
 			android:id="@+id/gridview"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"

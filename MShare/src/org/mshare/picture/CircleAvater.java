@@ -29,7 +29,7 @@ public class CircleAvater extends CanvasElement {
 
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
-		canvas.drawBitmap(avater, cx - avater.getWidth() / 2, cy - avater.getHeight() / 2, paint);	
+		canvas.drawBitmap(avater, cx - radius, cy - radius, paint);	
 	}
 
 	

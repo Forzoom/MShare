@@ -153,24 +153,14 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		settingsButton.setAlphaAnimation(alphaAnimation);
 //		canvasElements.add(settingsButton);
 		
-		Context context = MShareApp.getAppContext();
-		int avaterRadius = canvas.getWidth() / 4;
-		Bitmap originAvater = BitmapFactory.decodeResource(context.getResources(), R.drawable.avater_1);
-		Bitmap avater = Bitmap.createScaledBitmap(originAvater, avaterRadius * 2, avaterRadius * 2, false);
-		Bitmap bitmap = Bitmap.createBitmap(avater.getWidth(), avater.getHeight(), Config.ARGB_8888);
-		Canvas bitmapCanvas = new Canvas(bitmap);
+		int avaterRadius = canvasWidth / 4;
+		Bitmap source = BitmapFactory.decodeResource(MShareApp.getAppContext().getResources(), R.drawable.avater_1);
+		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(source, avaterRadius);
 		
-		Paint bitmapPaint = new Paint();
-		bitmapPaint.setAntiAlias(true);
-		bitmapCanvas.drawColor(transparentColor);
-		bitmapPaint.setColor(operatingColor);
-		bitmapCanvas.drawCircle(avater.getWidth() / 2, avater.getHeight() / 2, avater.getWidth() / 2, bitmapPaint);
-		bitmapPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-		bitmapCanvas.drawBitmap(avater, 0, 0, bitmapPaint);
 		circleAvater.setCx(canvas.getWidth() / 2);
 		circleAvater.setCy(canvas.getHeight() / 2);
 		circleAvater.setRadius(avaterRadius);
-		circleAvater.setAvater(bitmap);
+		circleAvater.setAvater(avaterBitmap);
 		
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
 		// 圆环
