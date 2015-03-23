@@ -1,5 +1,6 @@
 package org.mshare.file.browser;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -214,7 +216,7 @@ public class MShareFileBrowser extends LinearLayout {
 	
 	/**
 	 * 刷新GridView，重置适配器
-	 * @param currentFiles
+	 * @param files
 	 */
 	public void refreshGridView(FileBrowserFile[] files) {
 		
@@ -269,7 +271,11 @@ public class MShareFileBrowser extends LinearLayout {
 		int index = crumbController.pop();
 		crumbController.selectCrumb(index - 1);
 	}
-	
+
+    /**
+     * 获得所有的文件
+     * @return
+     */
 	public FileBrowserFile[] getCurrentFiles() {
 		return currentFiles;
 	}
@@ -337,6 +343,12 @@ public class MShareFileBrowser extends LinearLayout {
 		arrayList.toArray(ret);
 		return ret;
 	}
+
+    // 返回当前所对应的文件夹路径
+    public FileBrowserFile getCurrentDirectory() {
+        return crumbController.getSelectedFile();
+    }
+
 	/**
 	 * 判断文件是否被选择了，使用SINGLE和MULTI模式
 	 * @param position
@@ -620,4 +632,43 @@ public class MShareFileBrowser extends LinearLayout {
 			refreshGridView(FileBrowserActivity.listFiles(crumbController.getSelectedFile()));
 		}
 	}	
+	
+	//打开文件
+	public void openFile(FileBrowserFile openFileName) {
+        Intent intent = new Intent();
+        intent.setAction(android.content.Intent.ACTION_VIEW);
+        File file = new File(openFileName.getAbsolutePath());
+        // 取得文件名
+        String fileName = file.getName();
+        // 判断是否为图片文件
+        if (checkFileType(fileName,
+                        getResources().getStringArray(R.array.fileEndingImage))) {
+                intent.setDataAndType(Uri.fromFile(file), "image/*");// 图片类型
+                // Android中提供了Intent机制来协助应用间的交互与通讯，或者采用更准确的说法是，Intent不仅可用于应用程序之间，也可用于应用程序内部的Activity/Service之间的交互。利用Intent所实现的软件复用的粒度是Activity/Service，比函数复用更高一些，另外耦合也更为松散。
+        } else if (checkFileType(fileName,
+                        getResources().getStringArray(R.array.fileEndingAudio))) {
+                intent.setDataAndType(Uri.fromFile(file), "audio/*");
+
+        } else if (checkFileType(fileName,
+                        getResources().getStringArray(R.array.fileEndingVideo))) {
+                intent.setDataAndType(Uri.fromFile(file), "video/*");
+        } else if (checkFileType(fileName,
+                        getResources().getStringArray(R.array.fileEndingAPK))) {
+                intent.setDataAndType(Uri.fromFile(file),
+                                "application/vnd.android.package-archive");
+        }
+        context.startActivity(intent);// 发送intent，启动另外一个程序
+	}
+	
+	//通过文件名判断是什么类型的文件
+	public boolean checkFileType(String fileName, String[] extendName) {
+		// 遍历后缀名称集合 aEnd是临时变量 遍历
+		for (String aEnd : extendName) {
+			// 判断后缀名名称是否存在在数组中
+			if (fileName.endsWith(aEnd)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

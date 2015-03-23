@@ -1,5 +1,8 @@
 package org.mshare.main;
 
+import java.io.File;
+
+import org.mshare.file.MshareFileManage;
 import org.mshare.file.MshareFileMenu;
 import org.mshare.file.browser.FileBrowserCallback;
 import org.mshare.file.browser.FileBrowserFile;
@@ -11,6 +14,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -22,6 +27,7 @@ import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
+import android.widget.Toast;
 
 public class FileBrowserActivity extends Activity implements FileBrowserCallback {
 	private static final String TAG = FileBrowserActivity.class.getSimpleName();
@@ -32,9 +38,9 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	
 	private LinearLayout linearLayout;
 	
-	private MshareFileMenu mshareFileMenu1;
-	private MshareFileMenu mshareFileMenu2;
-	private MshareFileMenu mshareFileMenu3;
+	private MshareFileMenu[] mshareFileMenu;
+	
+	private MshareFileManage mshareFileManage;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +61,14 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		fileBrowser.refreshGridView(listFiles(rootFile));
 		
 		//添加菜单栏
+		mshareFileMenu = new MshareFileMenu[3];
 		linearLayout = (LinearLayout)this.findViewById(R.id.local_menus);
 		setMenu1();
 		setMenu2();
 		setMenu3();
+		
+		//文件处理类
+		mshareFileManage = new MshareFileManage(this);
 		
 	}
 	
@@ -84,15 +94,22 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	@Override
 	public void onItemClick(FileBrowserFile file) {
 		Log.d(TAG, "onItemClick");
-		fileBrowser.refreshGridView(listFiles(file));
+		if(file.isDirectory()) {
+			fileBrowser.refreshGridView(listFiles(file));
+		}
+		else {
+			fileBrowser.openFile(file);
+		}
+		
 	}
 
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
 		Log.d(TAG, "onItemLongClick");
 		// 没有刷新要求
-		mshareFileMenu1.hideAnimation();
-		mshareFileMenu2.showAnimation();
+		if(!mshareFileManage.getSelect()) {
+			changeMenu(0, 1);
+		}
 	}
 
 	@Override
@@ -156,56 +173,78 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	}
 	//设置第一菜单
 	private void setMenu1() {
-		this.mshareFileMenu1 = new MshareFileMenu(this, this.linearLayout);
+		this.mshareFileMenu[0] = new MshareFileMenu(this, this.linearLayout);
 		MenuNewFolder menuNewFolder = new MenuNewFolder();
-		this.mshareFileMenu1.addButton(R.drawable.account, "新建文件夹", menuNewFolder);		
+		this.mshareFileMenu[0].addButton(R.drawable.account, "新建文件夹", menuNewFolder);		
 	}
 	
 	//设置第二菜单
 	private void setMenu2() {
-		this.mshareFileMenu2 = new MshareFileMenu(this, this.linearLayout);
+		this.mshareFileMenu[1] = new MshareFileMenu(this, this.linearLayout);
 		MenuCopy menuCopy = new MenuCopy();
 		MenuCut menuCut = new MenuCut();
 		MenuRename menuRename = new MenuRename();
 		MenuDelete menuDelete = new MenuDelete();
-		MenuCancel menuCancel = new MenuCancel();
-		this.mshareFileMenu2.addButton(R.drawable.account, "复制", menuCopy);
-		this.mshareFileMenu2.addButton(R.drawable.account, "剪切", menuCut);
-		this.mshareFileMenu2.addButton(R.drawable.account, "重命名", menuRename);
-		this.mshareFileMenu2.addButton(R.drawable.account, "删除", menuDelete);
-		this.mshareFileMenu2.addButton(R.drawable.account, "撤消", menuCancel);
-		this.mshareFileMenu2.hide();
+		MenuCancelOpration menuCancelOperation = new MenuCancelOpration();
+		this.mshareFileMenu[1].addButton(R.drawable.account, "复制", menuCopy);
+		this.mshareFileMenu[1].addButton(R.drawable.account, "剪切", menuCut);
+		this.mshareFileMenu[1].addButton(R.drawable.account, "重命名", menuRename);
+		this.mshareFileMenu[1].addButton(R.drawable.account, "删除", menuDelete);
+		this.mshareFileMenu[1].addButton(R.drawable.account, "撤消", menuCancelOperation);
+		this.mshareFileMenu[1].hide();
 	}
 	
 	//设置第三菜单
 	private void setMenu3() {
-		this.mshareFileMenu3 = new MshareFileMenu(this, this.linearLayout);
+		this.mshareFileMenu[2] = new MshareFileMenu(this, this.linearLayout);
 		MenuPaste menuPaste = new MenuPaste();
-		MenuCancel menuCancel = new MenuCancel();
-		this.mshareFileMenu3.addButton(R.drawable.account, "粘贴", menuPaste);
-		this.mshareFileMenu3.addButton(R.drawable.account, "取消", menuCancel);
-		this.mshareFileMenu3.hide();
+		MenuCancelPaste menuCancelPaste = new MenuCancelPaste();
+		this.mshareFileMenu[2].addButton(R.drawable.account, "粘贴", menuPaste);
+		this.mshareFileMenu[2].addButton(R.drawable.account, "取消", menuCancelPaste);
+		this.mshareFileMenu[2].hide();
 	}
+	
+	//切换菜单
+	private void changeMenu(int fromMenu, int toMenu) {
+		this.mshareFileMenu[fromMenu].hideAnimation();
+		this.mshareFileMenu[toMenu].showAnimation();
+	}
+	
+	//刷新当前目录
+	private void refreshDirectory() {
+		fileBrowser.refreshGridView(listFiles(fileBrowser.getCurrentDirectory()));
+	}
+
 	
 	//新建文件夹
 	class MenuNewFolder implements View.OnClickListener {
 		
 		@Override
 		public void onClick(View arg0) {
-			TableLayout loginForm = (TableLayout)getLayoutInflater()
+			final TableLayout newFolderForm = (TableLayout)getLayoutInflater()
 					.inflate( R.layout.new_folder, null);	
 				new AlertDialog.Builder(context)
 					// 设置对话框的标题
 					.setTitle("新建文件夹")
 					// 设置对话框显示的View对象
-					.setView(loginForm)
+					.setView(newFolderForm)
 					// 为对话框设置一个“确定”按钮
-					.setPositiveButton("确定" , new OnClickListener()
-					{
+					.setPositiveButton("确定" , new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog,
-								int which)
-						{
+								int which) {
+							EditText editText = (EditText)newFolderForm.findViewById(R.id.editNewFolder);
+							String folderName = editText.getText().toString();
+							String path = fileBrowser.getCurrentDirectory().getAbsolutePath() + File.separator +folderName;
+							File file = new File(path);
+							if(file.exists()) {
+								Toast.makeText(getApplicationContext(), "文件夹已存在", Toast.LENGTH_SHORT).show();
+								
+							}
+							else {
+								mshareFileManage.newFolder(path);
+								refreshDirectory();
+							}
 							
 						}
 					})
@@ -222,7 +261,17 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		@Override
 		public void onClick(View arg0) {
-			
+			FileBrowserFile[] file = fileBrowser.getMultiSelectedFiles();
+			int length = file.length;
+			if(length < 1) {
+				Toast.makeText(getApplicationContext(), "请选择需要复制的文件", Toast.LENGTH_SHORT).show();
+			}
+			else {
+				mshareFileManage.copySelect(file, false);
+				fileBrowser.quitMultiSelectMode();
+				changeMenu(1, 2);
+				fileBrowser.setMultiSelectEnabled(false);
+			}
 		}
 	}
 	//剪切
@@ -230,7 +279,17 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		@Override
 		public void onClick(View arg0) {
-			
+			FileBrowserFile[] file = fileBrowser.getMultiSelectedFiles();
+			int length = file.length;
+			if(length < 1) {
+				Toast.makeText(getApplicationContext(), "请选择需要剪切的文件", Toast.LENGTH_SHORT).show();
+			}
+			else {
+				mshareFileManage.copySelect(file, true);
+				fileBrowser.quitMultiSelectMode();
+				changeMenu(1, 2);
+				fileBrowser.setMultiSelectEnabled(false);
+			}
 		}
 	}
 	
@@ -239,7 +298,44 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		@Override
 		public void onClick(View arg0) {
-			
+			final FileBrowserFile[] file = fileBrowser.getMultiSelectedFiles();
+			if(file.length == 1) {
+				final TableLayout renameForm = (TableLayout)getLayoutInflater()
+					.inflate( R.layout.rename, null);	
+				new AlertDialog.Builder(context)
+					// 设置对话框的标题
+					.setTitle("重命名")
+					// 设置对话框显示的View对象
+					.setView(renameForm)
+					// 为对话框设置一个“确定”按钮
+					.setPositiveButton("确定" , new OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog,
+								int which) {
+							EditText editText = (EditText)renameForm.findViewById(R.id.editRename);
+							String newName = editText.getText().toString();
+							String oldPath = file[0].getAbsolutePath();
+							String newPath = fileBrowser.getCurrentDirectory().getAbsolutePath() + File.separator + newName;
+							if(newName.equals("") || oldPath.equals(newPath)) {
+								Toast.makeText(getApplicationContext(), "新文件名不能为空或和原名一样", Toast.LENGTH_SHORT).show();
+							}
+							else {
+								mshareFileManage.renameFile(oldPath, newPath);
+								fileBrowser.quitMultiSelectMode();
+								refreshDirectory();
+								changeMenu(1, 0);
+							}
+						}
+					})
+					// 为对话框设置一个“取消”按钮
+					.setNegativeButton("取消", null)
+					// 创建、并显示对话框
+					.create()
+					.show();
+			}
+			else {
+				Toast.makeText(getApplicationContext(), "只能选中一个文件进行重命名", Toast.LENGTH_SHORT).show();
+			}
 		}
 	}
 	
@@ -248,16 +344,26 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		@Override
 		public void onClick(View arg0) {
-			
+			FileBrowserFile[] fileBrowserFile = fileBrowser.getMultiSelectedFiles();
+			if(fileBrowserFile.length < 1) {
+				Toast.makeText(getApplicationContext(), "请选择要删除的文件", Toast.LENGTH_SHORT).show();
+			}
+			else {
+				mshareFileManage.deleteMultiFiles(fileBrowserFile);
+				fileBrowser.quitMultiSelectMode();
+				refreshDirectory();
+				changeMenu(1, 0);
+			}
 		}
 	}
 	
-	//取消
-	class MenuCancel implements View.OnClickListener {
+	//取消操作
+	class MenuCancelOpration implements View.OnClickListener {
 		
 		@Override
 		public void onClick(View arg0) {
-			
+			fileBrowser.quitMultiSelectMode();
+			changeMenu(1, 0);
 		}
 	}
 	
@@ -266,7 +372,26 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		
 		@Override
 		public void onClick(View arg0) {
-			
+			if(mshareFileManage.getCut()) {
+				mshareFileManage.moveMultiFiles(fileBrowser.getCurrentDirectory().getAbsolutePath());
+			}
+			else {
+				mshareFileManage.CopyMultiFiles(fileBrowser.getCurrentDirectory().getAbsolutePath());
+			}
+			refreshDirectory();
+			changeMenu(2, 0);
+			fileBrowser.setMultiSelectEnabled(true);
+		}
+	}
+	
+	//取消粘贴
+	class MenuCancelPaste implements View.OnClickListener {
+		
+		@Override
+		public void onClick(View arg0) {
+			mshareFileManage.pasteCancel();
+			changeMenu(2, 0);
+			fileBrowser.setMultiSelectEnabled(true);
 		}
 	}
 }

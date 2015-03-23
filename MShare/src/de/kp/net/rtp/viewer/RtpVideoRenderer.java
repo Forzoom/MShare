@@ -18,25 +18,25 @@
 
 package de.kp.net.rtp.viewer;
 
-import com.orangelabs.rcs.core.ims.protocol.rtp.MediaRegistry;
-import com.orangelabs.rcs.core.ims.protocol.rtp.MediaRtpReceiver;
-import com.orangelabs.rcs.core.ims.protocol.rtp.codec.video.h263.H263Config;
-import com.orangelabs.rcs.core.ims.protocol.rtp.codec.video.h263.decoder.NativeH263Decoder;
-import com.orangelabs.rcs.core.ims.protocol.rtp.codec.video.h264.H264Config;
-import com.orangelabs.rcs.core.ims.protocol.rtp.codec.video.h264.decoder.NativeH264Decoder;
-import com.orangelabs.rcs.core.ims.protocol.rtp.format.video.H263VideoFormat;
-import com.orangelabs.rcs.core.ims.protocol.rtp.format.video.H264VideoFormat;
-import com.orangelabs.rcs.core.ims.protocol.rtp.format.video.VideoFormat;
-import com.orangelabs.rcs.core.ims.protocol.rtp.media.MediaOutput;
-import com.orangelabs.rcs.core.ims.protocol.rtp.media.MediaSample;
-import com.orangelabs.rcs.platform.network.DatagramConnection;
-import com.orangelabs.rcs.platform.network.NetworkFactory;
-import com.orangelabs.rcs.service.api.client.media.IMediaEventListener;
-import com.orangelabs.rcs.service.api.client.media.IMediaRenderer;
-import com.orangelabs.rcs.service.api.client.media.MediaCodec;
-import com.orangelabs.rcs.service.api.client.media.video.VideoCodec;
-import com.orangelabs.rcs.service.api.client.media.video.VideoSurfaceView;
-import com.orangelabs.rcs.utils.logger.Logger;
+import com.orangelabs.core.ims.protocol.rtp.MediaRegistry;
+import com.orangelabs.core.ims.protocol.rtp.MediaRtpReceiver;
+import com.orangelabs.core.ims.protocol.rtp.codec.video.h263.H263Config;
+import com.orangelabs.core.ims.protocol.rtp.codec.video.h263.decoder.NativeH263Decoder;
+import com.orangelabs.core.ims.protocol.rtp.codec.video.h264.H264Config;
+import com.orangelabs.core.ims.protocol.rtp.codec.video.h264.decoder.NativeH264Decoder;
+import com.orangelabs.core.ims.protocol.rtp.format.video.H263VideoFormat;
+import com.orangelabs.core.ims.protocol.rtp.format.video.H264VideoFormat;
+import com.orangelabs.core.ims.protocol.rtp.format.video.VideoFormat;
+import com.orangelabs.core.ims.protocol.rtp.media.MediaOutput;
+import com.orangelabs.core.ims.protocol.rtp.media.MediaSample;
+import com.orangelabs.platform.network.DatagramConnection;
+import com.orangelabs.platform.network.NetworkFactory;
+import com.orangelabs.service.api.client.media.IMediaEventListener;
+import com.orangelabs.service.api.client.media.IMediaRenderer;
+import com.orangelabs.service.api.client.media.MediaCodec;
+import com.orangelabs.service.api.client.media.video.VideoCodec;
+import com.orangelabs.service.api.client.media.video.VideoSurfaceView;
+import com.orangelabs.utils.logger.Logger;
 
 import de.kp.net.rtsp.RtspConstants;
 import de.kp.net.rtsp.client.RtspControl;

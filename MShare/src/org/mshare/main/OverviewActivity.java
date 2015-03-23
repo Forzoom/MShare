@@ -130,13 +130,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private LinearLayout serverMenu;
 	private MshareFileMenu menuInStop;
 	private MshareFileMenu menuInStart;
-	
-	// 所需要在Canvas中绘制的内容
-	private PictureBackground pictureBackground;
-	private CircleAvater circleAvater;
-	private RingButton serverButton;
-	private SettingsButton settingsButton;
-	
+
 	//连接参数
 	private ServerListGridView gridview;
 	private LinearLayout btftp, btscan;
@@ -216,27 +210,11 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		surfaceView.setStatusController(statusController);
 		// 设置onFling的GestureDetector
 		gestureDetector = new GestureDetector(this, new SwitchListener());
-		
-		/* 创建所需要绘制的元素 */
-		// 背景
-		pictureBackground = new PictureBackground();
-		surfaceView.setPictureBackground(pictureBackground);
-		
-		// 头像
-		circleAvater = new CircleAvater();
-		surfaceView.setCircleAvater(circleAvater);
-		
-		// 设置按钮
-		Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
-		settingsButton = new SettingsButton(settingsBitmap); 
-		settingsButton.setElementOnClickListener(new SettingsButtonListener());
-		surfaceView.setSettingsButton(settingsButton);
-		
-		// 服务器按钮
-		serverButton = new RingButton();
-		serverButton.setElementOnClickListener(new ServerButtonListener());
-		surfaceView.setServerButton(serverButton);
-		
+
+        // 为surfaceView中的内容添加监听器
+        surfaceView.setServerButtonListener(new ServerButtonListener());
+        surfaceView.setSettingsButtonListener(new SettingsButtonListener());
+
 		// 添加加入链接的组件
 		gridview = (ServerListGridView) findViewById(R.id.gridview);
 		gridview.setGestureDetector(gestureDetector);
@@ -605,46 +583,19 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		Log.d(TAG, "onServerStatus");
 		// 可以将operating的颜色变化放在这里
 		if (status == StatusController.STATUS_SERVER_STARTED) {
-			// 处理SurfaceView中的动画效果
-			long startTime = System.currentTimeMillis();
-			
-			pictureBackground.stopColorAnimation();
-			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
-			if (colorAnimation != null) {
-				colorAnimation.setDuration(500);
-			}
-			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getStartColor(), startTime);
-			
-			serverButton.stopBreatheAnimation();
-			CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
-			if (breatheAnimation != null) {
-				breatheAnimation.setDuration(3000);
-				breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_INFINITE);
-			}
-			serverButton.startBreatheAnimation(surfaceView.getServerOuterRadius(), startTime);
-			
-			// 处理菜单动画效果
-			menuInStop.hideAnimation();
-			menuInStart.showAnimation();
+            // 使用启动动画
+            surfaceView.startServerAnimation();
+
+            // 菜单动画
+            menuInStop.hideAnimation();
+            menuInStart.showAnimation();
 		} else if (status == StatusController.STATUS_SERVER_STOPPED) {
-			// 调整背景颜色
-			pictureBackground.stopColorAnimation();
-			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
-			if (colorAnimation != null) {
-				colorAnimation.setDuration(500);
-			}
-			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getStopColor());
-			
-			// 调整呼吸动画
-			CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
-			// 通过设置repeatMode，当动画循环结束的时候就会自动stop
-			if (breatheAnimation != null) {
-				breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_ONCE);
-			}
-			
-			// 处理菜单动画
-			menuInStart.hideAnimation();
-			menuInStop.showAnimation();
+            // 使用停止动画
+            surfaceView.stopServerAniamtion();
+
+            // 处理菜单动画
+            menuInStart.hideAnimation();
+            menuInStop.showAnimation();
 		}
 		
 	}
@@ -753,7 +704,9 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			
 			// 执行bounceAnimaion和启动和关闭服务器
 			long startTime = System.currentTimeMillis();
-			
+
+            // 启动了bounceAnimation
+            RingButton serverButton = surfaceView.getServerButton();
 			serverButton.stopBounceAnimation();
 			CanvasAnimation bounceAnimation = serverButton.getBounceAnimation();
 			bounceAnimation.setDuration(500);
@@ -768,8 +721,9 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 				startServer();
 			}
 			
-			// 修改背景色
-			pictureBackground.stopColorAnimation();
+			// 修改背景色到执行状态
+            PictureBackground pictureBackground = surfaceView.getPictureBackground();
+		    pictureBackground.stopColorAnimation();
 			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
 			colorAnimation.setDuration(500);
 			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime);
@@ -780,7 +734,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		@Override
 		public void onClick() {
 			Log.d(TAG, "settings button clicked!");
-			settingsButton.startAlphaAnimation(223);
+			surfaceView.getSettingsButton().startAlphaAnimation(223);
 			
 			// 尝试启动serverSettings
 			Intent startServerSettingsIntent = new Intent(OverviewActivity.this, ServerSettingActivity.class);

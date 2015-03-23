@@ -18,14 +18,14 @@
 
 package de.kp.net.rtp.recorder;
 
-import com.orangelabs.rcs.core.ims.protocol.rtp.MediaRegistry;
-import com.orangelabs.rcs.core.ims.protocol.rtp.Processor;
-import com.orangelabs.rcs.core.ims.protocol.rtp.RtpException;
-import com.orangelabs.rcs.core.ims.protocol.rtp.codec.Codec;
-import com.orangelabs.rcs.core.ims.protocol.rtp.format.Format;
-import com.orangelabs.rcs.core.ims.protocol.rtp.media.MediaInput;
-import com.orangelabs.rcs.core.ims.protocol.rtp.stream.MediaCaptureStream;
-import com.orangelabs.rcs.utils.logger.Logger;
+import com.orangelabs.core.ims.protocol.rtp.MediaRegistry;
+import com.orangelabs.core.ims.protocol.rtp.Processor;
+import com.orangelabs.core.ims.protocol.rtp.RtpException;
+import com.orangelabs.core.ims.protocol.rtp.codec.Codec;
+import com.orangelabs.core.ims.protocol.rtp.format.Format;
+import com.orangelabs.core.ims.protocol.rtp.media.MediaInput;
+import com.orangelabs.core.ims.protocol.rtp.stream.MediaCaptureStream;
+import com.orangelabs.utils.logger.Logger;
 
 import de.kp.net.rtp.stream.RtpOutputStream;
 

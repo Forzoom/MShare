@@ -6,73 +6,119 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.mshare.file.browser.FileBrowserFile;
+
 import android.content.Context;
 import android.widget.Toast;
 
 public class MshareFileManage {
 	//判断是否有文件被选中复制或剪切
 	private boolean selected = false;
-	private String fromPath = null;
-	private String toPath = null;
-	private String name = null;
+	private FileBrowserFile[] file = null;
 	private Context context = null;
 	private boolean cut = false;
+	private int pasteCount = 0;
 	
-	//设置context
-	public void setContext(Context c) {
+	public MshareFileManage(Context c) {
 		context = c;
 	}
 	
+	//获取cut的值
+	public boolean getCut() {
+		return cut;
+	}
+	
 	//获取select的值
-	public boolean getSelected() {
+	public boolean getSelect() {
 		return selected;
 	}
 	
 	//复制剪切选择
-	public void copySelect(String fp, String n, boolean c) {
+	public void copySelect(FileBrowserFile[] f, boolean c) {
 		selected = true;
-		fromPath = fp;
-		name = n;
+		file = f;
 		cut = c;
 		Toast.makeText(context, "请选择目标文件夹", Toast.LENGTH_SHORT).show();
 	}
 	
 	//取消粘贴
-	public void copyCancel() {
+	public void pasteCancel() {
 		selected = false;
-		fromPath = null;
+		file = null;
 	}
 	
-	//粘贴
-	public void paste(String tp) {
+	//剪切多个文件
+	public void moveMultiFiles(String path) {
+		int length = this.file.length;
+		for(int i = 0; i < length; i++) {
+			String oldPath = this.file[i].getAbsolutePath();
+			String newPath = path + File.separator + this.file[i].getName();
+			moveFile(oldPath, newPath);
+		}
+		if(this.pasteCount == length) {
+			Toast.makeText(context, "文件全部剪切成功", Toast.LENGTH_SHORT).show();
+		}
+		else {
+			Toast.makeText(context, String.valueOf(length-this.pasteCount) + "个文件剪切出错", Toast.LENGTH_SHORT).show();
+		}
+		this.pasteCount = 0;
+		pasteCancel();
+	}
+	
+	//剪切
+	private void moveFile(String oldPath, String newPath) {
+		if(new File(newPath).exists()) {
+			Toast.makeText(context, "剪切出错", Toast.LENGTH_SHORT).show();
+		}
+		else {
+			new File(oldPath).renameTo(new File(newPath));
+			this.pasteCount++;
+		}
+	}
+	
+	//复制多个文件
+	public void CopyMultiFiles(String path) {
+		int length = this.file.length;
+		for(int i = 0; i < length; i++) {
+			String oldPath = this.file[i].getAbsolutePath();
+			String newPath = path + File.separator + this.file[i].getName();
+			pasteOfCopy(oldPath, newPath);
+		}
+		if(this.pasteCount == length) {
+			Toast.makeText(context, "文件全部复制成功", Toast.LENGTH_SHORT).show();
+		}
+		else {
+			Toast.makeText(context, String.valueOf(length-this.pasteCount) + "个文件复制出错", Toast.LENGTH_SHORT).show();
+		}
+		this.pasteCount = 0;
+		pasteCancel();
+	}
+	
+	//粘贴-复制
+	private void pasteOfCopy(String fromPath, String toPath) {
 		if(selected) {
-			toPath = tp + "/" + name;
-			if(toPath.equals(fromPath)) {
-				Toast.makeText(context, "粘贴失败", Toast.LENGTH_SHORT).show();
+			if(toPath.equals(fromPath) || new File(toPath).exists()) {
+				Toast.makeText(context, "复制失败", Toast.LENGTH_SHORT).show();
 			}
 			else {
-				if(copy()) {
-					Toast.makeText(context, "粘贴成功", Toast.LENGTH_SHORT).show();
-					if(cut) {
-						deleteAll(fromPath);
-					}
-					copyCancel();
+				if(copy(fromPath, toPath)) {
+					this.pasteCount++;
 				}
 				else {
-					Toast.makeText(context, "粘贴出错", Toast.LENGTH_SHORT).show();
+					Toast.makeText(context, "复制出错", Toast.LENGTH_SHORT).show();
 				}
 			}
 		}
 		else {
-			copyCancel();
+			pasteCancel();
 		}
 	}
 	
 	//复制文件
-	private boolean copy() {
+	private boolean copy(String fromPath, String toPath) {
 		File file = new File(fromPath);
 		if(file.isFile()) {
-			return copyFile();
+			return copyFile(fromPath, toPath);
 		}
 		else {
 			return copyFolder(fromPath, toPath);
@@ -80,7 +126,7 @@ public class MshareFileManage {
 	}
 	
 	//复制单个文件
-	public boolean copyFile() { 
+	public boolean copyFile(String fromPath, String toPath) { 
 	   boolean isok = true;
        try { 
            int bytesum = 0; 
@@ -114,28 +160,28 @@ public class MshareFileManage {
 	} 
 	
 	//复制整个文件夹
-	private boolean copyFolder(String oldPath, String newPath) { 
+	private boolean copyFolder(String fromPath, String toPath) { 
 	   boolean isok = true;
        try { 
-           (new File(oldPath)).mkdirs(); //如果文件夹不存在 则建立新文件夹 
-           File a=new File(oldPath); 
-           (new File(newPath)).mkdirs();
+           (new File(fromPath)).mkdirs(); //如果文件夹不存在 则建立新文件夹 
+           File a=new File(fromPath); 
+           (new File(toPath)).mkdirs();
            String[] file=a.list(); 
            File temp=null; 
            
            for (int i = 0; i < file.length; i++) { 
-               if(oldPath.endsWith(File.separator)){ 
-                   temp=new File(oldPath+file[i]); 
+               if(fromPath.endsWith(File.separator)){ 
+                   temp=new File(fromPath+file[i]); 
                } 
                else
                { 
-                   temp=new File(oldPath+File.separator+file[i]); 
+                   temp=new File(fromPath+File.separator+file[i]); 
                } 
 
                if(temp.isFile()){ 
             	   
                    FileInputStream input = new FileInputStream(temp); 
-                   FileOutputStream output = new FileOutputStream(newPath + "/" + 
+                   FileOutputStream output = new FileOutputStream(toPath + "/" + 
                            (temp.getName()).toString()); 
                    
                    byte[] b = new byte[1024]; 
@@ -149,7 +195,7 @@ public class MshareFileManage {
                    
                } 
                if(temp.isDirectory()){//如果是子文件夹 
-                   copyFolder(oldPath+"/"+file[i],newPath+"/"+file[i]); 
+                   copyFolder(fromPath+"/"+file[i],toPath+"/"+file[i]); 
                } 
            } 
        } 
@@ -159,7 +205,8 @@ public class MshareFileManage {
        return isok;
 	}	
 	
-	public boolean deleteAll(String path) {
+	//删除整个文件或文件夹
+	private boolean deleteAll(String path) {
 		boolean isok = true;
 		try {
 			File file = new File(path);
@@ -174,6 +221,7 @@ public class MshareFileManage {
 		return isok;
 	}
 	
+	//删除文件和文件夹里内容
 	private boolean deleteFiles(String path) {
 		boolean isok = true;
 		try {
@@ -193,5 +241,24 @@ public class MshareFileManage {
 			isok = false;
 		}
 		return isok;
+	}
+	
+	//删除多个文件或文件夹
+	public void deleteMultiFiles(FileBrowserFile[] f) {
+		int length = f.length;
+		for(int i = 0; i < length; i++) {
+			deleteAll(f[i].getAbsolutePath());
+		}
+	}
+	
+	//重命名文件
+	public void renameFile(String oldPath, String newPath) {
+		File file = new File(oldPath);
+		file.renameTo(new File(newPath));
+	}
+	
+	//新建文件夹
+	public void newFolder(String path) {
+		(new File(path)).mkdirs();
 	}
 }
