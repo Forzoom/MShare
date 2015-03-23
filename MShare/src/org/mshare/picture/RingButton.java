@@ -18,9 +18,9 @@ public class RingButton extends CanvasElement implements Parcelable {
 	private int outerRadius;
 	private Point center;
 	private int ringColor;
-
+    // 内缩动画效果
 	private BounceAnimation bounceAnimation;
-
+    // 呼吸动画效果
 	private BreatheAnimation breatheAnimation;
 	
 	public RingButton() {
@@ -37,6 +37,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 	}
 	
 	// 判断当前是否点击了Button
+    @Override
 	public boolean isClicked(int clickX, int clickY) {
 		int distanceX = clickX - center.x;
 		int distanceY = clickY - center.y;
@@ -60,6 +61,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 	public void startBounceAnimation(int newInnerRadius, long startTime) {
 		if (bounceAnimation == null) {
 			Log.d(TAG, "bounce animation is null");
+            bounceAnimation = new BounceAnimation(this, newInnerRadius);
 			return;
 		}
 		bounceAnimation.setTargetInnerRadius(newInnerRadius);
@@ -86,16 +88,17 @@ public class RingButton extends CanvasElement implements Parcelable {
 
     /**
      * 启动呼吸动画
-     * @param newOuterRadius
+     * @param targetOuterRadius
      * @param startTime
      */
-	public void startBreatheAnimation(int newOuterRadius, long startTime) {
+	public void startBreatheAnimation(int targetOuterRadius, long startTime) {
 		if (breatheAnimation == null) {
 			Log.d(TAG, "breathe animation is null");
+            breatheAnimation = new BreatheAnimation(this, targetOuterRadius);
 			return;
 		}
-		breatheAnimation.setTargetOuterRadius(newOuterRadius);
-		Log.d(TAG, "bounce outer radius : " + newOuterRadius + " startTime : " + startTime);
+		breatheAnimation.setTargetOuterRadius(targetOuterRadius);
+		Log.d(TAG, "bounce outer radius : " + targetOuterRadius + " startTime : " + startTime);
 		breatheAnimation.start(startTime);
 	}
 
@@ -109,10 +112,17 @@ public class RingButton extends CanvasElement implements Parcelable {
 	}
 
 	public BounceAnimation getBounceAnimation() {
+        // surface没有创建的时候，将不能对animation进行操作
+        if (!canRefresh()) {
+            return null;
+        }
 		return bounceAnimation;
 	}
 
 	public BreatheAnimation getBreatheAnimation() {
+        if (!canRefresh()) {
+            return null;
+        }
 		return breatheAnimation;
 	}
 

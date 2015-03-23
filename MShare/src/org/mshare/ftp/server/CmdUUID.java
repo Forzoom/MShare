@@ -16,7 +16,7 @@ public class CmdUUID extends FtpCmd implements Runnable {
 	public void run() {
 		Log.d(TAG, "UUID executing");
 		
-		sessionThread.writeString("211 " + FsSettings.getUUID() + "\r\n");
+		sessionThread.writeString("211 " + FtpSettings.getUUID() + "\r\n");
 		
 		Log.d(TAG, "UUID finished");
 	}

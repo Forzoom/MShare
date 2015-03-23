@@ -1,17 +1,16 @@
-package org.mshare.ftp.server;
+package org.mshare.account;
 
 import java.io.File;
 import java.util.HashMap;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkStorage;
-import org.mshare.file.share.SharedLinkSystem.Permission;
 
 import android.util.Log;
 
 /**
- * {@link Account}
- * {@link Account#prepare()}
+ * {@link org.mshare.account.Account}
+ * {@link org.mshare.account.Account#prepare()}
  * @author HM
  *
  */

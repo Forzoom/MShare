@@ -21,7 +21,6 @@ package org.mshare.ftp.server;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -32,9 +31,8 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 
 import org.mshare.file.share.SharedLink;
-import org.mshare.file.share.SharedLinkSystem;
-import org.mshare.ftp.server.AccountFactory.Token;
-import org.mshare.ftp.server.AccountFactory.Verifier;
+import org.mshare.account.AccountFactory.Token;
+import org.mshare.account.AccountFactory.Verifier;
 
 import android.util.Log;
 
@@ -275,7 +273,7 @@ public class SessionThread extends Thread {
                 String line;
                 line = in.readLine(); // will accept \r\n or \n for terminator
                 if (line != null) {
-                    FsService.writeMonitor(true, line);
+                    ServerService.writeMonitor(true, line);
                     Log.d(TAG, "Received line from client: " + line);
                     FtpCmd.dispatchCommand(this, line);
                 } else {
@@ -332,7 +330,7 @@ public class SessionThread extends Thread {
      * @param str
      */
     public void writeString(String str) {
-        FsService.writeMonitor(false, str);
+        ServerService.writeMonitor(false, str);
         byte[] strBytes;
         try {
             strBytes = str.getBytes(encoding);

@@ -19,11 +19,9 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
-import java.io.File;
 import java.lang.reflect.Constructor;
 
-import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.ftp.server.AccountFactory.Token;
+import org.mshare.account.AccountFactory.Token;
 
 import android.util.Log;
 
@@ -209,7 +207,7 @@ public abstract class FtpCmd implements Runnable {
 //        try {
 //            if (param.charAt(0) == '/') {
 //                // The STOR contained an absolute path
-//                File chroot = FsSettings.getRootDir();
+//                File chroot = FtpSettings.getRootDir();
 //                return new File(chroot, param);
 //            }
 //        } catch (Exception e) {

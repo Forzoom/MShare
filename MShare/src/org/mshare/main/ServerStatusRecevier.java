@@ -1,6 +1,6 @@
 package org.mshare.main;
 
-import org.mshare.ftp.server.FsService;
+import org.mshare.ftp.server.ServerService;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -27,10 +27,10 @@ public class ServerStatusRecevier extends BroadcastReceiver {
 		Log.d(TAG, "Recevie action : " + action);
 		
 		if (statusController != null) {
-			if (action.equals(FsService.ACTION_STARTED)) {
+			if (action.equals(ServerService.ACTION_STARTED)) {
 				statusController.setServerStatus(StatusController.STATUS_SERVER_STARTED);
 				// 可能发送了启动请求，但是启动失败了
-			} else if (action.equals(FsService.ACTION_STOPPED) || action.equals(FsService.ACTION_FAILEDTOSTART)) {
+			} else if (action.equals(ServerService.ACTION_STOPPED) || action.equals(ServerService.ACTION_FAILEDTOSTART)) {
 				statusController.setServerStatus(StatusController.STATUS_SERVER_STOPPED);
 			}
 		}

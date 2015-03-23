@@ -123,11 +123,24 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		canvas.drawColor(getResources().getColor(R.color.blue08));
 		int canvasWidth = canvas.getWidth(), canvasHeight = canvas.getHeight();
 
-        /* 创建所需要绘制的元素 */
+        /* 创建所需要绘制的元素，在前调用addElement方法的将被先绘制，先绘制的内容被后绘制的内容覆盖 */
         // 背景
         if (pictureBackground == null) {
             pictureBackground = new PictureBackground();
             addElement(pictureBackground);
+        }
+        // 绘制背景色
+        switch (statusController.getServerStatus()) {
+            case StatusController.STATUS_SERVER_STARTED:
+                pictureBackground.setCurrentColor(startColor);
+                break;
+            case StatusController.STATUS_SERVER_STOPPED:
+                pictureBackground.setCurrentColor(stopColor);
+                break;
+            case StatusController.STATUS_SERVER_STARTING:
+            case StatusController.STATUS_SERVER_STOPING:
+                pictureBackground.setCurrentColor(operatingColor);
+                break;
         }
 
         // 头像
@@ -147,9 +160,6 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         settingsButton.setX(x);
         settingsButton.setY(paddingTop);
         settingsButton.setPadding(12, paddingTop, 12, 12);
-        AlphaAnimation alphaAnimation = settingsButton.new AlphaAnimation(settingsButton, 223);
-        alphaAnimation.setDuration(300);
-        settingsButton.setAlphaAnimation(alphaAnimation);
 
         // 服务器按钮
         if (serverButton == null) {// null情况下，仅仅是添加而已
@@ -163,27 +173,10 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         serverButton.setCenter(center);
         serverButton.setRadius(canvasWidth / 4 - 20, canvasWidth / 4);
 
-		// 在前的会先被绘制
-		// 绘制背景色
-		switch (statusController.getServerStatus()) {
-		case StatusController.STATUS_SERVER_STARTED:
-			pictureBackground.setCurrentColor(startColor);
-			break;
-		case StatusController.STATUS_SERVER_STOPPED:
-			pictureBackground.setCurrentColor(stopColor);
-			break;
-		case StatusController.STATUS_SERVER_STARTING:
-		case StatusController.STATUS_SERVER_STOPING:
-			pictureBackground.setCurrentColor(operatingColor);
-			break;
-		}
-		pictureBackground.setColorAnimation(pictureBackground.new ColorAnimation(pictureBackground, pictureBackground.getCurrentColor(), pictureBackground.getCurrentColor()));
-
 		int avaterRadius = canvasWidth / 4;
 		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(R.drawable.avater_1, avaterRadius);
 		
-		circleAvater.setCx(canvas.getWidth() / 2);
-		circleAvater.setCy(canvas.getHeight() / 2);
+		circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
 		circleAvater.setRadius(avaterRadius);
 		circleAvater.setAvater(avaterBitmap);
 		

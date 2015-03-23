@@ -19,7 +19,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
-import org.mshare.ftp.server.AccountFactory.Token;
+import org.mshare.account.AccountFactory.Token;
 
 import android.util.Log;
 

@@ -3,23 +3,17 @@ package org.mshare.main;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.mshare.ftp.server.FsService;
-import org.mshare.ftp.server.FsSettings;
+import org.mshare.ftp.server.ServerService;
 
 import android.app.Service;
 import android.content.Context;
 import android.content.IntentFilter;
-import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.nfc.NfcAdapter;
 import android.os.Environment;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
 /**
  * TODO 是否需要将getState和isEnable来使用
@@ -154,9 +148,9 @@ public class StatusController {
 		serverStatusReceiver = new ServerStatusRecevier(this);
 		
 		IntentFilter serverStatusFilter = new IntentFilter();
-		serverStatusFilter.addAction(FsService.ACTION_STARTED);
-		serverStatusFilter.addAction(FsService.ACTION_FAILEDTOSTART);
-		serverStatusFilter.addAction(FsService.ACTION_STOPPED);
+		serverStatusFilter.addAction(ServerService.ACTION_STARTED);
+		serverStatusFilter.addAction(ServerService.ACTION_FAILEDTOSTART);
+		serverStatusFilter.addAction(ServerService.ACTION_STOPPED);
 		
 		context.registerReceiver(serverStatusReceiver, serverStatusFilter);
 	}
@@ -186,7 +180,7 @@ public class StatusController {
 	// 获得服务器状态
 	public int getServerStatus() {
 		if (serverStatus == STATUS_SERVER_UNKNOWN) {
-			if (FsService.isRunning()) {
+			if (ServerService.isRunning()) {
 				return STATUS_SERVER_STARTED;
 			} else {
 				return STATUS_SERVER_STOPPED;

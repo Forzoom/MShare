@@ -7,7 +7,6 @@ import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,74 +14,31 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mshare.file.MshareFileMenu;
-import org.mshare.ftp.server.FsService;
-import org.mshare.ftp.server.FsSettings;
-import org.mshare.main.JoinConn.CmdCWD;
-import org.mshare.main.JoinConn.CmdConnect;
-import org.mshare.main.JoinConn.CmdDELE;
-import org.mshare.main.JoinConn.CmdDisConnect;
-import org.mshare.main.JoinConn.CmdFactory;
-import org.mshare.main.JoinConn.CmdLIST;
-import org.mshare.main.JoinConn.CmdPWD;
-import org.mshare.main.JoinConn.CmdRENAME;
-import org.mshare.main.JoinConn.DameonFtpConnector;
-import org.mshare.main.JoinConn.FtpCmd;
-import org.mshare.main.StatusController.StatusCallback;
-import org.mshare.picture.CircleAvater;
-import org.mshare.picture.SettingsButton;
+import org.mshare.ftp.server.FtpSettings;
+import org.mshare.ftp.server.ServerService;
 import org.mshare.picture.CanvasAnimation;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
 import org.mshare.picture.RingButton;
-import org.mshare.picture.RefreshHandler;
 import org.mshare.picture.ServerOverviewSurfaceView;
 import org.mshare.scan.ScanActivity;
 
-import de.kp.net.rtsp.RtspConstants;
-import de.kp.net.rtsp.server.RtspServer;
-import de.kp.rtspcamera.MediaConstants;
-
-import android.animation.ArgbEvaluator;
-
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.Paint.Style;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
-import android.graphics.drawable.shapes.Shape;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Looper;
 import android.os.Message;
-import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.FrameLayout.LayoutParams;
@@ -90,16 +46,11 @@ import android.widget.LinearLayout;
 import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 import android.widget.TableLayout;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ViewAnimator;
-import android.widget.ViewFlipper;
 import android.widget.ViewSwitcher;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -119,10 +70,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	
 	// 状态控制器
 	private StatusController statusController;
-	
-	/* RTSP服务器 */
-	private RtspServer rtspServer;
-	
+
 	/* FTP服务器 */
 	// 服务器UI SurfaceView
 	private ServerOverviewSurfaceView surfaceView;
@@ -541,7 +489,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
 
 		// 当前上传路径
-//		uploadPathView.setText(FsSettings.getUpload());
+//		uploadPathView.setText(FtpSettings.getUpload());
 		statusController.registerReceiver();
 	}
 	
@@ -549,22 +497,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	protected void onResume() {
 		Log.d(TAG, "onResume");
 		statusController.initial();
-		
-		// 视频编码器？
-		RtspConstants.VideoEncoder rtspVideoEncoder = (MediaConstants.H264_CODEC == true) ? RtspConstants.VideoEncoder.H264_ENCODER
-				: RtspConstants.VideoEncoder.H263_ENCODER;
-		
-		try {
-			// 先启动RTSP服务器
-			if (rtspServer == null) {
-				rtspServer = new RtspServer(5544, rtspVideoEncoder);
-				new Thread(rtspServer).start();
-			}
-		} catch (IOException e) {
-			Log.e(TAG, "something wrong happen! start rtsp server failed");
-			e.printStackTrace();
-		}
-		
+
 		super.onResume();
 	}
 	
@@ -610,7 +543,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// 表示的是手机不支持WIFI
 		case StatusController.STATE_WIFI_DISABLE:
 		case StatusController.STATE_WIFI_ENABLE:
-			if (FsService.isRunning()) {
+			if (ServerService.isRunning()) {
 				// 尝试关闭服务器
 //				stopServer();
 			}
@@ -618,7 +551,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			break;
 		case StatusController.STATE_WIFI_USING:
 			// 设置显示的IP地址
-//			ftpAddrView.setText(FsService.getLocalInetAddress().getHostAddress());
+//			ftpAddrView.setText(ServerService.getLocalInetAddress().getHostAddress());
 			break;
 		}
 	}
@@ -631,7 +564,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		Log.d(TAG, "on wifi ap state change");
 		// TODO 地址可能并不是这样设置的，所以暂时将这些注释
 		// 设置地址
-//		byte[] address = FsService.getLocalInetAddress().getAddress();
+//		byte[] address = ServerService.getLocalInetAddress().getAddress();
 //		String addressStr = "";
 //		for (int i = 0, len = address.length; i < len; i++) {
 //			byte b = address[i];
@@ -663,14 +596,14 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	 */
 	private void startServer() {
 		// 设置新的配置内容
-		sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
+		sendBroadcast(new Intent(ServerService.ACTION_START_FTPSERVER));
 	}
 	
 	/**
 	 * 尝试停止服务器
 	 */
 	private void stopServer() {
-		sendBroadcast(new Intent(FsService.ACTION_STOP_FTPSERVER));
+		sendBroadcast(new Intent(ServerService.ACTION_STOP_FTPSERVER));
 		
 	}
 	
@@ -759,11 +692,11 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			Intent startQrcodeIntent = new Intent(OverviewActivity.this, QRCodeConnectActivity.class);
 			
 			// 暂时在这里判断服务器是否正在运行，只有当服务器争取额运行的时候才能够打开qrcode
-			if (FsService.isRunning()) {
-				String host = FsService.getLocalInetAddress().toString();
-				String port = String.valueOf(FsSettings.getPort());
-				String username = FsSettings.getUsername();
-				String password = FsSettings.getPassword();
+			if (ServerService.isRunning()) {
+				String host = ServerService.getLocalInetAddress().toString();
+				String port = String.valueOf(FtpSettings.getPort());
+				String username = FtpSettings.getUsername();
+				String password = FtpSettings.getPassword();
 				
 				ConnectInfo connectInfo = new ConnectInfo(host, port, username, password);
 				

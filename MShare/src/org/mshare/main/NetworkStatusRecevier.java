@@ -2,14 +2,11 @@ package org.mshare.main;
 
 import java.lang.reflect.Field;
 
-import org.mshare.ftp.server.FsService;
-
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 /**

@@ -20,7 +20,7 @@ public class CmdNINA extends FtpCmd {
 		Context context = MShareApp.getAppContext();
 		
 		// 获得配置文件的内容
-		String nickName = PreferenceManager.getDefaultSharedPreferences(context).getString(FsSettings.KEY_NICKNAME, FsSettings.VALUE_NICKNAME_DEFAULT);
+		String nickName = PreferenceManager.getDefaultSharedPreferences(context).getString(FtpSettings.KEY_NICKNAME, FtpSettings.VALUE_NICKNAME_DEFAULT);
 		
 		// 如何在没有设置的情况下获得用户的名称
 				

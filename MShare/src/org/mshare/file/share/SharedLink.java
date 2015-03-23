@@ -1,14 +1,12 @@
 package org.mshare.file.share;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.ftp.server.Account;
+import org.mshare.account.Account;
 
 import android.util.Log;
 

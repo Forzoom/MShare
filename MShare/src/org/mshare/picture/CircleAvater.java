@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Xfermode;
@@ -16,8 +17,7 @@ import android.graphics.Bitmap.Config;
 
 public class CircleAvater extends CanvasElement {
 
-	private int cx;
-	private int cy;
+	private Point center;
 	private int radius;
 	private Bitmap avater;
 
@@ -29,26 +29,20 @@ public class CircleAvater extends CanvasElement {
 
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
-		canvas.drawBitmap(avater, cx - radius, cy - radius, paint);	
+        if (center != null) {
+            canvas.drawBitmap(avater, center.x - radius, center.y - radius, paint);
+        }
+
 	}
 
-	
-	public int getCx() {
-		return cx;
+	public Point getCenter() {
+		return center;
+	}
+    // 在创建的时候最好设置center
+	public void setCenter(Point center) {
+		this.center = center;
 	}
 
-	public void setCx(int cx) {
-		this.cx = cx;
-	}
-
-	public int getCy() {
-		return cy;
-	}
-
-	public void setCy(int cy) {
-		this.cy = cy;
-	}
-	
 	public int getRadius() {
 		return radius;
 	}

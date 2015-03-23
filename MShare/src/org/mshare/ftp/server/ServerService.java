@@ -27,10 +27,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.UUID;
 
 import android.app.AlarmManager;
@@ -52,9 +49,14 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import org.mshare.ftp.server.AccountFactory.Token;
+import org.mshare.account.AccountFactory;
+import org.mshare.account.AccountFactory.Token;
 import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
+
+import de.kp.net.rtsp.RtspConstants;
+import de.kp.net.rtsp.server.RtspServer;
+import de.kp.rtspcamera.MediaConstants;
 
 /**
  * TODO 当有Session的数量发生变化的时候，如果能够通知就好了，以保证当前的Session数量合适
@@ -64,8 +66,8 @@ import org.mshare.main.MShareUtil;
  * @author HM
  *
  */
-public class FsService extends Service implements Runnable {
-    private static final String TAG = FsService.class.getSimpleName();
+public class ServerService extends Service implements Runnable {
+    private static final String TAG = ServerService.class.getSimpleName();
 
     // Service will (global) broadcast when server start/stop
     // 当FTP服务器启动或者停止的时候，会广播
@@ -83,6 +85,9 @@ public class FsService extends Service implements Runnable {
     protected boolean shouldExit = false;
     // 用于接收客户端的socket
     protected ServerSocket listenSocket;
+
+    /* RTSP服务器 */
+    private RtspServer rtspServer;
 
     // The server thread will check this often to look for incoming
     // connections. We are forced to use non-blocking accept() and polling
@@ -131,18 +136,18 @@ public class FsService extends Service implements Runnable {
         
         // 创建nickname
         SharedPreferences defaultSp = PreferenceManager.getDefaultSharedPreferences(context);
-        String nickName = defaultSp.getString(FsSettings.KEY_NICKNAME, FsSettings.VALUE_NICKNAME_DEFAULT);
+        String nickName = defaultSp.getString(FtpSettings.KEY_NICKNAME, FtpSettings.VALUE_NICKNAME_DEFAULT);
         if (nickName.equals("")) {// 当前nickName仍是默认的""
         	Editor editor = defaultSp.edit();
         	// 修改为设备名称
-        	editor.putString(FsSettings.KEY_NICKNAME, Build.MODEL);
+        	editor.putString(FtpSettings.KEY_NICKNAME, Build.MODEL);
         	editor.commit();
         }
         
         // 创建uuid
-        if (FsSettings.getUUID().equals(FsSettings.VALUE_UUID_DEFAULT)) {
+        if (FtpSettings.getUUID().equals(FtpSettings.VALUE_UUID_DEFAULT)) {
         	String uuid = UUID.randomUUID().toString();
-        	FsSettings.setUUID(uuid);
+        	FtpSettings.setUUID(uuid);
         }
         
         // 创建SessionController，并绑定SessionNotifier
@@ -150,7 +155,6 @@ public class FsService extends Service implements Runnable {
         sessionNotifier = new SessionNotifier(sessionController);
         if (mAccountFactory == null) {
         	Log.e(TAG, "AccountFactory is null until onStartCommand!");
-        	prepareAdminAccount();
         }
         mAccountFactory.bindSessionNotifier(sessionNotifier);
         // 设置验证器
@@ -160,6 +164,23 @@ public class FsService extends Service implements Runnable {
         Log.d(TAG, "Creating server thread");
         serverThread = new Thread(this);
         serverThread.start();
+
+        // 视频编码器？
+        RtspConstants.VideoEncoder rtspVideoEncoder = (MediaConstants.H264_CODEC == true) ? RtspConstants.VideoEncoder.H264_ENCODER
+                : RtspConstants.VideoEncoder.H263_ENCODER;
+
+
+        // 启动rtsp服务器
+        try {
+            if (rtspServer == null) {
+                rtspServer = new RtspServer(5544, rtspVideoEncoder);
+            }
+            new Thread(rtspServer).start();
+        } catch (IOException e) {
+            Log.e(TAG, "something wrong happen! start rtsp server failed");
+            e.printStackTrace();
+        }
+
         return START_STICKY;
     }
 
@@ -223,6 +244,9 @@ public class FsService extends Service implements Runnable {
         if (mAccountFactory != null) {
         	mAccountFactory.releaseSessionNotifier();
         }
+
+        // 停止rtsp服务器
+        rtspServer.stop();
         Log.d(TAG, "FTPServerService.onDestroy() finished");
     }
 
@@ -233,7 +257,7 @@ public class FsService extends Service implements Runnable {
         // 允许出于TIME_WAIT状态的Socket连接下一个内容
         listenSocket.setReuseAddress(true);
         // 将其绑定到特定的端口号上
-        listenSocket.bind(new InetSocketAddress(FsSettings.getPort()));
+        listenSocket.bind(new InetSocketAddress(FtpSettings.getPort()));
     }
 
     /**
@@ -328,7 +352,7 @@ public class FsService extends Service implements Runnable {
     private void takeWakeLock() {
         if (wakeLock == null) {
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            if (FsSettings.shouldTakeFullWakeLock()) {
+            if (FtpSettings.shouldTakeFullWakeLock()) {
                 Log.d(TAG, "takeWakeLock: Taking full wake lock");
                 wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
             } else {
@@ -480,7 +504,6 @@ public class FsService extends Service implements Runnable {
     /**
      * 并不支持低版本，但是在使用的过程中，好像并没有什么用处，
      * 应该和Service的生命周期有关吧
-     * TODO 在发布版本中，应该将该函数去掉注释
      */
     @Override
     public void onTaskRemoved(Intent rootIntent) {
@@ -501,29 +524,9 @@ public class FsService extends Service implements Runnable {
      * @return
      */
     public static Token getAdminToken() {
-    	if (mAccountFactory == null) {
-    		Log.e(TAG, "AccountFactory is null, try get one");
-    		prepareAdminAccount();
-    	}
-    	return mAccountFactory.getAdminAccountToken();
+    	return AccountFactory.getInstance().getAdminAccountToken();
     }
-    
-    /**
-     * 当 {@link #mAccountFactory}不是null时，创建管理员账户
-     */
-    private static void prepareAdminAccount() {
-    	
-    	if (mAccountFactory != null) {
-    		Log.e(TAG, "AccountFactory is already prepared");
-    		return;
-    	}
-    	
-        // 创建AccountFactory
-        mAccountFactory = new AccountFactory();
-        mAccountFactory.checkReservedAccount();
-        Log.d(TAG, "AccountFactory is created");    
-    }
-    
+
     /**
      * 临时所使用的用于注册session的函数，不知道以后还需不需要
      * @param newSession

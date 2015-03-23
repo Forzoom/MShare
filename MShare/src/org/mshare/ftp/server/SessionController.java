@@ -3,7 +3,7 @@ package org.mshare.ftp.server;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mshare.ftp.server.AccountFactory.Verifier;
+import org.mshare.account.AccountFactory.Verifier;
 
 import android.util.Log;
 

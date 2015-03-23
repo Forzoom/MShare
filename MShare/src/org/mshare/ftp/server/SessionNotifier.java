@@ -1,6 +1,7 @@
 package org.mshare.ftp.server;
 
-import org.mshare.ftp.server.AccountFactory.Token;
+import org.mshare.account.Account;
+import org.mshare.account.AccountFactory.Token;
 
 /**
  * 用于向多个Session发送消息，消息的内容已经包装好了

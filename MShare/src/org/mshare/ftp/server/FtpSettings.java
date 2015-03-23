@@ -20,25 +20,23 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.ftp.server;
 
-import java.io.Externalizable;
 import java.io.File;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.mshare.main.MShareApp;
-import org.mshare.main.MShareUtil;
+
 /**
  * 目前使用原本的设置方法，即使用SharedPreference
  * @author HM
  *
  */
-public class FsSettings {
+public class FtpSettings {
 
-    private static final String TAG = FsSettings.class.getSimpleName();
+    private static final String TAG = FtpSettings.class.getSimpleName();
     public static final String KEY_USERNAME = "username";
     public static final String VALUE_USERNAME_DEFAULT = "username";
     public static final String KEY_PASSWORD = "password";
@@ -210,7 +208,7 @@ public class FsSettings {
     }
 
     public static void setInputBufferSize(int inputBufferSize) {
-        FsSettings.inputBufferSize = inputBufferSize;
+        FtpSettings.inputBufferSize = inputBufferSize;
     }
 
     public static boolean isAllowOverwrite() {
@@ -218,7 +216,7 @@ public class FsSettings {
     }
 
     public static void setAllowOverwrite(boolean allowOverwrite) {
-        FsSettings.allowOverwrite = allowOverwrite;
+        FtpSettings.allowOverwrite = allowOverwrite;
     }
 
     public static int getDataChunkSize() {
@@ -226,7 +224,7 @@ public class FsSettings {
     }
 
     public static void setDataChunkSize(int dataChunkSize) {
-        FsSettings.dataChunkSize = dataChunkSize;
+        FtpSettings.dataChunkSize = dataChunkSize;
     }
 
     public static int getSessionMonitorScrollBack() {
@@ -234,7 +232,7 @@ public class FsSettings {
     }
 
     public static void setSessionMonitorScrollBack(int sessionMonitorScrollBack) {
-        FsSettings.sessionMonitorScrollBack = sessionMonitorScrollBack;
+        FtpSettings.sessionMonitorScrollBack = sessionMonitorScrollBack;
     }
 
     public static int getServerLogScrollBack() {
@@ -242,7 +240,7 @@ public class FsSettings {
     }
 
     public static void setLogScrollBack(int serverLogScrollBack) {
-        FsSettings.serverLogScrollBack = serverLogScrollBack;
+        FtpSettings.serverLogScrollBack = serverLogScrollBack;
     }
 
 }
