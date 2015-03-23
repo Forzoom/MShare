@@ -982,10 +982,13 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				for(int i=0; i<files.length; i++){
 					String localPath = getParentRootPath() + File.separator
 							+ files[i].getName();
-					mFTPClient.download(
+					if(files[i].canRead())
+						mFTPClient.download(
 							files[i].getName(),
 							new File(localPath),
 							new DownloadFTPDataTransferListener(((FTPFile) files[i]).getSize()));
+					else
+						toast("没有下载权限！");
 				}
 				
 			} catch (Exception ex) {
@@ -1523,7 +1526,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		
 		//下载
 		class MenuDownload implements View.OnClickListener {
-					
+
 			@Override
 			public void onClick(View arg0) {
 				FileBrowserFile[] files = null;
@@ -1537,8 +1540,11 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 						return;
 					}
 				}
-				showDialog(DIALOG_LOAD);
-				new CmdDownLoad().execute();
+				if(files.length > 0){
+					showDialog(DIALOG_LOAD);
+					new CmdDownLoad().execute();
+				}else
+					toast("未选中任何文件或文件夹！");
 			}
 		}
 		
@@ -1564,8 +1570,15 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			
 			@Override
 			public void onClick(View arg0) {
-				if (remoteBrowser.getMultiSelectedFiles().length < 2) {
-					showDialog(DIALOG_RENAME);
+				FileBrowserFile[] files = null;
+				files = remoteBrowser.getMultiSelectedFiles();
+				if (files.length < 2 && files.length > 1) {
+					if(files[0].canWrite())
+						showDialog(DIALOG_RENAME);
+					else if(!files[0].canWrite())
+						toast("没有重命名权限！");
+				}else if(files.length < 1){
+					toast("未选中任何文件或文件夹！");
 				}else{
 					toast("暂不支持批量重命名！");
 				}
@@ -1582,10 +1595,16 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				if (remoteBrowser.getMode() == MShareFileBrowser.MODE_MULTI_SELECT) {
 					files = remoteBrowser.getMultiSelectedFiles();
 				}
-				for(int i=0; i<files.length; i++){
-					executeDELERequest(files[i].getName(),
-							files[i].isDirectory());
-				}
+				if(files.length > 0){
+					for(int i=0; i<files.length; i++){
+						if(files[i].canWrite())
+							executeDELERequest(files[i].getName(),
+								files[i].isDirectory());
+						else
+							toast("没有删除权限！");
+					}
+				}else
+					toast("未选中任何文件或文件夹！");
 			}
 		}
 		
