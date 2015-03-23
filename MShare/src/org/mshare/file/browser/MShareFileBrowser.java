@@ -214,7 +214,7 @@ public class MShareFileBrowser extends LinearLayout {
 	
 	/**
 	 * 刷新GridView，重置适配器
-	 * @param currentFiles
+	 * @param files
 	 */
 	public void refreshGridView(FileBrowserFile[] files) {
 		
@@ -269,7 +269,11 @@ public class MShareFileBrowser extends LinearLayout {
 		int index = crumbController.pop();
 		crumbController.selectCrumb(index - 1);
 	}
-	
+
+    /**
+     * 获得所有的文件
+     * @return
+     */
 	public FileBrowserFile[] getCurrentFiles() {
 		return currentFiles;
 	}
@@ -337,6 +341,12 @@ public class MShareFileBrowser extends LinearLayout {
 		arrayList.toArray(ret);
 		return ret;
 	}
+
+    // 返回当前所对应的文件夹路径
+    public FileBrowserFile getCurrentDirectory() {
+        return crumbController.getSelectedFile();
+    }
+
 	/**
 	 * 判断文件是否被选择了，使用SINGLE和MULTI模式
 	 * @param position
