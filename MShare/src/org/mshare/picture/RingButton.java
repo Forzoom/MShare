@@ -54,12 +54,20 @@ public class RingButton extends CanvasElement implements Parcelable {
 		Log.d(TAG, "distance is :" + distance);
 		return distance <= outerRadius;
 	}
-	
-	// 添加bounceAnimation
+
+    /**
+     * 添加内缩动画，使用System.currentTimeMillis()
+     * @param newInnerRadius
+     */
 	public void startBounceAnimation(int newInnerRadius) {
 		startBounceAnimation(newInnerRadius, System.currentTimeMillis());
 	}
-	
+
+    /**
+     * 添加内缩动画，使用指定的时间
+     * @param newInnerRadius
+     * @param startTime
+     */
 	public void startBounceAnimation(int newInnerRadius, long startTime) {
 		if (bounceAnimation == null) {
 			Log.d(TAG, "bounce animation is null");
@@ -69,7 +77,10 @@ public class RingButton extends CanvasElement implements Parcelable {
 		Log.d(TAG, "bounce inner radius : " + newInnerRadius + " startTime : " + startTime);
 		bounceAnimation.start(startTime);
 	}
-	
+
+    /**
+     * 如果当前有内缩动画的话，将停止当前的内缩动画
+     */
 	public void stopBounceAnimation() {
 		if (bounceAnimation != null) {
 			bounceAnimation.stop();

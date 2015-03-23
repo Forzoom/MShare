@@ -68,9 +68,9 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		
 	private StatusController statusController;
 
+    // 所需要在Canvas上绘制的内容
 	private PictureBackground pictureBackground;
 	private CircleAvater circleAvater;
-
 	private RingButton serverButton;
 	private SettingsButton settingsButton;
 	
@@ -109,7 +109,27 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		startColor = getResources().getColor(R.color.blue08);
 		operatingColor = getResources().getColor(R.color.blue00);
 		transparentColor = getResources().getColor(R.color.color_transparent);
-	}
+
+        // 希望在这里创建所有需要在Canvas上进行绘制的内容
+
+		/* 创建所需要绘制的元素 */
+        // 背景
+        pictureBackground = new PictureBackground();
+        addElement(pictureBackground);
+
+        // 头像
+        circleAvater = new CircleAvater();
+        addElement(circleAvater);
+
+        // 设置按钮
+        Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
+        settingsButton = new SettingsButton(settingsBitmap);
+        addElement(settingsButton);
+
+        // 服务器按钮
+        serverButton = new RingButton();
+        addElement(serverButton);
+    }
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
@@ -248,7 +268,49 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		}
 		return false;
 	}
-	
+
+    // 预置的服务器启动动画
+    public void startServerAnimation() {
+        // 处理SurfaceView中的动画效果
+        long startTime = System.currentTimeMillis();
+
+        pictureBackground.stopColorAnimation();
+        CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
+        if (colorAnimation != null) {
+            colorAnimation.setDuration(500);
+        }
+        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStartColor(), startTime);
+
+        // 处理呼吸动画效果
+        serverButton.stopBreatheAnimation();
+        CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
+        if (breatheAnimation != null) {
+            breatheAnimation.setDuration(3000);
+            breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_INFINITE);
+        }
+        serverButton.startBreatheAnimation(getServerOuterRadius(), startTime);
+
+    }
+
+    // 预置的服务器停止动画
+    public void stopServerAniamtion() {
+        // 调整背景颜色
+        pictureBackground.stopColorAnimation();
+        CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
+        if (colorAnimation != null) {
+            colorAnimation.setDuration(500);
+        }
+        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStopColor());
+
+        // 调整呼吸动画
+        CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
+        // 通过设置repeatMode，当动画循环结束的时候就会自动stop
+        if (breatheAnimation != null) {
+            breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_ONCE);
+        }
+
+    }
+
 	// 设置GestureDetector
 	public void setGestureDetector(GestureDetector gestureDetector) {
 		this.gestureDetector = gestureDetector;
@@ -332,11 +394,15 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	public CircleAvater getCircleAvater() {
 		return circleAvater;
 	}
-	public void setCircleAvater(CircleAvater circleAvater) {
-		this.circleAvater = circleAvater;
-		addElement(circleAvater);
-	}
-	
+
+    public void setServerButtonListener(CanvasElement.ElementOnClickListener listener) {
+        serverButton.setElementOnClickListener(listener);
+    }
+
+    public void setSettingsButtonListener(CanvasElement.ElementOnClickListener listener) {
+        settingsButton.setElementOnClickListener(listener);
+    }
+
 	class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
 		@Override
