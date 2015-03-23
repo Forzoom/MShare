@@ -23,9 +23,14 @@ public class MshareFileManage {
 		context = c;
 	}
 	
-	//获取select的值
+	//获取cut的值
 	public boolean getCut() {
 		return cut;
+	}
+	
+	//获取select的值
+	public boolean getSelect() {
+		return selected;
 	}
 	
 	//复制剪切选择

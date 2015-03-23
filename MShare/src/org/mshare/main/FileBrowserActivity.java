@@ -14,6 +14,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -92,14 +94,22 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	@Override
 	public void onItemClick(FileBrowserFile file) {
 		Log.d(TAG, "onItemClick");
-		fileBrowser.refreshGridView(listFiles(file));
+		if(file.isDirectory()) {
+			fileBrowser.refreshGridView(listFiles(file));
+		}
+		else {
+			fileBrowser.openFile(file);
+		}
+		
 	}
 
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
 		Log.d(TAG, "onItemLongClick");
 		// 没有刷新要求
-		changeMenu(0, 1);
+		if(!mshareFileManage.getSelect()) {
+			changeMenu(0, 1);
+		}
 	}
 
 	@Override
@@ -200,6 +210,12 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		this.mshareFileMenu[toMenu].showAnimation();
 	}
 	
+	//刷新当前目录
+	private void refreshDirectory() {
+		fileBrowser.refreshGridView(listFiles(fileBrowser.getCurrentDirectory()));
+	}
+
+	
 	//新建文件夹
 	class MenuNewFolder implements View.OnClickListener {
 		
@@ -223,9 +239,11 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 							File file = new File(path);
 							if(file.exists()) {
 								Toast.makeText(getApplicationContext(), "文件夹已存在", Toast.LENGTH_SHORT).show();
+								
 							}
 							else {
 								mshareFileManage.newFolder(path);
+								refreshDirectory();
 							}
 							
 						}
@@ -251,7 +269,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 			else {
 				mshareFileManage.copySelect(file, false);
 				fileBrowser.quitMultiSelectMode();
-				changeMenu(2, 3);
+				changeMenu(1, 2);
+				fileBrowser.setMultiSelectEnabled(false);
 			}
 		}
 	}
@@ -268,7 +287,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 			else {
 				mshareFileManage.copySelect(file, true);
 				fileBrowser.quitMultiSelectMode();
-				changeMenu(2, 3);
+				changeMenu(1, 2);
+				fileBrowser.setMultiSelectEnabled(false);
 			}
 		}
 	}
@@ -302,7 +322,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 							else {
 								mshareFileManage.renameFile(oldPath, newPath);
 								fileBrowser.quitMultiSelectMode();
-								changeMenu(2, 1);
+								refreshDirectory();
+								changeMenu(1, 0);
 							}
 						}
 					})
@@ -330,7 +351,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 			else {
 				mshareFileManage.deleteMultiFiles(fileBrowserFile);
 				fileBrowser.quitMultiSelectMode();
-				changeMenu(2, 1);
+				refreshDirectory();
+				changeMenu(1, 0);
 			}
 		}
 	}
@@ -341,7 +363,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		@Override
 		public void onClick(View arg0) {
 			fileBrowser.quitMultiSelectMode();
-			changeMenu(2, 1);
+			changeMenu(1, 0);
 		}
 	}
 	
@@ -352,12 +374,13 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		public void onClick(View arg0) {
 			if(mshareFileManage.getCut()) {
 				mshareFileManage.moveMultiFiles(fileBrowser.getCurrentDirectory().getAbsolutePath());
-				changeMenu(3, 1);
 			}
 			else {
 				mshareFileManage.CopyMultiFiles(fileBrowser.getCurrentDirectory().getAbsolutePath());
-				changeMenu(3, 1);
 			}
+			refreshDirectory();
+			changeMenu(2, 0);
+			fileBrowser.setMultiSelectEnabled(true);
 		}
 	}
 	
@@ -367,7 +390,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		@Override
 		public void onClick(View arg0) {
 			mshareFileManage.pasteCancel();
-			changeMenu(3, 1);
+			changeMenu(2, 0);
+			fileBrowser.setMultiSelectEnabled(true);
 		}
 	}
 }
