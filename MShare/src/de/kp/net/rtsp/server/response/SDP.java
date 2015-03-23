@@ -2,7 +2,7 @@ package de.kp.net.rtsp.server.response;
 
 import java.net.UnknownHostException;
 
-import com.orangelabs.rcs.core.ims.protocol.rtp.codec.video.h264.H264Config;
+import com.orangelabs.core.ims.protocol.rtp.codec.video.h264.H264Config;
 
 import de.kp.net.rtsp.RtspConstants;
 import de.kp.net.rtsp.RtspConstants.VideoEncoder;

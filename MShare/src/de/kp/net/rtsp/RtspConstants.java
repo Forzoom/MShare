@@ -33,8 +33,8 @@ public class RtspConstants {
 	// the camera using H.263-1998
 	
 	// TODO: sync with 
-	// 		com.orangelabs.rcs.core.ims.protocol.rtp.format.video.H263VideoFormat.PAYLOAD = 97
-	//		com.orangelabs.rcs.core.ims.protocol.rtp.format.video.H264VideoFormat.PAYLOAD = 96
+	// 		com.orangelabs.core.ims.protocol.rtp.format.video.H263VideoFormat.PAYLOAD = 97
+	//		com.orangelabs.core.ims.protocol.rtp.format.video.H264VideoFormat.PAYLOAD = 96
 	public static int RTP_H264_PAYLOADTYPE = 96; // dynamic range
 	public static int RTP_H263_PAYLOADTYPE = 97; // dynamic range
 	
@@ -48,8 +48,8 @@ public class RtspConstants {
 	};
 	
 	// TODO: synchronize settings
-	// com.orangelabs.rcs.core.ims.protocol.rtp.codec.video.h263.H263Config
-	// com.orangelabs.rcs.core.ims.protocol.rtp.codec.video.h264.H264Config
+	// com.orangelabs.core.ims.protocol.rtp.codec.video.h263.H263Config
+	// com.orangelabs.core.ims.protocol.rtp.codec.video.h264.H264Config
 	
 	// QCIF
 //	public static String WIDTH  = "176";
