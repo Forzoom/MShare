@@ -7,6 +7,8 @@ import android.location.GpsStatus.Listener;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -64,19 +66,15 @@ public class MshareFileMenu {
 	}
 	
 	public void hideAnimation() { //¶¯»­Òþ²Ø²Ëµ¥
-//		AlphaAnimation aa = new AlphaAnimation(1.0f, 0.0f);
-//		aa.setDuration(500);
-//		aa.setFillAfter(true);
-//		this.linearLayout.startAnimation(aa);
+		Animation animation = AnimationUtils.loadAnimation(context, R.anim.menu_hide);
+		this.linearLayout.startAnimation(animation);
 		this.linearLayout.setVisibility(View.GONE);
 	}
 	
 	public void showAnimation() { //¶¯»­ÏÔÊ¾²Ëµ¥
-//		AlphaAnimation aa = new AlphaAnimation(0.0f, 1.0f);
-//		aa.setDuration(500);
-//		aa.setFillAfter(true);
-//		this.linearLayout.startAnimation(aa);
 		this.linearLayout.setVisibility(View.VISIBLE);
+		Animation animation = AnimationUtils.loadAnimation(context, R.anim.menu_show);
+		this.linearLayout.startAnimation(animation);
 	}
 	
 	public void hide() { //Òþ²Ø²Ëµ¥
