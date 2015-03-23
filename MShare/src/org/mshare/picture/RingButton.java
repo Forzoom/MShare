@@ -1,57 +1,46 @@
 package org.mshare.picture;
 
 import org.mshare.main.MShareApp;
-import org.mshare.main.R;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
-import android.os.Bundle;
-import android.os.Message;
+import android.graphics.Point;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
-import android.view.animation.Interpolator;
 
 public class RingButton extends CanvasElement implements Parcelable {
 	private static final String TAG = RingButton.class.getSimpleName();
 	
 	private int innerRadius;
 	private int outerRadius;
-	private int cx;
-	private int cy;
+	private Point center;
 	private int ringColor;
 
 	private BounceAnimation bounceAnimation;
 
-	private OuterRadiusBreatheAnimation breatheAnimation;
+	private BreatheAnimation breatheAnimation;
 	
 	public RingButton() {
-		Context context = MShareApp.getAppContext();
-		ringColor = context.getResources().getColor(R.color.Color_White);
 		setClickable(true);
 	}
 	
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
 		int ringWidth = outerRadius - innerRadius;
-		Log.d(TAG, "cx : " + cx + " cy : " + cy + "innerRadius : " + innerRadius + " outerRadius : " + outerRadius + " ringWidth : " + ringWidth);
 		paint.setColor(ringColor);
 		paint.setStyle(Style.STROKE);
 		paint.setStrokeWidth(ringWidth);
-		canvas.drawCircle(cx, cy, (innerRadius + outerRadius) / 2, paint);
+		canvas.drawCircle(center.x, center.y, (innerRadius + outerRadius) / 2, paint);
 	}
 	
 	// 判断当前是否点击了Button
 	public boolean isClicked(int clickX, int clickY) {
-		Log.d(TAG, "center x:" + cx + " centerY:" + cy + " clickX:" + clickX + " clickY:" + clickY);
-		int distanceX = clickX - cx;
-		int distanceY = clickY - cy;
-		Log.d(TAG, "disX:" + distanceX + " disY:" + distanceY);
+		int distanceX = clickX - center.x;
+		int distanceY = clickY - center.y;
 		int distance = (int)Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-		Log.d(TAG, "distance is :" + distance);
 		return distance <= outerRadius;
 	}
 
@@ -86,11 +75,20 @@ public class RingButton extends CanvasElement implements Parcelable {
 			bounceAnimation.stop();
 		}
 	}
-	
+
+    /**
+     * 启动呼吸动画
+     * @param newOuterRadius
+     */
 	public void startBreatheAnimation(int newOuterRadius) {
 		startBreatheAnimation(newOuterRadius, System.currentTimeMillis());
 	}
-	
+
+    /**
+     * 启动呼吸动画
+     * @param newOuterRadius
+     * @param startTime
+     */
 	public void startBreatheAnimation(int newOuterRadius, long startTime) {
 		if (breatheAnimation == null) {
 			Log.d(TAG, "breathe animation is null");
@@ -100,28 +98,21 @@ public class RingButton extends CanvasElement implements Parcelable {
 		Log.d(TAG, "bounce outer radius : " + newOuterRadius + " startTime : " + startTime);
 		breatheAnimation.start(startTime);
 	}
-	
+
+    /**
+     * 停止当前的呼吸动画
+     */
 	public void stopBreatheAnimation() {
 		if (breatheAnimation != null) {
 			breatheAnimation.stop();
 		}
-	}
-	
-	public void setBounceAnimation(BounceAnimation bounceAnimation) {
-		this.bounceAnimation = bounceAnimation;
-		addAnimation(bounceAnimation);
-	}
-
-	public void setBreatheAnimation(OuterRadiusBreatheAnimation breatheAnimation) {
-		this.breatheAnimation = breatheAnimation;
-		addAnimation(breatheAnimation);
 	}
 
 	public BounceAnimation getBounceAnimation() {
 		return bounceAnimation;
 	}
 
-	public OuterRadiusBreatheAnimation getBreatheAnimation() {
+	public BreatheAnimation getBreatheAnimation() {
 		return breatheAnimation;
 	}
 
@@ -135,8 +126,8 @@ public class RingButton extends CanvasElement implements Parcelable {
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeInt(innerRadius);
 		dest.writeInt(outerRadius);
-		dest.writeInt(cx);
-		dest.writeInt(cy);
+		dest.writeInt(center.x);
+		dest.writeInt(center.y);
 		dest.writeInt(ringColor);
 	}
 	
@@ -144,13 +135,11 @@ public class RingButton extends CanvasElement implements Parcelable {
 
 		@Override
 		public RingButton createFromParcel(Parcel source) {
-			RingButton pb = new RingButton();
-			pb.setInnerRadius(source.readInt());
-			pb.setOuterRadius(source.readInt());
-			pb.setCx(source.readInt());
-			pb.setCy(source.readInt());
-			pb.setRingColor(source.readInt());
-			return pb;
+			RingButton rb = new RingButton();
+            rb.setRadius(source.readInt(), source.readInt());
+			rb.setCenter(new Point(source.readInt(), source.readInt()));
+			rb.setRingColor(source.readInt());
+			return rb;
 		}
 
 		@Override
@@ -159,13 +148,16 @@ public class RingButton extends CanvasElement implements Parcelable {
 		}
 		
 	};
-	
-	public class OuterRadiusBreatheAnimation extends CanvasAnimation {
+
+    /**
+     * 呼吸动画
+     */
+	public class BreatheAnimation extends CanvasAnimation {
 
 		private int targetOuterRadius;
 		private int originOuterRadius;
 		
-		public OuterRadiusBreatheAnimation(CanvasElement owner, int targetOuterRadius) {
+		public BreatheAnimation(CanvasElement owner, int targetOuterRadius) {
 			super(owner);
 			this.targetOuterRadius = targetOuterRadius;
 			this.originOuterRadius = outerRadius;
@@ -186,7 +178,10 @@ public class RingButton extends CanvasElement implements Parcelable {
 		}
 
 	}
-	
+
+    /**
+     * 内缩动画
+     */
 	public class BounceAnimation extends CanvasAnimation {
 
 		int targetInnerRadius;
@@ -224,37 +219,34 @@ public class RingButton extends CanvasElement implements Parcelable {
 			super.onStop();
 		}
 	}
-	
+
+    /**
+     * 设置圆环半径相关的内容
+     * @param innerRadius
+     * @param outerRadius
+     */
+	public void setRadius(int innerRadius, int outerRadius) {
+        this.innerRadius = innerRadius;
+        this.outerRadius = outerRadius;
+        int ringWidth = outerRadius - innerRadius;
+        bounceAnimation = new BounceAnimation(this, innerRadius - ringWidth);
+        breatheAnimation = new BreatheAnimation(this, outerRadius + ringWidth);
+	}
+
+    public int getInnerRadius() {
+        return innerRadius;
+    }
+
 	public int getOuterRadius() {
 		return outerRadius;
 	}
 
-	public void setOuterRadius(int outRadius) {
-		this.outerRadius = outRadius;
-	}
-	
-	public int getCx() {
-		return cx;
+	public Point getCenter() {
+		return center;
 	}
 
-	public void setCx(int cx) {
-		this.cx = cx;
-	}
-
-	public int getCy() {
-		return cy;
-	}
-
-	public void setCy(int cy) {
-		this.cy = cy;
-	}
-
-	public int getInnerRadius() {
-		return innerRadius;
-	}
-
-	public void setInnerRadius(int innerRadius) {
-		this.innerRadius = innerRadius;
+	public void setCenter(Point center) {
+		this.center = center;
 	}
 
 	public int getRingColor() {

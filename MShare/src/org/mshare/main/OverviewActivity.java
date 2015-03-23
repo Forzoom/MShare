@@ -191,7 +191,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// 设置状态控制器
 		statusController = new StatusController();
 		statusController.setCallback(this);
-		
+
+        // 为surfaceView设置状态控制器
+        surfaceView.setStatusController(statusController);
+
 		// 服务器菜单
 		serverMenu = (LinearLayout)serverOverview.findViewById(R.id.server_overview_menu);
 		// 服务器停止状态下的Menu

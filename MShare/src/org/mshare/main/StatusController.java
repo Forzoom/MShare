@@ -105,7 +105,6 @@ public class StatusController {
 	
 	/**
 	 *  初始化所有的状态内容
-	 * @param container 包含所有图标的View
 	 */
 	public void initial() {
 		Log.d(TAG, "statusController initial!");

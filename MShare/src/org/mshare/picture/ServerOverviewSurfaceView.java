@@ -2,27 +2,18 @@ package org.mshare.picture;
 
 import java.util.ArrayList;
 
-import org.mshare.ftp.server.FsService;
 import org.mshare.main.MShareApp;
-import org.mshare.main.OverviewActivity;
 import org.mshare.main.R;
-import org.mshare.main.ServerSettingActivity;
 import org.mshare.main.StatusController;
-import org.mshare.picture.PictureBackground.ColorAnimation;
-import org.mshare.picture.RingButton.BounceAnimation;
-import org.mshare.picture.RingButton.OuterRadiusBreatheAnimation;
 import org.mshare.picture.SettingsButton.AlphaAnimation;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Bitmap.Config;
+import android.graphics.Point;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -55,6 +46,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	private RefreshHandler refreshHandler;
 	
 	// 背景颜色
+    private int ringColor;
 	private int stopColor;
 	private int startColor;
 	private int operatingColor;
@@ -105,30 +97,15 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		canvasPaint.setAlpha(223);
 		
 		// 创建背景颜色
-		stopColor = getResources().getColor(R.color.blue01);
-		startColor = getResources().getColor(R.color.blue08);
-		operatingColor = getResources().getColor(R.color.blue00);
-		transparentColor = getResources().getColor(R.color.color_transparent);
+        Resources res = getResources();
+        ringColor = res.getColor(R.color.Color_White);
+		stopColor = res.getColor(R.color.blue01);
+		startColor = res.getColor(R.color.blue08);
+		operatingColor = res.getColor(R.color.blue00);
+		transparentColor = res.getColor(R.color.color_transparent);
 
         // 希望在这里创建所有需要在Canvas上进行绘制的内容
 
-		/* 创建所需要绘制的元素 */
-        // 背景
-        pictureBackground = new PictureBackground();
-        addElement(pictureBackground);
-
-        // 头像
-        circleAvater = new CircleAvater();
-        addElement(circleAvater);
-
-        // 设置按钮
-        Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
-        settingsButton = new SettingsButton(settingsBitmap);
-        addElement(settingsButton);
-
-        // 服务器按钮
-        serverButton = new RingButton();
-        addElement(serverButton);
     }
 	
 	@Override
@@ -146,6 +123,46 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		canvas.drawColor(getResources().getColor(R.color.blue08));
 		int canvasWidth = canvas.getWidth(), canvasHeight = canvas.getHeight();
 
+        /* 创建所需要绘制的元素 */
+        // 背景
+        if (pictureBackground == null) {
+            pictureBackground = new PictureBackground();
+            addElement(pictureBackground);
+        }
+
+        // 头像
+        if (circleAvater == null) {
+            circleAvater = new CircleAvater();
+            addElement(circleAvater);
+        }
+
+        // 设置按钮
+        if (settingsButton == null) {
+            Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
+            settingsButton = new SettingsButton(settingsBitmap);
+            addElement(settingsButton);
+        }
+        int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
+        int paddingTop = 12;
+        settingsButton.setX(x);
+        settingsButton.setY(paddingTop);
+        settingsButton.setPadding(12, paddingTop, 12, 12);
+        AlphaAnimation alphaAnimation = settingsButton.new AlphaAnimation(settingsButton, 223);
+        alphaAnimation.setDuration(300);
+        settingsButton.setAlphaAnimation(alphaAnimation);
+
+        // 服务器按钮
+        if (serverButton == null) {// null情况下，仅仅是添加而已
+            serverButton = new RingButton();
+            addElement(serverButton);
+        }
+        serverInnerRadius = canvasWidth / 4 - 50;
+        serverOuterRadius = canvasWidth / 4 + 30;
+        Point center = new Point(canvasWidth / 2, canvasHeight / 2);
+        serverButton.setRingColor(ringColor);
+        serverButton.setCenter(center);
+        serverButton.setRadius(canvasWidth / 4 - 20, canvasWidth / 4);
+
 		// 在前的会先被绘制
 		// 绘制背景色
 		switch (statusController.getServerStatus()) {
@@ -161,21 +178,9 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 			break;
 		}
 		pictureBackground.setColorAnimation(pictureBackground.new ColorAnimation(pictureBackground, pictureBackground.getCurrentColor(), pictureBackground.getCurrentColor()));
-//		canvasElements.add(pictureBackground);
-		
-		// 设置按钮
-		int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
-		settingsButton.setX(x);
-		settingsButton.setY(12);
-		settingsButton.setPadding(12, 12, 12, 12);
-		AlphaAnimation alphaAnimation = settingsButton.new AlphaAnimation(settingsButton, 223);
-		alphaAnimation.setDuration(300);
-		settingsButton.setAlphaAnimation(alphaAnimation);
-//		canvasElements.add(settingsButton);
-		
+
 		int avaterRadius = canvasWidth / 4;
-		Bitmap source = BitmapFactory.decodeResource(MShareApp.getAppContext().getResources(), R.drawable.avater_1);
-		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(source, avaterRadius);
+		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(R.drawable.avater_1, avaterRadius);
 		
 		circleAvater.setCx(canvas.getWidth() / 2);
 		circleAvater.setCy(canvas.getHeight() / 2);
@@ -184,16 +189,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
 		// 圆环
-		serverInnerRadius = canvasWidth / 4 - 50;
-		serverOuterRadius = canvasWidth / 4 + 30;
-		serverButton.setCx(canvasWidth / 2);
-		serverButton.setCy(canvasHeight / 2);
-		serverButton.setInnerRadius(canvasWidth / 4 - 20); 
-		serverButton.setOuterRadius(canvasWidth / 4);
-		serverButton.setBounceAnimation(serverButton.new BounceAnimation(serverButton, serverInnerRadius));
-		serverButton.setBreatheAnimation(serverButton.new OuterRadiusBreatheAnimation(serverButton, serverOuterRadius));
-//		canvasElements.add(serverButton);
-		
+
 		// 绘制基本内容
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement canvasElement = canvasElements.get(i);
