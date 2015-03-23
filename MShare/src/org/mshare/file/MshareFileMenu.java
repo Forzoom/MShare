@@ -64,18 +64,18 @@ public class MshareFileMenu {
 	}
 	
 	public void hideAnimation() { //动画隐藏菜单
-		AlphaAnimation aa = new AlphaAnimation(1.0f, 0.0f);
-		aa.setDuration(500);
-		aa.setFillAfter(true);
-		this.linearLayout.startAnimation(aa);
+//		AlphaAnimation aa = new AlphaAnimation(1.0f, 0.0f);
+//		aa.setDuration(500);
+//		aa.setFillAfter(true);
+//		this.linearLayout.startAnimation(aa);
 		this.linearLayout.setVisibility(View.GONE);
 	}
 	
 	public void showAnimation() { //动画显示菜单
-		AlphaAnimation aa = new AlphaAnimation(0.0f, 1.0f);
-		aa.setDuration(500);
-		aa.setFillAfter(true);
-		this.linearLayout.startAnimation(aa);
+//		AlphaAnimation aa = new AlphaAnimation(0.0f, 1.0f);
+//		aa.setDuration(500);
+//		aa.setFillAfter(true);
+//		this.linearLayout.startAnimation(aa);
 		this.linearLayout.setVisibility(View.VISIBLE);
 	}
 	
