@@ -18,12 +18,12 @@
 
 package de.kp.net.rtp.stream;
 
-import com.orangelabs.rcs.core.ims.protocol.rtp.core.RtcpSession;
-import com.orangelabs.rcs.core.ims.protocol.rtp.core.RtpPacket;
-import com.orangelabs.rcs.core.ims.protocol.rtp.stream.ProcessorOutputStream;
-import com.orangelabs.rcs.core.ims.protocol.rtp.util.Buffer;
-import com.orangelabs.rcs.core.ims.protocol.rtp.util.Packet;
-import com.orangelabs.rcs.utils.logger.Logger;
+import com.orangelabs.core.ims.protocol.rtp.core.RtcpSession;
+import com.orangelabs.core.ims.protocol.rtp.core.RtpPacket;
+import com.orangelabs.core.ims.protocol.rtp.stream.ProcessorOutputStream;
+import com.orangelabs.core.ims.protocol.rtp.util.Buffer;
+import com.orangelabs.core.ims.protocol.rtp.util.Packet;
+import com.orangelabs.utils.logger.Logger;
 
 import de.kp.net.rtp.RtpSender;
 
