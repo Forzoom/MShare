@@ -630,4 +630,9 @@ public class MShareFileBrowser extends LinearLayout {
 			refreshGridView(FileBrowserActivity.listFiles(crumbController.getSelectedFile()));
 		}
 	}	
+	
+	//返回当前所需要的文件夹路径
+	public FileBrowserFile getCurrentDirectory() {
+		return crumbController.getSelectedFile();
+	}
 }
