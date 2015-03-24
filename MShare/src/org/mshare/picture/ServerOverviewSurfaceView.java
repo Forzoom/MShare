@@ -105,7 +105,30 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		transparentColor = res.getColor(R.color.color_transparent);
 
         // 希望在这里创建所有需要在Canvas上进行绘制的内容
+        // 背景
+        if (pictureBackground == null) {
+            pictureBackground = new PictureBackground();
+            addElement(pictureBackground);
+        }
 
+        // 头像
+        if (circleAvater == null) {
+            circleAvater = new CircleAvater();
+            addElement(circleAvater);
+        }
+
+        // 设置按钮
+        if (settingsButton == null) {
+            Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
+            settingsButton = new SettingsButton(settingsBitmap);
+            addElement(settingsButton);
+        }
+
+        // 服务器按钮
+        if (serverButton == null) {// null情况下，仅仅是添加而已
+            serverButton = new RingButton();
+            addElement(serverButton);
+        }
     }
 	
 	@Override
@@ -124,11 +147,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		int canvasWidth = canvas.getWidth(), canvasHeight = canvas.getHeight();
 
         /* 创建所需要绘制的元素，在前调用addElement方法的将被先绘制，先绘制的内容被后绘制的内容覆盖 */
-        // 背景
-        if (pictureBackground == null) {
-            pictureBackground = new PictureBackground();
-            addElement(pictureBackground);
-        }
+
         // 绘制背景色
         switch (statusController.getServerStatus()) {
             case StatusController.STATUS_SERVER_STARTED:
@@ -143,29 +162,13 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
                 break;
         }
 
-        // 头像
-        if (circleAvater == null) {
-            circleAvater = new CircleAvater();
-            addElement(circleAvater);
-        }
-
-        // 设置按钮
-        if (settingsButton == null) {
-            Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
-            settingsButton = new SettingsButton(settingsBitmap);
-            addElement(settingsButton);
-        }
         int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
         int paddingTop = 12;
         settingsButton.setX(x);
         settingsButton.setY(paddingTop);
         settingsButton.setPadding(12, paddingTop, 12, 12);
 
-        // 服务器按钮
-        if (serverButton == null) {// null情况下，仅仅是添加而已
-            serverButton = new RingButton();
-            addElement(serverButton);
-        }
+        // 圆环的参数设置不得不放在这里，因为要使用canvasWidth
         serverInnerRadius = canvasWidth / 4 - 50;
         serverOuterRadius = canvasWidth / 4 + 30;
         Point center = new Point(canvasWidth / 2, canvasHeight / 2);
@@ -179,9 +182,6 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
 		circleAvater.setRadius(avaterRadius);
 		circleAvater.setAvater(avaterBitmap);
-		
-		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
-		// 圆环
 
 		// 绘制基本内容
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {

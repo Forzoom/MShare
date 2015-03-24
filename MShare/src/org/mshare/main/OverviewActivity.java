@@ -142,9 +142,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		statusController = new StatusController();
 		statusController.setCallback(this);
 
-        // 为surfaceView设置状态控制器
-        surfaceView.setStatusController(statusController);
-
 		// 服务器菜单
 		serverMenu = (LinearLayout)serverOverview.findViewById(R.id.server_overview_menu);
 		// 服务器停止状态下的Menu
@@ -161,7 +158,8 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// 设置surfaceView
 		surfaceView = (ServerOverviewSurfaceView)findViewById(R.id.server_overview_surface_view);
 		surfaceView.setStatusController(statusController);
-		// 设置onFling的GestureDetector
+
+        // 设置onFling的GestureDetector
 		gestureDetector = new GestureDetector(this, new SwitchListener());
 
         // 为surfaceView中的内容添加监听器
