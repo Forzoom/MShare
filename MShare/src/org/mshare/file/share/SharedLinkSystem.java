@@ -1,21 +1,9 @@
 package org.mshare.file.share;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
-import org.mshare.ftp.server.Account;
-import org.mshare.main.MShareApp;
+import org.mshare.account.Account;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.os.Environment;
-import android.text.TextUtils;
 import android.util.Log;
 
 /**

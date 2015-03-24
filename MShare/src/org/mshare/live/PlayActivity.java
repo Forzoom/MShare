@@ -43,7 +43,10 @@ import android.widget.VideoView;
  */
 public class PlayActivity extends Activity {
 	private static final String TAG = PlayActivity.class.getSimpleName();
-	
+
+    // 用来保存uri的内容
+    public static final String EXTRA_RTSP_URI = "rtsp_uri";
+
 	private VideoView mVideoView;
 	
 	private boolean isReady = false;
@@ -55,7 +58,7 @@ public class PlayActivity extends Activity {
 	private long mediaLength = 0;
 	// 当前已经读取的size
 	private long readSize = 0;
-	
+
 	private String externalStoragePath = Environment.getExternalStorageDirectory().getAbsolutePath();
 	
 	@Override
@@ -63,8 +66,14 @@ public class PlayActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		// 设置的布局文件
 		setContentView(R.layout.live_play);
-		
+
+        Intent intent = getIntent();
+        String uriStr = intent.getStringExtra(EXTRA_RTSP_URI);
+        Uri uri = Uri.parse(uriStr);
+
 		this.mVideoView = (VideoView) findViewById(R.id.video_view);
+        this.mVideoView.setVideoURI(uri);
+        this.mVideoView.start();
 
 		// TODO 在这里判断不大好，毕竟Activity已经启动了
 	}

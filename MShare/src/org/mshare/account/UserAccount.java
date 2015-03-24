@@ -1,4 +1,7 @@
-package org.mshare.ftp.server;
+package org.mshare.account;
+
+import org.mshare.account.Account;
+import org.mshare.account.AccountFactory;
 
 public class UserAccount extends Account {
 

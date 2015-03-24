@@ -28,9 +28,9 @@ public class TcpListener extends Thread {
     private static final String TAG = TcpListener.class.getSimpleName();
 
     ServerSocket listenSocket;
-    FsService ftpServerService;
+    ServerService ftpServerService;
 
-    public TcpListener(ServerSocket listenSocket, FsService ftpServerService) {
+    public TcpListener(ServerSocket listenSocket, ServerService ftpServerService) {
         this.listenSocket = listenSocket;
         this.ftpServerService = ftpServerService;
     }

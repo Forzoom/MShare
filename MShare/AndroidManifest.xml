@@ -119,12 +119,7 @@
         </activity>
 
         <!-- 测试图片显示 -->
-        <activity
-            android:name="org.mshare.picture.PictureActivity"
-            android:label="图片测试"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
-        </activity>
-        
+
         <!-- MainActivity -->
         <activity
             android:name="org.mshare.main.FileBrowserActivity"
@@ -154,7 +149,7 @@
             </intent-filter>
         </receiver>
         
-        <service android:name="org.mshare.ftp.server.FsService"></service>
+        <service android:name="org.mshare.ftp.server.ServerService"></service>
         
     </application>
 

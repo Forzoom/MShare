@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,9 +12,11 @@ import java.util.concurrent.Executors;
 import org.mshare.file.MshareFileMenu;
 import org.mshare.file.browser.FileBrowserCallback;
 import org.mshare.file.browser.FileBrowserFile;
-import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
+import org.mshare.live.PlayActivity;
 import org.mshare.main.UploadFileChooserAdapter.FileInfo;
+
+import de.kp.net.rtsp.client.RtspControl;
 import it.sauronsoftware.ftp4j.FTPClient;
 import it.sauronsoftware.ftp4j.FTPDataTransferListener;
 import it.sauronsoftware.ftp4j.FTPException;
@@ -36,21 +37,17 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnKeyListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
@@ -98,7 +95,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	private Thread mDameonThread = null ;
 	private boolean mDameonRunning = true;
-	
+
+    private String mFTPUUID;
 	private String mFTPHost ;
 	private int mFTPPort ;
 	private String mFTPUser ;
@@ -379,7 +377,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 					public void onClick(DialogInterface uploadDialog, int which) {
 						// TODO Auto-generated method stub
 						if (!TextUtils.isEmpty(edit.getText())) {
-							executeREANMERequest(edit.getText().toString());
+							executeRENAMERequest(edit.getText().toString());
 						}
 					}
 				})
@@ -553,7 +551,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		mThreadPool.execute(mCmdFactory.createCmdDEL(path, isDirectory));
 	}
 
-	private void executeREANMERequest(String newPath) {
+	private void executeRENAMERequest(String newPath) {
 		mThreadPool.execute(mCmdFactory.createCmdRENAME(newPath));
 	}
 
@@ -682,6 +680,12 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 						logv("connect " + value);
 					}
 				}
+
+                // 获得服务器信息
+                mFTPClient.getServerInfo();
+                mFTPUUID = mFTPClient.getUUID();
+
+                // 登陆
 				mFTPClient.login(mFTPUser, mFTPPassword);
 				rootRemotePath = mFTPClient.currentDirectory();
 				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);
@@ -1424,7 +1428,16 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		}else if(file.isFile()){
 			if(getMIMEType(fileName).startsWith("video")){
 				showDialog(DIALOG_LOAD);
-				executeOpenRequest();
+//				executeOpenRequest();
+
+                // 尝试播放
+                Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
+                String host = mFTPHost;
+                String port = "5544";
+                String rtspUriString = "rtsp://" + host + ":" + port + file.getAbsolutePath();
+                Log.d(TAG, "rtspUriString :" + rtspUriString);
+                startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
+                startActivity(startPlayActivity);
 			}else{
 				showDialog(DIALOG_LOAD);
 				new CmdOPEN().execute();

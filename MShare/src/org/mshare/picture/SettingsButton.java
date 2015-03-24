@@ -52,13 +52,21 @@ public class SettingsButton extends CanvasElement {
 		paint.setAlpha(255);
 	}
 
-	public void startAlphaAnimation(int targetAlpha) {
+    // 当前默认的AlphaAnimation
+    public AlphaAnimation getDefaultAlphaAnimation() {
+        AlphaAnimation animation = new AlphaAnimation(this, 223);
+        animation.setDuration(300);
+        return animation;
+    }
+
+    public void startAlphaAnimation(int targetAlpha) {
 		startAlphaAnimation(targetAlpha, System.currentTimeMillis());
 	}
 	
 	public void startAlphaAnimation(int targetAlpha, long startTime) {
 		if (alphaAnimation == null) {
 			Log.e(TAG, "alpha animation is null");
+            alphaAnimation = getDefaultAlphaAnimation();
 			return;
 		}
 		alphaAnimation.setTargetAlpha(targetAlpha);
@@ -66,16 +74,17 @@ public class SettingsButton extends CanvasElement {
 	}
 	
 	public void stopAlphaAnimation() {
-		
+		if (alphaAnimation != null) {
+            alphaAnimation.stop();
+        }
 	}
-	
-	public void setAlphaAnimation(AlphaAnimation alphaAnimation) {
-		this.alphaAnimation = alphaAnimation;
-		addAnimation(alphaAnimation);
-	}
-	
+
 	public AlphaAnimation getAlphaAnimation() {
-		return alphaAnimation;
+		if (!canRefresh()) {
+            Log.e(TAG, "cannot get animation now!");
+            return null;
+        }
+        return alphaAnimation;
 	}
 	
 	// 设置padding
@@ -102,7 +111,7 @@ public class SettingsButton extends CanvasElement {
 			setInterpolator(new BounceInterpolator());
 		}
 
-		@Override
+        @Override
 		public void doAnimation(float ratio) {
 			alpha = originAlpha + (int)((targetAlpha - originAlpha) * ratio);
 		}

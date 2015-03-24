@@ -1,11 +1,8 @@
 package org.mshare.ftp.server;
 
-import org.mshare.main.R;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender.SendIntentException;
 import android.util.Log;
 
 public class RequestStartStopReceiver extends BroadcastReceiver {
@@ -18,24 +15,24 @@ public class RequestStartStopReceiver extends BroadcastReceiver {
 
         // TODO: analog code as in ServerPreferenceActivity.start/stopServer(), refactor
         try {
-            if (intent.getAction().equals(FsService.ACTION_START_FTPSERVER)) {
-                Intent serverService = new Intent(context, FsService.class);
-                if (!FsService.isRunning()) {
+            if (intent.getAction().equals(ServerService.ACTION_START_FTPSERVER)) {
+                Intent serverService = new Intent(context, ServerService.class);
+                if (!ServerService.isRunning()) {
                 	// 为什么要在这里提示扩展存储不可用呢？
 //                    warnIfNoExternalStorage();
                     context.startService(serverService);
                 } else {
                 	// TODO 临时在这里添加sendBroadcast内容
-                	context.sendBroadcast(new Intent(FsService.ACTION_STARTED));
+                	context.sendBroadcast(new Intent(ServerService.ACTION_STARTED));
                 }
-            } else if (intent.getAction().equals(FsService.ACTION_STOP_FTPSERVER)) {
+            } else if (intent.getAction().equals(ServerService.ACTION_STOP_FTPSERVER)) {
             	// TODO 添加运行中判断
-            	if (FsService.isRunning()) {
-            		Intent serverService = new Intent(context, FsService.class);
+            	if (ServerService.isRunning()) {
+            		Intent serverService = new Intent(context, ServerService.class);
                     context.stopService(serverService);
             	} else {
             		// 新添加的内容，没有测试,再说也是仅仅为了保险
-            		context.sendBroadcast(new Intent(FsService.ACTION_STOPPED));
+            		context.sendBroadcast(new Intent(ServerService.ACTION_STOPPED));
             	}
                 
             }

@@ -136,7 +136,7 @@ public class LocalDataSocket {
     }
 
     public InetAddress getPasvIp() {
-        return FsService.getLocalInetAddress();
+        return ServerService.getLocalInetAddress();
     }
 
     public void reportTraffic(long bytes) {

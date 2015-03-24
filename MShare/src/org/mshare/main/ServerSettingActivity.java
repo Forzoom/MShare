@@ -1,16 +1,10 @@
 package org.mshare.main;
 
-import org.mshare.ftp.server.FsService;
-import org.mshare.ftp.server.FsSettings;
-
-import android.app.ActionBar;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.EditText;
-import android.widget.Toast;
 
 public class ServerSettingActivity extends Activity {
 

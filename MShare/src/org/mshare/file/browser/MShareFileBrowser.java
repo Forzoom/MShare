@@ -632,7 +632,7 @@ public class MShareFileBrowser extends LinearLayout {
 			refreshGridView(FileBrowserActivity.listFiles(crumbController.getSelectedFile()));
 		}
 	}	
-	
+
 	//打开文件
 	public void openFile(FileBrowserFile openFileName) {
         Intent intent = new Intent();

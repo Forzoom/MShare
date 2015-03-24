@@ -1,3 +1,7 @@
+.DS_Store
+.idea
+MShare.iml
+/out
 /MShare/assets
 /MShare/bin
 /MShare/gen

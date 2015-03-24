@@ -54,7 +54,11 @@ import java.util.zip.InflaterInputStream;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
+
+import org.mshare.main.MShareApp;
 
 /**
  * This class implements a FTP client.
@@ -75,6 +79,7 @@ import android.util.Log;
  * @version 1.7.1
  */
 public class FTPClient {
+    private static final String TAG = FTPClient.class.getSimpleName();
 
 	/**
 	 * The constant for the FTP security level.
@@ -200,6 +205,10 @@ public class FTPClient {
 	 * operations.
 	 */
 	private FTPListParser parser = null;
+
+    private String uuid = null;
+
+    private boolean isMShareServerSupport = false;
 
 	/**
 	 * If the client is connected, it reports the remote host name or address.
@@ -794,6 +803,16 @@ public class FTPClient {
 		}
 	}
 
+    public boolean isMShareServerSupport() {
+        return isMShareServerSupport;
+    }
+
+    public String getUUID() {
+        synchronized (lock) {
+            return uuid;
+        }
+    }
+
 	/**
 	 * If the client is connected, it reports the remote host name or address.
 	 * 
@@ -1036,6 +1055,7 @@ public class FTPClient {
 			try {
 				// Open the connection.
 				connection = connector.connectForCommunicationChannel(host, port);
+                // 实用安全连接
 				if (security == SECURITY_FTPS) {
 					connection = ssl(connection, host, port);
 				}
@@ -1045,6 +1065,7 @@ public class FTPClient {
 					communication.addCommunicationListener((FTPCommunicationListener) i.next());
 				}
 				// Welcome message.
+                // 接受欢迎信息
 				FTPReply wm = communication.readFTPReply();
 				// Does this reply mean "ok"?
 				if (!wm.isSuccessCode()) {
@@ -1164,6 +1185,55 @@ public class FTPClient {
 		// Stops the auto noop timer.
 		stopAutoNoopTimer();
 	}
+
+    /**
+     * 获得当前服务器的UUID和nickname
+     */
+    public void getServerInfo() throws IOException, FTPIllegalReplyException {
+        if (!connected) {
+            throw new IllegalStateException("Client not connect!");
+        }
+        synchronized (lock) {
+            // 请求UUID
+            communication.sendFTPCommand("UUID");
+            FTPReply reply = communication.readFTPReply();
+            // 正常的返回应该是211
+            if (reply.getCode() == 211) {
+                isMShareServerSupport = true;
+                // 当服务器并支持UUID的时候
+                String uuid = reply.getMessages()[0];
+
+                Log.d(TAG, "the server uuid :" + uuid);
+
+                // 请求nickname
+                communication.sendFTPCommand("NINA");
+                reply = communication.readFTPReply();
+                String nickName = reply.getMessages()[0];
+
+                Log.d(TAG, "the server nickname :" + nickName);
+
+                // 对应SharedPreferences中的内容
+                Context context = MShareApp.getAppContext();
+                SharedPreferences sp = context.getSharedPreferences("server_list", Context.MODE_PRIVATE);
+                // 尝试获得所有的服务器列表
+                String SERVER_NOT_FOUND = "";
+                String value = sp.getString(uuid, SERVER_NOT_FOUND);
+                if (value.equals(SERVER_NOT_FOUND) || !value.equals(nickName)) {
+                    // 保存服务器,或者修改nickname
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putString(uuid, nickName);
+                    editor.commit();
+                }
+
+            } else {
+                // 当前并不是MShare服务器
+                isMShareServerSupport = false;
+
+            }
+
+        }
+
+    }
 
 	/**
 	 * This method authenticates the user against the server.

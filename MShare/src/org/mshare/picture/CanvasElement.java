@@ -16,9 +16,11 @@ public abstract class CanvasElement  {
 	public static final int ANIMATION_INDEX_NONE = -1;
 
 	private boolean isClickable = false;
-	
+	// 指示当前是否允许刷新
+    private boolean canRefresh = false;
+
 	private ElementOnClickListener listener;
-	
+
 	// 判断当前是否被点击了
 	public abstract boolean isClicked(int clickX, int clickY);
 	
@@ -95,7 +97,18 @@ public abstract class CanvasElement  {
 	public void setClickable(boolean isClickable) {
 		this.isClickable = isClickable;
 	}
-	
+
+    // 主要还是用于在getAnimation的情况下来不允许获得Animation
+    // 用于设置当前的Element是否可以刷新
+    public boolean canRefresh() {
+        return canRefresh;
+    }
+
+    // 设置Element是否可以刷新
+    public void setRefreshable(boolean refreshable) {
+        this.canRefresh = refreshable;
+    }
+
 	// click监听器
 	public interface ElementOnClickListener {
 		public void onClick();

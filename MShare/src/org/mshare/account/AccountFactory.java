@@ -1,14 +1,16 @@
-package org.mshare.ftp.server;
+package org.mshare.account;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
+import org.mshare.ftp.server.FtpSettings;
+import org.mshare.ftp.server.SessionNotifier;
+import org.mshare.ftp.server.SessionThread;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -86,11 +88,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     public static final int PERMISSION_ADMIN = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_WRITE_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
     public static final int PERMISSION_USER = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
     public static final int PERMISSION_GUEST = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ_GUEST; 
-    
+
+    private static AccountFactory sAccountFactory;
+
     /**
      * 创建管理员账户、匿名账户以及验证器
      */
-    public AccountFactory() {
+    private AccountFactory() {
     	
     	// 加载adminAccount
     	adminAccount = new AdminAccount(AdminUsername, AdminPassword);
@@ -106,7 +110,20 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		mVerifier = new Verifier();
 		Log.d(TAG, "create verifier");
 	}
-    
+
+    /**
+     * 使用单例模式
+     * @return
+     */
+    public static AccountFactory getInstance() {
+        if (sAccountFactory == null) {
+            sAccountFactory = new AccountFactory();
+            sAccountFactory.checkReservedAccount();
+            Log.d(TAG, "AccountFactory is created");
+        }
+        return sAccountFactory;
+    }
+
 	/**
      * 获得对应的Token，Session为了获得Token，应该调用verifier中的auth方法来获得
      * @param username 登录所使用的用户名
@@ -160,7 +177,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		if (username != null && !account.isGuest() && password != null && password.equals(correctPassword)) {
 			Log.d(TAG, "User logged in");
 			return true;
-		} else if (FsSettings.allowAnoymous() && correctUsername.equals(AccountFactory.AnonymousUsername)) {
+		} else if (FtpSettings.allowAnoymous() && correctUsername.equals(AccountFactory.AnonymousUsername)) {
 			// 设置权限为匿名账户权限
 			Log.i(TAG, "Guest logged in with password: " + password);
 			return true;
@@ -177,7 +194,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	 * TODO 需要检测用户名和密码的安全性和合法性
 	 * @param username
 	 * @param password
-	 * @param mPermission 
+	 * @param permission
 	 * @return
 	 */
 	protected static boolean register(String username, String password, int permission) {
@@ -235,12 +252,12 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		}
 		
 		// 检测默认普通账户
-		if (!isAccountExists(context, FsSettings.getUsername())) {
+		if (!isAccountExists(context, FtpSettings.getUsername())) {
 			
 			Log.d(TAG, "当前默认账户信息不存在");
 			Log.d(TAG, "+默认账户");
 			int permission = Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
-			boolean registerResult = AccountFactory.register(FsSettings.getUsername(), FsSettings.getPassword(), permission);
+			boolean registerResult = AccountFactory.register(FtpSettings.getUsername(), FtpSettings.getPassword(), permission);
 			Log.d(TAG, "默认账户, 结果:" + registerResult);
 		} else {
 			Log.d(TAG, "当前默认账户信息存在");

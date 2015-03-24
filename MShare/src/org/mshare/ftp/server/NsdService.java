@@ -55,10 +55,10 @@ public class NsdService extends Service {
                         + "NSD functionality, bailing out");
                 return;
             }
-            if (intent.getAction().equals(FsService.ACTION_STARTED)) {
+            if (intent.getAction().equals(ServerService.ACTION_STARTED)) {
                 Intent service = new Intent(context, NsdService.class);
                 context.startService(service);
-            } else if (intent.getAction().equals(FsService.ACTION_STOPPED)) {
+            } else if (intent.getAction().equals(ServerService.ACTION_STOPPED)) {
                 Intent service = new Intent(context, NsdService.class);
                 context.stopService(service);
             }
@@ -102,7 +102,7 @@ public class NsdService extends Service {
         final NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(FTP_SERVICE_TYPE);
-        serviceInfo.setPort(FsSettings.getPort());
+        serviceInfo.setPort(FtpSettings.getPort());
 
         new Thread(new Runnable() {
             @Override

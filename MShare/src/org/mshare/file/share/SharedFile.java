@@ -2,8 +2,6 @@ package org.mshare.file.share;
 
 import java.io.File;
 
-import org.mshare.ftp.server.Account;
-
 import android.util.Log;
 
 // 所需要的内容 realPath和fakePath

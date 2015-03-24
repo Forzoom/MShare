@@ -44,6 +44,7 @@ import de.kp.rtspcamera.MediaConstants;
  */
 
 public class RtspServer implements Runnable {
+    private static final String TAG = RtspServer.class.getSimpleName();
 
 	// serverSocket
 	private ServerSocket serverSocket;
@@ -77,13 +78,12 @@ public class RtspServer implements Runnable {
 	public void run() {
 	    
 	    /*
-	     * In order to communicate with different clients,
-	     * we construct a thread for each client that is
-	     * connected.
+	     * 用于接受用户的连接
 	     */
 	    while (this.stopped == false) {
 	    	
 			try {
+                Log.d(TAG, "");
 				Socket  clientSocket = this.serverSocket.accept();
 		    	serverThreads.add(new ServerThread(clientSocket, this.encoder));
 
@@ -266,7 +266,8 @@ public class RtspServer implements Runnable {
 	    				this.rtpSocket.suspend(false);
 	    				
 	    				this.rtspState = RtspConstants.PLAYING;
-	    				
+
+                        // 播放数据内容
 	    				if (MediaConstants.H264_CODEC == true) {
 	    					videoPacketizer = new H264Packetizer(fis);
 	    				} else {

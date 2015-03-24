@@ -20,30 +20,32 @@ public class CircleAvaterCreator {
 	
 	/**
 	 * 创建图片，并不希望每次都创建，需要保存的手段
-	 * @param source
-	 * @param radius
+	 * @param resId 当前没有办法判断resId是否正确
+	 * @param radius 所希望创建的头像的半径大小
 	 * @return 失败时返回null
 	 */
-	public static Bitmap createAvater(Bitmap source, int radius) {
+	public static Bitmap createAvater(int resId, int radius) {
 
-		if (source == null) {
-			Log.e(TAG, "source is null, stop creating!");
-			return null;
-		}
-		
 		// 暂时将颜色获得放在这里
 		Context context = MShareApp.getAppContext();
-		int blackColor = context.getResources().getColor(R.color.Color_Black);
-		int transparentColor = context.getResources().getColor(R.color.color_transparent);
-		
-		// 文件的读取不在需要处理的范围之内(使用inSampleSize来获得较小的图片);
-		
+        Resources res = context.getResources();
+		int blackColor = res.getColor(R.color.Color_Black);
+		int transparentColor = res.getColor(R.color.color_transparent);
+
+        // 使用decode创建
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, opt);
+        int resWidth = opt.outWidth, resHeight = opt.outHeight;
+        int shortWidth = resWidth < resHeight ? resWidth : resHeight;
+
+        opt.inJustDecodeBounds = false;
+        opt.inSampleSize = (shortWidth / (radius * 2));
+        Bitmap sampleBitmap = BitmapFactory.decodeResource(res, resId, opt);
+
 		// 获得正方形图片
-		int sourceWidth = source.getWidth();
-		int sourceHeight = source.getHeight();
-		int shortWidth = sourceWidth < sourceHeight ? sourceWidth : sourceHeight;
-		Bitmap rectBitmap = Bitmap.createBitmap(source, (sourceWidth - shortWidth) / 2, (sourceHeight - shortWidth) / 2, shortWidth, shortWidth);
-		
+        Bitmap rectBitmap = getRectBitmap(sampleBitmap);
+
 		// 创建缩放图片(先缩放再获得正方形比较好？)
 		Bitmap avater = Bitmap.createScaledBitmap(rectBitmap, radius * 2, radius * 2, false);
 		// 释放rectBitmap
@@ -64,5 +66,18 @@ public class CircleAvaterCreator {
 		
 		return result;
 	}
-	
+
+    /**
+     * 获得一个正方形图片
+     * @param source
+     * @return
+     */
+    private static Bitmap getRectBitmap(Bitmap source) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        int shortOne = width < height ? width : height;
+        Bitmap rectBitmap = Bitmap.createBitmap(source, (width - shortOne) / 2, (height - shortOne) / 2, shortOne, shortOne);
+        return rectBitmap;
+    }
+
 }

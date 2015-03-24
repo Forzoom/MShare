@@ -17,24 +17,15 @@ You should have received a copy of the GNU General Public License
 along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package org.mshare.ftp.server;
+package org.mshare.account;
 
 import java.io.File;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.mshare.file.share.SharedLinkStorage;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.ftp.server.AccountFactory.Token;
-import org.mshare.main.MShareApp;
+import org.mshare.ftp.server.FtpSettings;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 /**
@@ -141,7 +132,7 @@ public abstract class Account {
 	 * @return
 	 */
 	public String getUpload() {
-		return getStorage().get(KEY_UPLOAD, FsSettings.getUpload() + File.separator + getUsername());
+		return getStorage().get(KEY_UPLOAD, FtpSettings.getUpload() + File.separator + getUsername());
 	}
 	
 	/**

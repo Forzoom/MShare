@@ -37,7 +37,7 @@ public class RtspControl implements RequestListener {
 	 * resource
 	 */
 
-	public RtspControl(String uri) {	
+	public RtspControl(String uri) {
 
 		int pos = uri.lastIndexOf("/");
 
@@ -49,32 +49,32 @@ public class RtspControl implements RequestListener {
 			// initialize the RTSP communication
 			this.client = new RtspClient();
 			this.client.setTransport(new TCPTransport());
-			
-			this.client.setRequestListener(this);			
+
+			this.client.setRequestListener(this);
 			this.state = RtspConstants.UNDEFINED;
-			
+
 			// the OPTIONS request is used to invoke and
 			// test the connection to the RTSP server,
 			// specified with the URI provided
-			
+
 			this.client.options("*", this.uri);
 
 		} catch (Exception e) {
-			
+
 			if (this.client != null) {
 				onError(this.client, e);
-				
+
 			} else {
 				e.printStackTrace();
-				
+
 			}
-			
+
 		}
-		
+
 	}
 
 	public RtspControl(String uri, String resource) {
-				
+
 		try {
 
 			this.uri      = new URI(uri);
@@ -83,27 +83,27 @@ public class RtspControl implements RequestListener {
 			// initialize the RTSP communication
 			this.client = new RtspClient();
 			this.client.setTransport(new TCPTransport());
-			
+
 			this.client.setRequestListener(this);
-			
+
 			this.state = RtspConstants.UNDEFINED;
-			
+
 			// the OPTIONS request is used to invoke and
 			// test the connection to the RTSP server,
 			// specified with the URI provided
-			
+
 			this.client.options("*", this.uri);
 
 		} catch (Exception e) {
-			
+
 			if (this.client != null) {
 				onError(this.client, e);
-				
+
 			} else {
 				e.printStackTrace();
-				
+
 			}
-			
+
 		}
 
 	}

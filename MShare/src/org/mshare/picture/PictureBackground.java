@@ -69,14 +69,12 @@ public class PictureBackground extends CanvasElement {
 	}
 	
 	public void startColorAnimation(int startColor, int endColor) {
-		if (colorAnimation != null) {
-			colorAnimation.setStartColor(startColor);
-			colorAnimation.setEndColor(endColor);
-			colorAnimation.start();
-		}
+        startColorAnimation(startColor, endColor, System.currentTimeMillis());
 	}
 
 	public void startColorAnimation(int startColor, int endColor, long startTime) {
+
+
 		if (colorAnimation != null) {
 			colorAnimation.setStartColor(startColor);
 			colorAnimation.setEndColor(endColor);
@@ -95,12 +93,7 @@ public class PictureBackground extends CanvasElement {
 	public ColorAnimation getColorAnimation() {
 		return colorAnimation;
 	}
-	
-	public void setColorAnimation(ColorAnimation colorAnimation) {
-		this.colorAnimation = colorAnimation;
-		addAnimation(colorAnimation);
-	}
-	
+
 	/**
 	 * @return the currentColor
 	 */
