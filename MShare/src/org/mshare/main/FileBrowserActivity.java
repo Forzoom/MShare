@@ -394,4 +394,20 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 			fileBrowser.setMultiSelectEnabled(true);
 		}
 	}
+
+    class MenuShare implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+
+        }
+    }
+
+    class MenuUnshare implements View.OnClickListener {
+
+        @Override
+        public void onClick(View v) {
+
+        }
+    }
 }

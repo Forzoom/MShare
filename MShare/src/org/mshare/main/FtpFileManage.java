@@ -95,7 +95,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	private Thread mDameonThread = null ;
 	private boolean mDameonRunning = true;
-	
+
+    private String mFTPUUID;
 	private String mFTPHost ;
 	private int mFTPPort ;
 	private String mFTPUser ;
@@ -680,6 +681,12 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 						logv("connect " + value);
 					}
 				}
+
+                // 获得服务器信息
+                mFTPClient.getServerInfo();
+                mFTPUUID = mFTPClient.getUUID();
+
+                // 登陆
 				mFTPClient.login(mFTPUser, mFTPPassword);
 				rootRemotePath = mFTPClient.currentDirectory();
 				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);

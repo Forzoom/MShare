@@ -25,9 +25,11 @@ import org.mshare.scan.ScanActivity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
@@ -307,9 +309,23 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	}
 	
 	private void buildOrUpdateDataset() {
-		HashMap<String, Object> map = new HashMap<String, Object>();  
-		map.put("ItemImage", R.drawable.folder);// 添加图像资源的ID  
-        map.put("ItemText", mFTPHost);// 按FTPHost做ItemText  
+		HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("ItemImage", R.drawable.folder);// 添加图像资源的ID
+
+        if (mFTPClient.isMShareServerSupport()) {
+
+            String uuid = mFTPClient.getUUID();
+            SharedPreferences sp = getSharedPreferences("server_list", Context.MODE_PRIVATE);
+            String nickname = sp.getString(uuid, "");
+            if (!nickname.equals("")) {
+                map.put("ItemText", nickname);
+            } else {
+                map.put("ItemText", mFTPHost);
+            }
+        } else {
+            map.put("ItemText", mFTPHost);
+        }
+
         listImageItem.add(map);
         
 	    //添加图片绑定  
@@ -424,12 +440,14 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		public void run() {
 			boolean errorAndRetry = false ;  //根据不同的异常类型，是否重新捕获
 			try {
+                // 连接结束
 				String[] welcome = mFTPClient.connect(mFTPHost, mFTPPort);
 				if (welcome != null) {
 					for (String value : welcome) {
 						logv("connect " + value);
 					}
 				}
+                // 尝试登陆
 				mFTPClient.login(mFTPUser, mFTPPassword);
 				mHandler.sendEmptyMessage(MSG_CMD_CONNECT_OK);
 			}catch (IllegalStateException illegalEx) {
