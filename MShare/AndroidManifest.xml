@@ -141,7 +141,7 @@
         </receiver>
         
         <receiver 
-            android:name="org.mshare.ftp.server.RequestStartStopReceiver"
+            android:name="org.mshare.server.ftp.RequestStartStopReceiver"
             >
             <intent-filter>
                 <action android:name="org.mshare.ftp.server.ACTION_START_FTPSERVER"/>
@@ -149,7 +149,7 @@
             </intent-filter>
         </receiver>
         
-        <service android:name="org.mshare.ftp.server.ServerService"></service>
+        <service android:name="org.mshare.server.ftp.ServerService"></service>
         
     </application>
 

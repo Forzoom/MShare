@@ -14,9 +14,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mshare.file.MshareFileMenu;
-import org.mshare.ftp.server.FtpSettings;
-import org.mshare.ftp.server.ServerService;
-import org.mshare.picture.CanvasAnimation;
+import org.mshare.server.ftp.FtpSettings;
+import org.mshare.server.ftp.ServerService;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
 import org.mshare.picture.RingButton;
@@ -660,9 +659,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
             // 启动了bounceAnimation
             RingButton serverButton = surfaceView.getServerButton();
 			serverButton.stopBounceAnimation();
-			CanvasAnimation bounceAnimation = serverButton.getBounceAnimation();
-			bounceAnimation.setDuration(500);
-			serverButton.startBounceAnimation(surfaceView.getServerInnerRadius(), startTime);
+			serverButton.startBounceAnimation(surfaceView.getServerInnerRadius(), startTime, 500);
 			
 			// 修改服务器状态、启动或关闭服务器
 			if (serverStatus == StatusController.STATUS_SERVER_STARTED) {
@@ -676,9 +673,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			// 修改背景色到执行状态
             PictureBackground pictureBackground = surfaceView.getPictureBackground();
 		    pictureBackground.stopColorAnimation();
-			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
-			colorAnimation.setDuration(500);
-			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime);
+			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime, 500);
 		}
 	}
 	

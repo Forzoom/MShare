@@ -399,6 +399,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 
         @Override
         public void onClick(View v) {
+            // 获得当前所选择的内容，需要将长按的内容保存下来
 
         }
     }

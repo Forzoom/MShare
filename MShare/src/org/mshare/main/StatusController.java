@@ -3,7 +3,7 @@ package org.mshare.main;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.mshare.ftp.server.ServerService;
+import org.mshare.server.ftp.ServerService;
 
 import android.app.Service;
 import android.content.Context;

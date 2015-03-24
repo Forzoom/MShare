@@ -5,9 +5,6 @@ import java.util.HashMap;
 
 import org.mshare.main.MShareApp;
 import org.mshare.main.R;
-import org.mshare.main.R.drawable;
-import org.mshare.main.R.id;
-import org.mshare.main.R.layout;
 
 import android.content.Context;
 import android.graphics.Color;

@@ -13,18 +13,20 @@ import android.view.animation.Interpolator;
 
 public class PictureBackground extends CanvasElement {
 	private static final String TAG = PictureBackground.class.getSimpleName();
-	
+
+    // 当前所绘制的颜色
 	private int currentColor;
 
 	private ColorAnimation colorAnimation;
 	
 	public PictureBackground() {
-		setClickable(false);
+        setClickable(false);
+        colorAnimation = new ColorAnimation();
 	}
 	
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
-		Log.d(TAG, "color : " + Integer.toHexString(currentColor));
+		Log.d(TAG, "PictureBackground color : " + Integer.toHexString(currentColor));
 		canvas.drawColor(currentColor);
 	}
 
@@ -37,19 +39,12 @@ public class PictureBackground extends CanvasElement {
 
 		private int startColor;
 		private int endColor;
-		
-		public ColorAnimation(CanvasElement owner, int startColor, int endColor) {
-			super(owner);
-			this.startColor = startColor;
-			this.endColor = endColor;
-		}
-		
+
 		@Override
 		public void doAnimation(float ratio) {
 			currentColor = ColorComputer.computeGradientColor(startColor, endColor, ratio);
 		}
 		
-
 		public int getStartColor() {
 			return startColor;
 		}
@@ -67,19 +62,17 @@ public class PictureBackground extends CanvasElement {
 		}
 
 	}
-	
-	public void startColorAnimation(int startColor, int endColor) {
-        startColorAnimation(startColor, endColor, System.currentTimeMillis());
-	}
 
-	public void startColorAnimation(int startColor, int endColor, long startTime) {
+	public void startColorAnimation(int startColor, int endColor, long startTime, int duration) {
+        if (colorAnimation == null) {
+            Log.e(TAG, "color animation is null, and create a new one");
+            colorAnimation = new ColorAnimation();
+        }
 
-
-		if (colorAnimation != null) {
-			colorAnimation.setStartColor(startColor);
-			colorAnimation.setEndColor(endColor);
-			colorAnimation.start(startTime);
-		}
+        colorAnimation.setStartColor(startColor);
+        colorAnimation.setEndColor(endColor);
+        colorAnimation.setDuration(duration);
+        colorAnimation.start(startTime);
 	}
 	
 	// 停止当前的colorAnimation

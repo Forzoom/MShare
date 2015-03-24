@@ -138,7 +138,7 @@ final class DecodeHandler extends Handler {
 			} else {
 				// 失败的情况下需要再次请求
 				Log.d(TAG, "the result [" + result + "] can not be decoded by ConnectInfo, request again");
-//				activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
+				activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
 			}
 			
 			
@@ -148,8 +148,7 @@ final class DecodeHandler extends Handler {
 			Log.d(TAG, "request again preview frame in DecodeHandler, handler:" + this + " message:" + WHAT_DECODE);
 //			activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
 		}
-		
-		compressBitmapForDebug(source, width, height);
+
 	}
 
 	/**

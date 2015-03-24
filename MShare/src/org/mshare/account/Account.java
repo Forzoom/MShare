@@ -24,7 +24,7 @@ import java.io.File;
 import org.mshare.file.share.SharedLinkStorage;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.ftp.server.FtpSettings;
+import org.mshare.server.ftp.FtpSettings;
 
 import android.util.Log;
 

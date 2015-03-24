@@ -8,9 +8,9 @@ import java.util.Set;
 import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.ftp.server.FtpSettings;
-import org.mshare.ftp.server.SessionNotifier;
-import org.mshare.ftp.server.SessionThread;
+import org.mshare.server.ftp.FtpSettings;
+import org.mshare.server.ftp.SessionNotifier;
+import org.mshare.server.ftp.SessionThread;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;

@@ -136,7 +136,10 @@ public class RtspServer implements Runnable {
 		private RtspResponse rtspResponse;
 		
 		private String contentBase = "";
-		
+
+        // 判断当前是否已经经过验证了
+        private boolean authorized = false;
+
 		/*
 		 * input and output stream buffer for TCP connection; 
 		 * UDP response are sent through DatagramSocket
@@ -255,7 +258,8 @@ public class RtspServer implements Runnable {
 		    			
 		    			String root = Environment.getExternalStorageDirectory().getAbsolutePath();
 		    			String filePath = root + File.separator + fileName;
-		    			
+
+                        // 获得文件流
 		    			fis = new FileInputStream(filePath);
 		    			// 
 		    		} else if ((requestType == RtspConstants.PLAY) && (rtspState == RtspConstants.READY)) {	    				

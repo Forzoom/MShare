@@ -102,13 +102,8 @@ public class SettingsButton extends CanvasElement {
 		private int originAlpha = 255;
 		
 		public AlphaAnimation(CanvasElement owner, int targetAlpha) {
-			super(owner);
 			this.targetAlpha = targetAlpha;
-		}
-
-		public AlphaAnimation(CanvasElement owner) {
-			super(owner);
-			setInterpolator(new BounceInterpolator());
+            setInterpolator(new BounceInterpolator());
 		}
 
         @Override

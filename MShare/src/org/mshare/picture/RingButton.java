@@ -25,6 +25,8 @@ public class RingButton extends CanvasElement implements Parcelable {
 	
 	public RingButton() {
 		setClickable(true);
+        bounceAnimation = new BounceAnimation();
+        breatheAnimation = new BreatheAnimation();
 	}
 	
 	@Override
@@ -46,25 +48,17 @@ public class RingButton extends CanvasElement implements Parcelable {
 	}
 
     /**
-     * 添加内缩动画，使用System.currentTimeMillis()
-     * @param newInnerRadius
-     */
-	public void startBounceAnimation(int newInnerRadius) {
-		startBounceAnimation(newInnerRadius, System.currentTimeMillis());
-	}
-
-    /**
      * 添加内缩动画，使用指定的时间
      * @param newInnerRadius
      * @param startTime
      */
-	public void startBounceAnimation(int newInnerRadius, long startTime) {
+	public void startBounceAnimation(int newInnerRadius, long startTime, int duration) {
 		if (bounceAnimation == null) {
-			Log.d(TAG, "bounce animation is null");
-            bounceAnimation = new BounceAnimation(this, newInnerRadius);
-			return;
+			Log.e(TAG, "bounce animation is null, and create a new one");
+            bounceAnimation = new BounceAnimation();
 		}
 		bounceAnimation.setTargetInnerRadius(newInnerRadius);
+        bounceAnimation.setDuration(duration);
 		Log.d(TAG, "bounce inner radius : " + newInnerRadius + " startTime : " + startTime);
 		bounceAnimation.start(startTime);
 	}
@@ -80,24 +74,16 @@ public class RingButton extends CanvasElement implements Parcelable {
 
     /**
      * 启动呼吸动画
-     * @param newOuterRadius
-     */
-	public void startBreatheAnimation(int newOuterRadius) {
-		startBreatheAnimation(newOuterRadius, System.currentTimeMillis());
-	}
-
-    /**
-     * 启动呼吸动画
      * @param targetOuterRadius
      * @param startTime
      */
-	public void startBreatheAnimation(int targetOuterRadius, long startTime) {
+	public void startBreatheAnimation(int targetOuterRadius, long startTime, int duration) {
 		if (breatheAnimation == null) {
-			Log.d(TAG, "breathe animation is null");
-            breatheAnimation = new BreatheAnimation(this, targetOuterRadius);
-			return;
+			Log.e(TAG, "breathe animation is null, create one now");
+            breatheAnimation = new BreatheAnimation();
 		}
 		breatheAnimation.setTargetOuterRadius(targetOuterRadius);
+        breatheAnimation.setDuration(duration);
 		Log.d(TAG, "bounce outer radius : " + targetOuterRadius + " startTime : " + startTime);
 		breatheAnimation.start(startTime);
 	}
@@ -167,9 +153,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		private int targetOuterRadius;
 		private int originOuterRadius;
 		
-		public BreatheAnimation(CanvasElement owner, int targetOuterRadius) {
-			super(owner);
-			this.targetOuterRadius = targetOuterRadius;
+		public BreatheAnimation() {
 			this.originOuterRadius = outerRadius;
 			setInterpolator(new BreatheInterpolator());
 		}
@@ -187,7 +171,12 @@ public class RingButton extends CanvasElement implements Parcelable {
 			this.targetOuterRadius = targetOuterRadius;
 		}
 
-	}
+        @Override
+        public void onStop() {
+            // 重置最后的内容
+            outerRadius = originOuterRadius;
+        }
+    }
 
     /**
      * 内缩动画
@@ -197,9 +186,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		int targetInnerRadius;
 		int originInnerRadius;
 		
-		public BounceAnimation(CanvasElement owner, int targetInnerRadius) {
-			super(owner);
-			this.targetInnerRadius = targetInnerRadius;
+		public BounceAnimation() {
 			this.originInnerRadius = innerRadius;
 			setInterpolator(new BounceInterpolator());
 		}
@@ -226,6 +213,8 @@ public class RingButton extends CanvasElement implements Parcelable {
 		@Override
 		public void onStop() {
 			setClickable(true);
+            // 重置内容
+            innerRadius = originInnerRadius;
 			super.onStop();
 		}
 	}
@@ -239,8 +228,6 @@ public class RingButton extends CanvasElement implements Parcelable {
         this.innerRadius = innerRadius;
         this.outerRadius = outerRadius;
         int ringWidth = outerRadius - innerRadius;
-        bounceAnimation = new BounceAnimation(this, innerRadius - ringWidth);
-        breatheAnimation = new BreatheAnimation(this, outerRadius + ringWidth);
 	}
 
     public int getInnerRadius() {

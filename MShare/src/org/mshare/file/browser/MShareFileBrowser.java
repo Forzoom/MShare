@@ -2,19 +2,14 @@ package org.mshare.file.browser;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Map;
 
 import org.mshare.main.*;
 import org.mshare.file.browser.MShareFileAdapter.ItemContainer;
 import org.mshare.main.R;
 
 import android.widget.AdapterView;
-import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -29,7 +24,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 /**
  * 文件浏览器
@@ -95,11 +89,9 @@ public class MShareFileBrowser extends LinearLayout {
 	public static final int MODE_MULTI_SELECT = 2;
 	
 	private int mode = MODE_SINGLE_SELECT;
-	
-	// 只有在LongClick的时候才会被处理
-	private int selectPosition;
+
 	// 暂时先使用boolean
-	private boolean[] multiSelectPosition;
+	private boolean[] selectPositions;
 	
 	public MShareFileBrowser(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
@@ -237,7 +229,7 @@ public class MShareFileBrowser extends LinearLayout {
 		this.currentFiles = files;
 		
 		// 重置multiSelect的内容
-		multiSelectPosition = new boolean[files.length];
+		selectPositions = new boolean[files.length];
 		// 重置mode
 		setMode(MODE_SINGLE_SELECT);
 		
@@ -297,31 +289,19 @@ public class MShareFileBrowser extends LinearLayout {
 		
 		// 当前正在多选模式,将退出多选模式
 		if (isMultiSelectEnabled == false && mode == MODE_MULTI_SELECT) {
-			for (int i = 0, len = multiSelectPosition.length; i < len; i++) {
-				multiSelectPosition[i] = false;
+			for (int i = 0, len = selectPositions.length; i < len; i++) {
+				selectPositions[i] = false;
 			}
 		}
 		
 		this.isMultiSelectEnabled = isMultiSelectEnabled;
 	}
-	
-//	pub
-	
-	// TODO 需要保证在正确的模式下获得正确的内容
-	// 应该只能在SINGLE_MODE下调用
-	public int getSelectPosition() {
-		return selectPosition;
-	}
 
-	public FileBrowserFile getSelectFile() {
-		return currentFiles[selectPosition];
-	}
-	
 	public FileBrowserFile[] getMultiSelectedFiles() {
 		ArrayList<FileBrowserFile> arrayList = new ArrayList<FileBrowserFile>();
-		for (int i = 0; i < multiSelectPosition.length; i++) {
+		for (int i = 0; i < selectPositions.length; i++) {
 			// 不知道没有初始化的情况下是不是false
-			if (multiSelectPosition[i]) {
+			if (selectPositions[i]) {
 				arrayList.add(currentFiles[i]);
 			}
 		}
@@ -333,9 +313,9 @@ public class MShareFileBrowser extends LinearLayout {
 	
 	public Integer[] getMultiSelectedPosition() {
 		ArrayList<Integer> arrayList = new ArrayList<Integer>();
-		for (int i = 0; i < multiSelectPosition.length; i++) {
+		for (int i = 0; i < selectPositions.length; i++) {
 			// 不知道没有初始化的情况下是不是false
-			if (multiSelectPosition[i]) {
+			if (selectPositions[i]) {
 				arrayList.add(i);
 			}
 		}
@@ -350,27 +330,17 @@ public class MShareFileBrowser extends LinearLayout {
     }
 
 	/**
-	 * 判断文件是否被选择了，使用SINGLE和MULTI模式
+	 * 判断文件是否被选择了，不区分模式
 	 * @param position
 	 * @return
 	 */
 	public boolean isFileSelected(int position) {
-		if (mode == MODE_MULTI_SELECT) {
-			
-			if (position < multiSelectPosition.length) {
-				return multiSelectPosition[position];
-			} else {
-				Log.e(TAG, "something wrong may happen! the target position is not exists");
-				return false;
-			}
-			
-		} else if (mode == MODE_SINGLE_SELECT) {
-			// TODO 对于单选确实不知道该怎么办才好,或者说将多选和单选合并
-			return position == selectPosition;
-		} else {
-			Log.e(TAG, "unknown mode");
-			return false;
-		}
+        if (position < selectPositions.length) {
+            return selectPositions[position];
+        } else {
+            Log.e(TAG, "something wrong may happen! the target position is not exists");
+            return false;
+        }
 	}
 	
 	public void quitMultiSelectMode() {
@@ -380,15 +350,9 @@ public class MShareFileBrowser extends LinearLayout {
 				Log.e(TAG, "something must be wrong, the adapter is null!");
 				return;
 			}
-			
-			// 将当前已经选择的内容设置为Common
-			for (int position = 0; position < multiSelectPosition.length; position++) {
-				if (multiSelectPosition[position]) {
-					ItemContainer item = adapter.getItemContainers(position);
-					item.fileIcon.setImageDrawable(MShareFileAdapter.getCommonDrawable(currentFiles[position]));
-				}
-			}
-			
+
+            clearAll();
+
 			// 调整mode
 			setMode(MODE_SINGLE_SELECT);
 		}
@@ -398,7 +362,11 @@ public class MShareFileBrowser extends LinearLayout {
 	public int getMode() {
 		return mode;
 	}
-	
+
+    /**
+     * 在不同的模式中切换，当模式切换的时候，之前选择的内容都将被清除
+     * @param mode
+     */
 	private void setMode(int mode) {
 		int currentMode = this.mode;
 		if (mode == currentMode) {
@@ -408,20 +376,17 @@ public class MShareFileBrowser extends LinearLayout {
 		
 		if (mode == MODE_MULTI_SELECT) {
 			if (isMultiSelectEnabled()) {
-				// 清空选择内容
-				selectPosition = -1;
-				
 				// 设置为多选
 				this.mode = mode;
 			} else {
-				Log.e(TAG, "multiSelect mode is disabled");
+				Log.e(TAG, "multi select mode cannot enable");
 				return;
 			}
 		} else if (mode == MODE_SINGLE_SELECT) {
 			// 清空选择内容
 			// 暂时先这样清空
-			for (int i = 0; i < multiSelectPosition.length; i++) {
-				multiSelectPosition[i] = false;
+			for (int i = 0; i < selectPositions.length; i++) {
+				selectPositions[i] = false;
 			}
 			
 			// 设置为单选
@@ -431,13 +396,9 @@ public class MShareFileBrowser extends LinearLayout {
 	
 	// 将状态设置为选中，仅仅支持在多选模式下
 	public boolean selectFile(int position) {
-		if (getMode() == MODE_SINGLE_SELECT) {
-			Log.w(TAG, "cannot invoke select in single select mode");
-			return false;
-		}
-		if (multiSelectPosition[position]) {
+		if (selectPositions[position]) {
 			Log.w(TAG, "the file is already select! do nothing");
-			return false;
+			return true;
 		}
 		
 		// TODO 判断使用正确的tag/需要判断adapter是否是null?
@@ -446,17 +407,13 @@ public class MShareFileBrowser extends LinearLayout {
 		ImageView fileIcon = item.fileIcon;
 		
 		fileIcon.setImageDrawable(MShareFileAdapter.getSelectedDrawable(file));
-		multiSelectPosition[position] = true;
+		selectPositions[position] = true;
 		return true;
 	}
 	
 	// 将状态设置为未选中，仅仅支持在多选模式下
 	public boolean unselectFile(int position) {
-		if (getMode() == MODE_SINGLE_SELECT) {
-			Log.w(TAG, "cannot invoke unselect in single select mode");
-			return false;
-		}
-		if (!multiSelectPosition[position]) {
+		if (!selectPositions[position]) {
 			Log.w(TAG, "the file is already unselect! do nothing");
 			return false;
 		}
@@ -467,10 +424,39 @@ public class MShareFileBrowser extends LinearLayout {
 		ImageView fileIcon = item.fileIcon;
 		
 		fileIcon.setImageDrawable(MShareFileAdapter.getUnselectedDrawable(file));
-		multiSelectPosition[position] = false;
+		selectPositions[position] = false;
 		return true;
 	}
-		
+
+    /**
+     * 将所有的内容都设为unselect
+     */
+    public void unselectAll() {
+        // 将当前已经选择的内容设置为unselect
+        for (int position = 0; position < selectPositions.length; position++) {
+            if (selectPositions[position]) {
+                ItemContainer item = adapter.getItemContainers(position);
+                item.fileIcon.setImageDrawable(MShareFileAdapter.getUnselectedDrawable(currentFiles[position]));
+                selectPositions[position] = false;
+            }
+        }
+    }
+
+    /**
+     * 清除所有的图标样式
+     */
+    public void clearAll() {
+
+        // 将当前已经选择的内容设置为Common
+        for (int position = 0; position < selectPositions.length; position++) {
+            if (selectPositions[position]) {
+                ItemContainer item = adapter.getItemContainers(position);
+                item.fileIcon.setImageDrawable(MShareFileAdapter.getCommonDrawable(currentFiles[position]));
+                selectPositions[position] = false;
+            }
+        }
+
+    }
 	/**
 	 * 用于相应GridView中Item的响应事件
 	 */
@@ -485,7 +471,7 @@ public class MShareFileBrowser extends LinearLayout {
 			if (isMultiSelectEnabled() && mode == MODE_MULTI_SELECT) {
 				
 				Log.d(TAG, "operate multi select mode");
-				if (multiSelectPosition[position]) {
+				if (selectPositions[position]) {
 					// 文件已经被选中，所以将其设置为未选中，并从ArrayList中移除
 					unselectFile(position);
 				} else {
@@ -535,7 +521,7 @@ public class MShareFileBrowser extends LinearLayout {
 					ItemContainer item = adapter.getItemContainers(position);
 					item.fileIcon.setImageDrawable(MShareFileAdapter.getSelectedDrawable(longClickFile));
 					// 记录被选择情况
-					multiSelectPosition[position] = true;
+					selectPositions[position] = true;
 					
 					// 回调函数
 					if (callback != null) {
@@ -543,7 +529,7 @@ public class MShareFileBrowser extends LinearLayout {
 					}
 				} else if (mode == MODE_MULTI_SELECT) {
 					
-					if (multiSelectPosition[position]) {
+					if (selectPositions[position]) {
 						unselectFile(position);
 					} else {
 						selectFile(position);
@@ -551,9 +537,8 @@ public class MShareFileBrowser extends LinearLayout {
 				}
 				
 			} else {// 不允许MultiSelected
-				
-				// TODO 这里设置的selectPosition好像没有用,OnItemClick的情况下也要修改selectPosition
-				selectPosition = position;
+				// 在不允许多选模式的情况下，仅仅是保存数据内容
+                selectFile(position);
 				if (callback != null) {
 					callback.onItemLongClick(longClickFile);
 				}
@@ -608,9 +593,10 @@ public class MShareFileBrowser extends LinearLayout {
 		public void onClick(View v) {
 			// 撤销当前的状态
 			if (mode == MODE_SINGLE_SELECT) {
-				selectPosition = -1;
+                // 这样并不是很好
+//				selectPosition = -1;
 			}
-			
+
 			if (callback != null) {
 				callback.onGridViewClick();
 			}
@@ -631,7 +617,7 @@ public class MShareFileBrowser extends LinearLayout {
 			setEnabled(true);
 			refreshGridView(FileBrowserActivity.listFiles(crumbController.getSelectedFile()));
 		}
-	}	
+	}
 
 	//打开文件
 	public void openFile(FileBrowserFile openFileName) {
