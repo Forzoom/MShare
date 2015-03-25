@@ -2,6 +2,7 @@ package org.mshare.file;
 
 import org.mshare.main.R;
 
+import android.R.bool;
 import android.content.Context;
 import android.location.GpsStatus.Listener;
 import android.view.LayoutInflater;
@@ -16,6 +17,8 @@ import android.widget.TextView;
 public class MshareFileMenu {
 	LinearLayout linearLayout;//菜单对应的主布局
 	Context context;//对应的Activity
+	MshareFileMenu anotherMenu;
+	boolean leftMenu = true;
 	
 	
 	public MshareFileMenu(Context c, LinearLayout l) { //构造函数 创建新菜单
@@ -79,5 +82,39 @@ public class MshareFileMenu {
 	
 	public void hide() { //隐藏菜单
 		this.linearLayout.setVisibility(View.GONE);
+	}
+	
+	//设置右菜单
+	public void setRightMenu(MshareFileMenu m) {
+		this.anotherMenu = m;
+		this.leftMenu = true;
+		ToRight toRight = new ToRight();
+		this.addButton(R.drawable.account, toRight);
+	}
+	
+	//设置左菜单
+	public void setLeftMenu(MshareFileMenu m) {
+		this.anotherMenu = m;
+		this.leftMenu = false;
+		ToLeft toLeft = new ToLeft();
+		this.addButton(R.drawable.account, toLeft);
+	}
+	
+	class ToRight implements View.OnClickListener {
+		
+		@Override
+        public void onClick(View v) {
+			hideAnimation();
+			anotherMenu.showAnimation();
+        }
+	}
+	
+	class ToLeft implements View.OnClickListener {
+		
+		@Override
+        public void onClick(View v) {
+			hideAnimation();
+			anotherMenu.showAnimation();
+        }
 	}
 }
