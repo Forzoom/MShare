@@ -31,27 +31,27 @@ public abstract class FtpCmd implements Runnable {
 
     protected SessionThread sessionThread;
 
-    protected static CmdMap[] cmdClasses = { new CmdMap("SYST", CmdSYST.class),
-            new CmdMap("USER", CmdUSER.class), new CmdMap("PASS", CmdPASS.class),
-            new CmdMap("TYPE", CmdTYPE.class), new CmdMap("CWD", CmdCWD.class),
-            new CmdMap("PWD", CmdPWD.class), new CmdMap("LIST", CmdLIST.class),
-            new CmdMap("PASV", CmdPASV.class), new CmdMap("RETR", CmdRETR.class),
-            new CmdMap("NLST", CmdNLST.class), new CmdMap("NOOP", CmdNOOP.class),
-            new CmdMap("STOR", CmdSTOR.class), new CmdMap("DELE", CmdDELE.class),
-            new CmdMap("RNFR", CmdRNFR.class), new CmdMap("RNTO", CmdRNTO.class),
-            new CmdMap("RMD", CmdRMD.class), new CmdMap("MKD", CmdMKD.class),
-            new CmdMap("OPTS", CmdOPTS.class), new CmdMap("PORT", CmdPORT.class),
-            new CmdMap("QUIT", CmdQUIT.class), new CmdMap("FEAT", CmdFEAT.class),
-            new CmdMap("SIZE", CmdSIZE.class), new CmdMap("CDUP", CmdCDUP.class),
-            new CmdMap("APPE", CmdAPPE.class), new CmdMap("XCUP", CmdCDUP.class), // synonym
-            new CmdMap("XPWD", CmdPWD.class), // synonym
-            new CmdMap("XMKD", CmdMKD.class), // synonym
-            new CmdMap("XRMD", CmdRMD.class), // synonym
-            new CmdMap("MDTM", CmdMDTM.class), //
-            new CmdMap("MFMT", CmdMFMT.class), //
-            new CmdMap("REST", CmdREST.class), //
-            new CmdMap("SITE", CmdSITE.class), //
-            new CmdMap("UUID", CmdUUID.class), //
+    protected static FtpCmdMap[] cmdClasses = { new FtpCmdMap("SYST", CmdSYST.class),
+            new FtpCmdMap("USER", CmdUSER.class), new FtpCmdMap("PASS", CmdPASS.class),
+            new FtpCmdMap("TYPE", CmdTYPE.class), new FtpCmdMap("CWD", CmdCWD.class),
+            new FtpCmdMap("PWD", CmdPWD.class), new FtpCmdMap("LIST", CmdLIST.class),
+            new FtpCmdMap("PASV", CmdPASV.class), new FtpCmdMap("RETR", CmdRETR.class),
+            new FtpCmdMap("NLST", CmdNLST.class), new FtpCmdMap("NOOP", CmdNOOP.class),
+            new FtpCmdMap("STOR", CmdSTOR.class), new FtpCmdMap("DELE", CmdDELE.class),
+            new FtpCmdMap("RNFR", CmdRNFR.class), new FtpCmdMap("RNTO", CmdRNTO.class),
+            new FtpCmdMap("RMD", CmdRMD.class), new FtpCmdMap("MKD", CmdMKD.class),
+            new FtpCmdMap("OPTS", CmdOPTS.class), new FtpCmdMap("PORT", CmdPORT.class),
+            new FtpCmdMap("QUIT", CmdQUIT.class), new FtpCmdMap("FEAT", CmdFEAT.class),
+            new FtpCmdMap("SIZE", CmdSIZE.class), new FtpCmdMap("CDUP", CmdCDUP.class),
+            new FtpCmdMap("APPE", CmdAPPE.class), new FtpCmdMap("XCUP", CmdCDUP.class), // synonym
+            new FtpCmdMap("XPWD", CmdPWD.class), // synonym
+            new FtpCmdMap("XMKD", CmdMKD.class), // synonym
+            new FtpCmdMap("XRMD", CmdRMD.class), // synonym
+            new FtpCmdMap("MDTM", CmdMDTM.class), //
+            new FtpCmdMap("MFMT", CmdMFMT.class), //
+            new FtpCmdMap("REST", CmdREST.class), //
+            new FtpCmdMap("SITE", CmdSITE.class), //
+            new FtpCmdMap("UUID", CmdUUID.class), //
     };
 
     // 所有读权限所能够发送的命令
@@ -73,8 +73,11 @@ public abstract class FtpCmd implements Runnable {
     abstract public void run();
 
     protected static void dispatchCommand(SessionThread session, String inputString) {
+        // 使用空格来分割
         String[] strings = inputString.split(" ");
+        // 对于不能识别的Cmd
         String unrecognizedCmdMsg = "502 Command not recognized\r\n";
+        // 不能识别
         if (strings == null) {
             // There was some egregious sort of parsing error
             String errString = "502 Command parse error\r\n";
@@ -82,38 +85,43 @@ public abstract class FtpCmd implements Runnable {
             session.writeString(errString);
             return;
         }
+        // 没有识别出内容
         if (strings.length < 1) {
             Log.d(TAG, "No strings parsed");
             session.writeString(unrecognizedCmdMsg);
             return;
         }
+        // 对应的Cmd的名称
         String verb = strings[0];
         if (verb.length() < 1) {
             Log.i(TAG, "Invalid command verb");
             session.writeString(unrecognizedCmdMsg);
             return;
         }
+
+        // 需要优化
+        if (!isFtpCmd(inputString)) {
+            Log.e(TAG, "something wrong happen? the command is not ftp command!");
+            return;
+        }
+
         FtpCmd cmdInstance = null;
         verb = verb.trim();
         verb = verb.toUpperCase();
+        // 通过CmdMap所形成的一个映射关系
         for (int i = 0; i < cmdClasses.length; i++) {
 
+            // 将verb的内容移动出来
             if (cmdClasses[i].getName().equals(verb)) {
-                // We found the correct command. We retrieve the corresponding
-                // Class object, get the Constructor object for that Class, and
-                // and use that Constructor to instantiate the correct FtpCmd
-                // subclass. Yes, I'm serious.
                 Constructor<? extends FtpCmd> constructor;
                 try {
-                    constructor = cmdClasses[i].getCommand().getConstructor(
-                            new Class[] { SessionThread.class, String.class });
+                    constructor = cmdClasses[i].getCommand().getConstructor(new Class[] { SessionThread.class, String.class });
                 } catch (NoSuchMethodException e) {
                     Log.e(TAG, "FtpCmd subclass lacks expected " + "constructor ");
                     return;
                 }
                 try {
-                    cmdInstance = constructor.newInstance(new Object[] { session,
-                            inputString });
+                    cmdInstance = constructor.newInstance(new Object[] { session, inputString });
                 } catch (Exception e) {
                     Log.e(TAG, "Instance creation error on FtpCmd");
                     return;
@@ -126,6 +134,9 @@ public abstract class FtpCmd implements Runnable {
             session.writeString(unrecognizedCmdMsg);
             return;
         }
+
+        // 判断能够使用哪些Cmd
+        // 需要先判断当前是否能够使用该Cmd，然后再创建
 
         Token token = session.getToken();
         
@@ -169,6 +180,32 @@ public abstract class FtpCmd implements Runnable {
     }
 
     /**
+     * 判断所接受到的内容是否是FTP的命令
+     * @return
+     */
+    public static boolean isFtpCmd(String inputString) {
+        String[] strings = inputString.split(" ");
+        // 不能识别
+        if (strings == null || strings.length < 1) {
+            Log.d(TAG, "No strings parsed");
+            return false;
+        }
+        // 对应的Cmd的名称
+        String verb = strings[0];
+        if (verb.length() < 1) {
+            Log.i(TAG, "Invalid command verb");
+            return false;
+        }
+        // 可是没有办法对应
+        for (int i = 0; i < cmdClasses.length; i++) {
+            if (cmdClasses[i].getName().equals(verb)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * An FTP parameter is that part of the input string that occurs after the first
      * space, including any subsequent spaces. Also, we want to chop off the trailing
      * '\r\n', if present.
@@ -189,6 +226,7 @@ public abstract class FtpCmd implements Runnable {
 
         // Remove trailing whitespace
         // todo: trailing whitespace may be significant, just remove \r\n
+        // 删除所有的结尾处的空白
         retString = retString.replaceAll("\\s+$", "");
 
         if (!silent) {

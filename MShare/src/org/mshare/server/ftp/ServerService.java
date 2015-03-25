@@ -54,8 +54,8 @@ import org.mshare.account.AccountFactory.Token;
 import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
-import de.kp.net.rtsp.RtspConstants;
-import de.kp.net.rtsp.server.RtspServer;
+import org.mshare.server.rtsp.RtspConstants;
+import org.mshare.server.rtsp.RtspServer;
 import de.kp.rtspcamera.MediaConstants;
 
 /**
@@ -85,9 +85,6 @@ public class ServerService extends Service implements Runnable {
     protected boolean shouldExit = false;
     // 用于接收客户端的socket
     protected ServerSocket listenSocket;
-
-    /* RTSP服务器 */
-    private RtspServer rtspServer;
 
     // The server thread will check this often to look for incoming
     // connections. We are forced to use non-blocking accept() and polling
@@ -162,21 +159,6 @@ public class ServerService extends Service implements Runnable {
         RtspConstants.VideoEncoder rtspVideoEncoder = (MediaConstants.H264_CODEC == true) ? RtspConstants.VideoEncoder.H264_ENCODER
                 : RtspConstants.VideoEncoder.H263_ENCODER;
 
-
-        // 启动rtsp服务器
-        try {
-            if (rtspServer == null) {
-                rtspServer = new RtspServer(5544, rtspVideoEncoder);
-            } else {
-                Log.e(TAG, "start when rtsp server is running!");
-            }
-            new Thread(rtspServer).start();
-            Log.d(TAG, "rtsp server is running now");
-        } catch (IOException e) {
-            Log.e(TAG, "something wrong happen! start rtsp server failed");
-            e.printStackTrace();
-        }
-
         return START_STICKY;
     }
 
@@ -201,6 +183,10 @@ public class ServerService extends Service implements Runnable {
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy() Stopping server");
+
+		// RTSP服务器原本的内容是使用线程的interupt来停止线程
+		// 现在呢，能确保吗
+
         shouldExit = true;
         if (serverThread == null) {
             Log.w(TAG, "Stopping with null serverThread");
@@ -240,10 +226,6 @@ public class ServerService extends Service implements Runnable {
         // 释放SessionNotifier
        	AccountFactory.getInstance().releaseSessionNotifier();
 
-        // 停止rtsp服务器
-        if (rtspServer != null) {
-            rtspServer.stop();
-        }
         Log.d(TAG, "ServerService.onDestroy() finished");
     }
 

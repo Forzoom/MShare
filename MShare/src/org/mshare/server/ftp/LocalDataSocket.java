@@ -107,7 +107,7 @@ public class LocalDataSocket {
 
             return socket;
         } else {
-            // We're in PASV mode (not PORT)
+            // µ±Ç°ÔÙPASV×´Ì¬
             Socket socket = null;
             try {
                 socket = server.accept();

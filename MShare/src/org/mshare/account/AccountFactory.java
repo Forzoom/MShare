@@ -60,9 +60,8 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	// 匿名账户用户名和密码
 	public static final String AnonymousUsername = "anonymous";
 	public static final String AnonymousPassword = "guest";
+
 	// 管理员账户的用户名和密码
-	
-	// 管理员账户不应该被知道
 	public static final String AdminUsername = "admin";
 	private static final String AdminPassword = "admin";
 	
@@ -74,7 +73,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     
     // 匿名账户
     private GuestAccount guestAccount;
-    // 默认的管理员账户
+    // 管理员账户
     private AdminAccount adminAccount;
     
     // adminAccount所对应的唯一Token
@@ -89,6 +88,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     public static final int PERMISSION_USER = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
     public static final int PERMISSION_GUEST = Permission.PERMISSION_READ_ADMIN | Permission.PERMISSION_READ_GUEST; 
 
+    // 单例模式
     private static AccountFactory sAccountFactory;
 
     /**

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import de.kp.net.rtsp.RtspConstants;
+import org.mshare.server.rtsp.RtspConstants;
 
 public class RtspDescriptor {
 

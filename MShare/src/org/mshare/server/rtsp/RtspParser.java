@@ -1,99 +1,64 @@
-package de.kp.net.rtsp.server.response;
+package org.mshare.server.rtsp;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URI;
 import java.util.StringTokenizer;
-
-import de.kp.net.rtsp.RtspConstants;
 
 /**
  * This class provides a parser for incoming RTSP
  * messages and splits them into appropriate parts.
- * 
+ *
+ * 将传输的rtsp内容分割成正确的内容
+ *
  * @author Stefan Krusche (krusche@dr-kruscheundpartner.de)
  *
  */
-public class Parser {
+public class RtspParser {
         
     /**
-     * @param rtspBufferedReader
+     * 仅仅时读取到/r/n
+     * @param
      * @return
      * @throws IOException
      */
-    public static String readRequest(BufferedReader rtspBufferedReader) throws IOException {
- 
-    	String request = new String();
+//    public static String readRequest(BufferedReader rtspBufferedReader) throws IOException {
+//
+//        // 使用bf.readLine()就可以完成的功能
+//
+//    	String request = new String();
+//
+//    	boolean endFound = false;
+//    	int c;
+//
+//    	while ((c = rtspBufferedReader.read()) != -1) {
+//
+//    		request += (char) c;
+//    		if (c == '\n') {
+//
+//    			if (endFound) {
+//    				break;
+//
+//    			} else {
+//    				endFound = true;
+//    			}
+//
+//    		} else {
+//    			if (c != '\r') {
+//    				endFound = false;
+//    			}
+//
+//    		}
+//
+//    	}
+//
+//    	return request;
+//
+//    }
 
-    	boolean endFound = false;
-    	int c;
-
-    	while ((c = rtspBufferedReader.read()) != -1) {
-        
-    		request += (char) c;
-    		if (c == '\n') {
-            
-    			if (endFound) {
-    				break;
-	 
-    			} else {
-    				endFound = true;
-    			}
-
-    		} else {
-    			if (c != '\r') {
-    				endFound = false;
-    			}
-     
-    		}
-
-    	}
-
-    	return request;
-    
+    // 用于获得当前的cmd，但是每次都需要使用split来分割内容又浪费性能
+    public static String getCmd(String[] strings) {
+        return strings[0];
     }
 
-    /**
-     * This method determines the request type of an
-     * incoming RTSP request.
-     * 
-     * 根据发送的RTSP请求内容来决定RTSP的类型
-     * 
-     * @param request
-     * @return
-     */
-    public static int getRequestType(String request) {
-
-    	// 使用空格来分割,以后可以使用split
-    	StringTokenizer tokens = new StringTokenizer(request);
-        String requestType = "";
-
-        if (tokens.hasMoreTokens()) {
-	        requestType = tokens.nextToken();
-        }
-
-        // 判断命令
-        if ((new String(requestType)).compareTo("OPTIONS") == 0)
-        	return RtspConstants.OPTIONS;
-            
-        else if ((new String(requestType)).compareTo("DESCRIBE") == 0)
-            return RtspConstants.DESCRIBE;
-            
-        else if ((new String(requestType)).compareTo("SETUP") == 0)
-            return RtspConstants.SETUP;
-            
-        else if ((new String(requestType)).compareTo("PLAY") == 0)
-            return RtspConstants.PLAY;
-            
-        else if ((new String(requestType)).compareTo("PAUSE") == 0)
-            return RtspConstants.PAUSE;
-            
-        else if ((new String(requestType)).compareTo("TEARDOWN") == 0)
-            return RtspConstants.TEARDOWN;
-
-        return -1;
-    
-    }
 
     /**
      * 类似于获得命令的相关参数

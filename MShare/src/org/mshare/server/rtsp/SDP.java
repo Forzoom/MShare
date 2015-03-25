@@ -1,11 +1,8 @@
-package de.kp.net.rtsp.server.response;
+package org.mshare.server.rtsp;
 
 import java.net.UnknownHostException;
 
-import com.orangelabs.core.ims.protocol.rtp.codec.video.h264.H264Config;
-
-import de.kp.net.rtsp.RtspConstants;
-import de.kp.net.rtsp.RtspConstants.VideoEncoder;
+import org.mshare.server.rtsp.RtspConstants.VideoEncoder;
 
 public class SDP {
 
@@ -35,9 +32,9 @@ public class SDP {
 
 		StringBuffer buf = new StringBuffer();
 		
-		buf.append("v=0" + RtspResponse.CRLF);
+		buf.append("v=0" + RtspCmd.CRLF);
 		// filename contains leading slash
-		buf.append("s="  + fileName.substring(1) + RtspResponse.CRLF);
+		buf.append("s="  + fileName.substring(1) + RtspCmd.CRLF);
 		
 		int track = 1;
 		buf.append(getSDPVideo(track));
@@ -72,18 +69,18 @@ public class SDP {
 		// H263 encoding
 		if (encoder.equals(VideoEncoder.H263_ENCODER)) {
 			// cross encoder properties
-			sb.append("m=video " + clientVideoPort + RtspConstants.SEP + "RTP/AVP " + RtspConstants.RTP_H263_PAYLOADTYPE + RtspResponse.CRLF);	
+			sb.append("m=video " + clientVideoPort + RtspConstants.SEP + "RTP/AVP " + RtspConstants.RTP_H263_PAYLOADTYPE + RtspCmd.CRLF);
 			// set to H263-2000
-			sb.append("a=rtpmap:" + RtspConstants.RTP_H263_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.H263_2000 + RtspResponse.CRLF);
+			sb.append("a=rtpmap:" + RtspConstants.RTP_H263_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.H263_2000 + RtspCmd.CRLF);
 
 			// additional information for android video view, due to extended checking mechanism
-			sb.append("a=framesize:" + RtspConstants.RTP_H263_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.WIDTH + "-" + RtspConstants.HEIGHT + RtspResponse.CRLF);
+			sb.append("a=framesize:" + RtspConstants.RTP_H263_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.WIDTH + "-" + RtspConstants.HEIGHT + RtspCmd.CRLF);
 
 		} else if (encoder.equals(VideoEncoder.H264_ENCODER)) {
 			// cross encoder properties
-			sb.append("m=video " + clientVideoPort + RtspConstants.SEP + "RTP/AVP " + RtspConstants.RTP_H264_PAYLOADTYPE + RtspResponse.CRLF);	
+			sb.append("m=video " + clientVideoPort + RtspConstants.SEP + "RTP/AVP " + RtspConstants.RTP_H264_PAYLOADTYPE + RtspCmd.CRLF);
 
-			sb.append("a=rtpmap:" + RtspConstants.RTP_H264_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.H264 + RtspResponse.CRLF);
+			sb.append("a=rtpmap:" + RtspConstants.RTP_H264_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.H264 + RtspCmd.CRLF);
 
 			
 			/*
@@ -101,7 +98,7 @@ public class SDP {
 //			buf.append("a=fmtp:98 packetization-mode=1;profile-level-id=420020;sprop-parameter-sets=J0IAINoFB8Q=,KM48gA==;" + RtspResponse.CRLF); // 320x240 10fps
 			
 			// additional information for android video view, due to extended checking mechanism
-			sb.append("a=framesize:" + RtspConstants.RTP_H264_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.WIDTH + "-" + RtspConstants.HEIGHT + RtspResponse.CRLF);
+			sb.append("a=framesize:" + RtspConstants.RTP_H264_PAYLOADTYPE + RtspConstants.SEP + RtspConstants.WIDTH + "-" + RtspConstants.HEIGHT + RtspCmd.CRLF);
 		}
 
 		sb.append("a=control:trackID=" + String.valueOf(track));

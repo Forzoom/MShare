@@ -1,8 +1,21 @@
-package de.kp.net.rtsp.server.response;
+package org.mshare.server.rtsp.cmd;
 
+import android.os.Environment;
+import android.util.Log;
+
+import org.mshare.file.share.SharedLink;
+import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.rtsp.RtspCmd;
+import org.mshare.server.rtsp.RtspParser;
+import org.mshare.account.AccountFactory.Token;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.UnknownHostException;
 
-import de.kp.net.rtsp.RtspConstants.VideoEncoder;
+import org.mshare.server.rtsp.RtspConstants.VideoEncoder;
+import org.mshare.server.rtsp.SDP;
 
 /**
  * sdp的格式
@@ -88,7 +101,8 @@ import de.kp.net.rtsp.RtspConstants.VideoEncoder;
  *
  */
 
-public class RtspDescribeResponse extends RtspResponse {
+public class CmdDESCRIBE extends RtspCmd {
+    private static final String TAG = CmdDESCRIBE.class.getSimpleName();
 
     protected String rtpSession  = "";
     protected String contentBase = "";
@@ -96,9 +110,12 @@ public class RtspDescribeResponse extends RtspResponse {
     private String fileName;
 
 	private VideoEncoder encoder;
-    
-    public RtspDescribeResponse(int cseq) {
-        super(cseq);
+
+	private String input;
+
+    public CmdDESCRIBE(SessionThread sessionThread, String input, int cseq) {
+        super(sessionThread, cseq);
+		this.input = input;
     }
 
     protected void generateBody() {
@@ -137,5 +154,64 @@ public class RtspDescribeResponse extends RtspResponse {
     
     public void setVideoEncoder(VideoEncoder encoder) {
     	this.encoder = encoder;
+    }
+
+    @Override
+    public void run() {
+        Log.d(TAG, "rtsp DESCRIBE executing");
+        sessionThread.writeString(toString());
+
+		try {
+			// 通过对于uri进行解析
+			String fileName = RtspParser.getFileName(input);
+			Log.d(TAG, "request file name : " + fileName);
+			setFileName(fileName);
+
+			// set video encoding
+			setVideoEncoder(encoder);
+
+			// finally set content base
+			setContentBase(contentBase);
+
+		} catch (Exception e) {
+			Log.e(TAG, "something wrong happen in DESCRIBE !");
+			e.printStackTrace();
+		}
+
+		Log.i(TAG, "request : DESCRIBE");
+
+		// 前面的内容是创建response的内容，后面的内容是其他的处理内容
+
+		// 当前文件名已经准备好了
+		String fileName = getFileName();
+		Log.d(TAG, "try to get the file : " + fileName);
+		// TODO 需要保证所对应的是相对路径，以反斜杠开头？
+
+		String root = Environment.getExternalStorageDirectory().getAbsolutePath();
+		String filePath = root + File.separator + fileName;
+
+		Token token = sessionThread.getToken();
+		SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
+
+		// TODO 不知道出错了该怎么发送内容,使用RtspError
+		if (sharedLink == null) {
+			Log.e(TAG, "something wrong is happen, the file is null!");
+			return;
+		} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
+			Log.e(TAG, "the file is not a file!");
+			return;
+		}
+
+		File file = sharedLink.getRealFile();
+
+		// 获得文件流
+		try {
+			sessionThread.setVideoInputStream(new FileInputStream(file));
+		} catch (FileNotFoundException e) {
+			Log.e(TAG, "the file is not found");
+			e.printStackTrace();
+		}
+
+        Log.d(TAG, "rtsp DESCRIBE finished");
     }
 }

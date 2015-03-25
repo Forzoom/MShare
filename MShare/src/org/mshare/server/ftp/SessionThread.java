@@ -21,6 +21,7 @@ package org.mshare.server.ftp;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,6 +36,11 @@ import org.mshare.account.AccountFactory.Token;
 import org.mshare.account.AccountFactory.Verifier;
 
 import android.util.Log;
+
+import org.mshare.server.rtsp.RtspCmd;
+
+import de.kp.net.rtp.RtpSocket;
+import de.kp.net.rtp.packetizer.AbstractPacketizer;
 
 /**
  * 代表的应该是与Client的Thread
@@ -69,6 +75,26 @@ public class SessionThread extends Thread {
     /**
      * 所有通过writeString的内容都将使用
      */
+
+	// rtsp传输数据所使用的
+	private RtpSocket rtpSocket;
+
+	// 从存储上读取
+	private FileInputStream videoInputStream;
+
+	private AbstractPacketizer videoPacketizer;
+
+    /* 关于rtsp的内容 */
+    // RTSP消息的序列号
+    private int cseq = 0;
+    private String contentBase = "";
+	// 对应rtsp服务器的状态
+    private int rtspState;
+    // 客户端端口
+    private int clientPort;
+    // 远程客户端IP地址 TODO 可以将其纪录下来
+    private InetAddress clientAddress;
+
     protected String encoding = Defaults.SESSION_ENCODING;
     protected long offset = -1; // where to start append when using REST
 
@@ -84,6 +110,9 @@ public class SessionThread extends Thread {
         this.localDataSocket = dataSocket;
         this.sendWelcomeBanner = true;
         this.sessionInfo = new SessionInfo();
+
+		// 纪录客户端的IP，所使用的command的IP
+		this.clientAddress = this.cmdSocket.getInetAddress();
     }
 
     /**
@@ -266,8 +295,8 @@ public class SessionThread extends Thread {
         }
         // Main loop: read an incoming line and process it
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(
-                    cmdSocket.getInputStream()), 8192); // use 8k buffer
+            // use 8k buffer
+            BufferedReader in = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream()), 8192);
 
             // 将这里的内容转变成handler来处理？
             while (true) {
@@ -275,8 +304,15 @@ public class SessionThread extends Thread {
                 line = in.readLine(); // will accept \r\n or \n for terminator
                 if (line != null) {
                     ServerService.writeMonitor(true, line);
-                    Log.d(TAG, "Received line from client: " + line);
-                    FtpCmd.dispatchCommand(this, line);
+                    Log.i(TAG, "Received line from client: " + line);
+                    // 直接在这里调用就好了
+                    if (FtpCmd.isFtpCmd(line)) {
+                        FtpCmd.dispatchCommand(this, line);
+                    } else if (RtspCmd.isRtspCmd(line)) {
+
+                        RtspCmd.dispatchCmd(this, line);
+                    }
+
                 } else {
                     Log.i(TAG, "readLine gave null, quitting");
                     break;
@@ -435,4 +471,70 @@ public class SessionThread extends Thread {
     public void setToken(Token token) {
     	this.token = token;
     }
+
+    public int getCseq() {
+        return cseq;
+    }
+
+    public void setCseq(int cseq) {
+        this.cseq = cseq;
+    }
+
+    public String getContentBase() {
+        return contentBase;
+    }
+
+    public void setContentBase(String contentBase) {
+        this.contentBase = contentBase;
+    }
+
+    public int getClientPort() {
+        return clientPort;
+    }
+
+    public void setClientPort(int clientPort) {
+        this.clientPort = clientPort;
+    }
+
+    public InetAddress getClientAddress() {
+        return clientAddress;
+    }
+
+    public void setClientAddress(InetAddress clientAddress) {
+        this.clientAddress = clientAddress;
+    }
+
+	public int getRtspState() {
+		return rtspState;
+	}
+
+	public void setRtspState(int rtspState) {
+		this.rtspState = rtspState;
+	}
+
+	// 暂时放在这里来使用
+
+	public RtpSocket getRtpSocket() {
+		return rtpSocket;
+	}
+
+	public void setRtpSocket(RtpSocket rtpSocket) {
+		this.rtpSocket = rtpSocket;
+	}
+
+	public FileInputStream getVideoInputStream() {
+		return videoInputStream;
+	}
+
+	public void setVideoInputStream(FileInputStream videoInputStream) {
+		this.videoInputStream = videoInputStream;
+	}
+
+	public AbstractPacketizer getVideoPacketizer() {
+		return videoPacketizer;
+	}
+
+	public void setVideoPacketizer(AbstractPacketizer videoPacketizer) {
+		this.videoPacketizer = videoPacketizer;
+	}
 }

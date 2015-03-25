@@ -19,14 +19,12 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp;
 
-import org.mshare.server.ftp.FtpCmd;
-
-public class CmdMap {
+public class FtpCmdMap {
 	protected Class<? extends FtpCmd> cmdClass;
 	String name;
 
 
-	public CmdMap(String name, Class<? extends FtpCmd> cmdClass) {
+	public FtpCmdMap(String name, Class<? extends FtpCmd> cmdClass) {
 		super();
 		this.name = name;
 		this.cmdClass = cmdClass;

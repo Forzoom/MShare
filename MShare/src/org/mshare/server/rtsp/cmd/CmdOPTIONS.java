@@ -1,4 +1,9 @@
-package de.kp.net.rtsp.server.response;
+package org.mshare.server.rtsp.cmd;
+
+import android.util.Log;
+
+import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.rtsp.RtspCmd;
 
 /**
  * 目的是得到服务器提供的可用方法:
@@ -12,14 +17,21 @@ package de.kp.net.rtsp.server.response;
  * Cseq: 1         //每个回应消息的cseq数值和请求消息的cseq相对应
  * Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, SCALE, GET_PARAMETER //服务器提供的可用的方法
  */
-public class RtspOptionsResponse extends RtspResponse {
+public class CmdOPTIONS extends RtspCmd {
+    private static final String TAG = CmdOPTIONS.class.getSimpleName();
 
-    public RtspOptionsResponse(int cseq) {
-        super(cseq);
+    public CmdOPTIONS(SessionThread sessionThread, int cseq) {
+        super(sessionThread, cseq);
     }
     
     protected void generateBody() {
         this.body = "Public:DESCRIBE,SETUP,TEARDOWN,PLAY,PAUSE"/*+SL*/;
     }
 
+    @Override
+    public void run() {
+        Log.d(TAG, "rtsp OPTIONS executing");
+        sessionThread.writeString(toString());
+        Log.d(TAG, "rtsp OPTIONS finished");
+    }
 }
