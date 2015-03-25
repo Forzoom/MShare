@@ -9,22 +9,19 @@ import org.mshare.file.browser.FileBrowserFile;
 import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.EditText;
-import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.Toast;
@@ -61,7 +58,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		fileBrowser.refreshGridView(listFiles(rootFile));
 		
 		//添加菜单栏
-		mshareFileMenu = new MshareFileMenu[3];
+		mshareFileMenu = new MshareFileMenu[4];
 		linearLayout = (LinearLayout)this.findViewById(R.id.local_menus);
 		setMenu1();
 		setMenu2();
@@ -181,17 +178,25 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	//设置第二菜单
 	private void setMenu2() {
 		this.mshareFileMenu[1] = new MshareFileMenu(this, this.linearLayout);
+		this.mshareFileMenu[3] = new MshareFileMenu(this, this.linearLayout);
 		MenuCopy menuCopy = new MenuCopy();
 		MenuCut menuCut = new MenuCut();
 		MenuRename menuRename = new MenuRename();
 		MenuDelete menuDelete = new MenuDelete();
 		MenuCancelOpration menuCancelOperation = new MenuCancelOpration();
+		MenuShare menuShare = new MenuShare();
+		MenuUnshare menuUnshare = new MenuUnshare();
 		this.mshareFileMenu[1].addButton(R.drawable.account, "复制", menuCopy);
 		this.mshareFileMenu[1].addButton(R.drawable.account, "剪切", menuCut);
-		this.mshareFileMenu[1].addButton(R.drawable.account, "重命名", menuRename);
 		this.mshareFileMenu[1].addButton(R.drawable.account, "删除", menuDelete);
 		this.mshareFileMenu[1].addButton(R.drawable.account, "撤消", menuCancelOperation);
+		this.mshareFileMenu[1].setRightMenu(this.mshareFileMenu[3]);
+		this.mshareFileMenu[3].setLeftMenu(this.mshareFileMenu[1]);
+		this.mshareFileMenu[3].addButton(R.drawable.account, "重命名", menuRename);
+		this.mshareFileMenu[3].addButton(R.drawable.account, "共享", menuShare);
+		this.mshareFileMenu[3].addButton(R.drawable.account, "不共享", menuUnshare);
 		this.mshareFileMenu[1].hide();
+		this.mshareFileMenu[3].hide();
 	}
 	
 	//设置第三菜单
@@ -219,6 +224,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	//新建文件夹
 	class MenuNewFolder implements View.OnClickListener {
 		
+		@SuppressLint("InflateParams")
 		@Override
 		public void onClick(View arg0) {
 			final TableLayout newFolderForm = (TableLayout)getLayoutInflater()
@@ -237,9 +243,11 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 							String folderName = editText.getText().toString();
 							String path = fileBrowser.getCurrentDirectory().getAbsolutePath() + File.separator +folderName;
 							File file = new File(path);
-							if(file.exists()) {
-								Toast.makeText(getApplicationContext(), "文件夹已存在", Toast.LENGTH_SHORT).show();
-								
+							if(folderName.equals("")) {
+								Toast.makeText(getApplicationContext(), "文件夹名不能为空", Toast.LENGTH_SHORT).show();	
+							}
+							else if(file.exists()) {
+								Toast.makeText(getApplicationContext(), "文件夹已存在", Toast.LENGTH_SHORT).show();	
 							}
 							else {
 								mshareFileManage.newFolder(path);
@@ -296,6 +304,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	//重命名
 	class MenuRename implements View.OnClickListener {
 		
+		@SuppressLint("InflateParams")
 		@Override
 		public void onClick(View arg0) {
 			final FileBrowserFile[] file = fileBrowser.getMultiSelectedFiles();
@@ -323,7 +332,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 								mshareFileManage.renameFile(oldPath, newPath);
 								fileBrowser.quitMultiSelectMode();
 								refreshDirectory();
-								changeMenu(1, 0);
+								changeMenu(3, 0);
 							}
 						}
 					})
@@ -399,7 +408,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 
         @Override
         public void onClick(View v) {
-
+        	
         }
     }
 

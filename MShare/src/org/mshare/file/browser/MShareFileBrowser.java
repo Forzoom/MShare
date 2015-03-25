@@ -2,19 +2,13 @@ package org.mshare.file.browser;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Map;
-
 import org.mshare.main.*;
 import org.mshare.file.browser.MShareFileAdapter.ItemContainer;
 import org.mshare.main.R;
 
 import android.widget.AdapterView;
-import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -29,7 +23,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 /**
  * ÎÄ¼þä¯ÀÀÆ÷
