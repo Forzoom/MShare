@@ -49,7 +49,6 @@ public class CmdTEARDOWN extends RtspCmd {
         Log.d(TAG, "rtsp TEARDOWN executing!");
         sessionThread.writeString(toString());
 
-		// this RTP socket is removed from the RTP Sender
 		// TODO 关于RtpSender中的内容还需要了解
 		// 我们好像并没有将rtpSocket将入到RtpSender中
 //		RtpSender.getInstance().removeReceiver(this.rtpSocket);

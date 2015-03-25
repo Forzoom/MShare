@@ -59,40 +59,42 @@ public class CmdPLAY extends RtspCmd {
     @Override
     public void run() {
         Log.d(TAG, "rtsp PLAY executing ");
-        sessionThread.writeString(toString());
+		String errString = new RtspError(sessionThread, input, cseq).toString();
 
-		try {
+		mainblock : {
+
 			String range = RtspParser.getRangePlay(input);
 			if (range != null) {
 				setRange(range);
 			}
 
-		} catch (Exception e) {
-			Log.e(TAG, "something wrong happen in PLAY!");
-			e.printStackTrace();
-		}
+			if (sessionThread.getRtspState() == RtspConstants.READY) {
 
-		if (sessionThread.getRtspState() == RtspConstants.READY) {
+				// make sure that the respective client socket is ready to send RTP packets
+				sessionThread.getRtpSocket().suspend(false);
 
-			// make sure that the respective client socket is ready to send RTP packets
-			sessionThread.getRtpSocket().suspend(false);
+				sessionThread.setRtspState(RtspConstants.PLAYING);
 
-			sessionThread.setRtspState(RtspConstants.PLAYING);
+				try {
 
-			try {
+					// 播放数据内容
+					if (MediaConstants.H264_CODEC == true) {
+						sessionThread.setVideoPacketizer(new H264Packetizer(sessionThread.getVideoInputStream()));
+					} else {
+						sessionThread.setVideoPacketizer(new H263Packetizer(sessionThread.getVideoInputStream()));
+					}
 
-				// 播放数据内容
-				if (MediaConstants.H264_CODEC == true) {
-					sessionThread.setVideoPacketizer(new H264Packetizer(sessionThread.getVideoInputStream()));
-				} else {
-					sessionThread.setVideoPacketizer(new H263Packetizer(sessionThread.getVideoInputStream()));
+				} catch (SocketException e) {
+					Log.e(TAG, "the socket exception? so the play is stop!");
+					e.printStackTrace();
+					sessionThread.writeString(errString);
+					break mainblock;
 				}
 
-			} catch (SocketException e) {
-				Log.e(TAG, "the socket exception? so the play is stop!");
-				e.printStackTrace();
+				// TODO 暂时将要发送的cmd写在这里
+				sessionThread.writeString(toString());
+				sessionThread.getVideoPacketizer().startStreaming();
 			}
-			sessionThread.getVideoPacketizer().startStreaming();
 		}
 
 		Log.d(TAG, "rtsp PLAY finished");

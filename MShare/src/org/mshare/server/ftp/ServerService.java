@@ -173,6 +173,7 @@ public class ServerService extends Service implements Runnable {
             return false;
         }
         if (!serverThread.isAlive()) {
+			// 在这种情况下仍旧判断是true？
             Log.d(TAG, "serverThread non-null but !isAlive()");
         } else {
             Log.d(TAG, "Server is alive");

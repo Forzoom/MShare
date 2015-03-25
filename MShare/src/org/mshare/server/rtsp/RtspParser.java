@@ -1,5 +1,7 @@
 package org.mshare.server.rtsp;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.util.StringTokenizer;
 
@@ -13,6 +15,7 @@ import java.util.StringTokenizer;
  *
  */
 public class RtspParser {
+	private static final String TAG = RtspParser.class.getSimpleName();
         
     /**
      * 仅仅时读取到/r/n
@@ -122,21 +125,17 @@ public class RtspParser {
     /**
      * @param request
      * @return
-     * @throws Exception
      */
-    public static String getFileName(String request) throws Exception {
+    public static String getFileName(String request) {
                 
     	String lineInput = getLineInput(request, " ", "rtsp");
-//    	URI uri = new URI(lineInput);
-    	
+
     	// 在IP中已经包含了PORT
     	String[] parts = lineInput.split("rtsp://" + RtspConstants.SERVER_IP);
     	// 就是一个相对路径
         String fileName = parts[1];
-        
-//    	String fileName = uri.getPath();
+    	Log.d(TAG, "getFileName : " + fileName);
         return fileName;
-           
     }
 
     /**
@@ -148,25 +147,24 @@ public class RtspParser {
      * @param separator
      * @param prefix
      * @return
-     * @throws Exception
      */
-    public static String getLineInput(String request, String separator, String prefix) throws Exception {
-            
-    	StringTokenizer str = new StringTokenizer(request, separator);
-        String token = null;
-
+    public static String getLineInput(String request, String separator, String prefix) {
+		// 在代码中的一些地方发现了split方法的使用，为什么有的地方使用了split方法，而有的地方而是StringToken
+		String[] strings = request.split(separator);
+		String ret = null;
         boolean match = false;
-        
-        while (str.hasMoreTokens()) {
-            token = str.nextToken();
-            if (token.startsWith(prefix)) {            	
-            	match = true;
-                break;
-            }
-        }
 
-        return (match == true) ? token : null;
-    
+		for (int i = 0; i < strings.length; i++) {
+			if (strings[i].startsWith(prefix)) {
+				match = true;
+				ret = strings[i];
+				break;
+			}
+		}
+
+		Log.d(TAG, "simple log getLineInput : " + ret);
+
+        return (match == true) ? ret : null;
     }
 
     /**
@@ -177,11 +175,13 @@ public class RtspParser {
      * @return
      * @throws Exception
      */
-    public static int getClientPort(String request) throws Exception {
+    public static int getClientPort(String request) {
 
     	String lineInput = getLineInput(request, "\r\n", "Transport:");
-    	if (lineInput == null) throw new Exception();
-            
+		if (lineInput == null) {
+			return 0;
+		}
+
     	String[] parts = lineInput.split(";");
         parts[2] = parts[2].substring(12);
             
@@ -218,7 +218,7 @@ public class RtspParser {
      * @return
      * @throws Exception
      */
-    public static String getRangePlay(String request) throws Exception {
+    public static String getRangePlay(String request) {
 
     	String lineInput = getLineInput(request, "\r\n", "Range:");
     	if (lineInput == null) {
@@ -229,7 +229,6 @@ public class RtspParser {
     		 */
     		
     		return null;
-    		
     	}
         
     	String[] parts = lineInput.split("=");

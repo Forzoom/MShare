@@ -143,15 +143,7 @@ public class CmdDESCRIBE extends RtspCmd {
     public void setContentBase(String contentBase) {
         this.contentBase = contentBase;
     }
-    
-    public void setFileName(String fileName) {
-    	this.fileName = fileName;
-    }
 
-    public String getFileName() {
-		return fileName;
-	}
-    
     public void setVideoEncoder(VideoEncoder encoder) {
     	this.encoder = encoder;
     }
@@ -159,57 +151,58 @@ public class CmdDESCRIBE extends RtspCmd {
     @Override
     public void run() {
         Log.d(TAG, "rtsp DESCRIBE executing");
-        sessionThread.writeString(toString());
 
-		try {
-			// 通过对于uri进行解析
-			String fileName = RtspParser.getFileName(input);
-			Log.d(TAG, "request file name : " + fileName);
-			setFileName(fileName);
+		// 创建一个空白内容对象表示错误
+		String errString = new RtspError(sessionThread, input, cseq).toString();
+
+		mainblock : {
+			// 解析文件名
+			fileName = RtspParser.getFileName(input);
 
 			// set video encoding
+			// TODO 这个东西并没有被正确设置
 			setVideoEncoder(encoder);
 
 			// finally set content base
+			// TODO 没有被正确设置
 			setContentBase(contentBase);
 
-		} catch (Exception e) {
-			Log.e(TAG, "something wrong happen in DESCRIBE !");
-			e.printStackTrace();
-		}
+			// 当前文件名已经准备好了
+			Log.d(TAG, "try to get the file : " + fileName);
+			// TODO 需要保证所对应的是相对路径，以反斜杠开头？
 
-		Log.i(TAG, "request : DESCRIBE");
+			Token token = sessionThread.getToken();
+			if (token == null || !token.isValid()) {
+				Log.e(TAG, "maybe has not authorized!");
+				sessionThread.writeString(errString);
+				break mainblock;
+			}
 
-		// 前面的内容是创建response的内容，后面的内容是其他的处理内容
+			// 获得对应文件对象
+			SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
+			if (sharedLink == null) {
+				Log.e(TAG, "something wrong is happen, the file is null!");
+				sessionThread.writeString(errString);
+				break mainblock;
+			} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
+				Log.e(TAG, "the file is not a file!");
+				sessionThread.writeString(errString);
+				break mainblock;
+			}
 
-		// 当前文件名已经准备好了
-		String fileName = getFileName();
-		Log.d(TAG, "try to get the file : " + fileName);
-		// TODO 需要保证所对应的是相对路径，以反斜杠开头？
+			// 获得文件流
+			File file = sharedLink.getRealFile();
+			try {
+				sessionThread.setVideoInputStream(new FileInputStream(file));
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "the file is not found");
+				e.printStackTrace();
+				sessionThread.writeString(errString);
+				break mainblock;
+			}
 
-		String root = Environment.getExternalStorageDirectory().getAbsolutePath();
-		String filePath = root + File.separator + fileName;
-
-		Token token = sessionThread.getToken();
-		SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
-
-		// TODO 不知道出错了该怎么发送内容,使用RtspError
-		if (sharedLink == null) {
-			Log.e(TAG, "something wrong is happen, the file is null!");
-			return;
-		} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
-			Log.e(TAG, "the file is not a file!");
-			return;
-		}
-
-		File file = sharedLink.getRealFile();
-
-		// 获得文件流
-		try {
-			sessionThread.setVideoInputStream(new FileInputStream(file));
-		} catch (FileNotFoundException e) {
-			Log.e(TAG, "the file is not found");
-			e.printStackTrace();
+			// TODO 暂时将内容写在这里
+			sessionThread.writeString(toString());
 		}
 
         Log.d(TAG, "rtsp DESCRIBE finished");

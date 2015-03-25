@@ -76,39 +76,45 @@ public class CmdSETUP extends RtspCmd {
 	@Override
 	public void run() {
 		Log.d(TAG, "rtsp SETUP executing!");
-		sessionThread.writeString(toString());
+		String errString = new RtspError(sessionThread, input, cseq).toString();
 
-		try {
-			int clientPort = RtspParser.getClientPort(input);
-			sessionThread.setClientPort(clientPort);
-			// 客户端端口
-			setClientPort(clientPort);
-			// 传输协议
-			setTransportProtocol(RtspParser.getTransportProtocol(input));
-			// 会话类型
-			setSessionType(RtspParser.getSessionType(input));
-			// 客户端IP
-			setClientIP(sessionThread.getClientAddress().getHostAddress());
-			// TODO 设置什么
+		mainblock : {
+			try {
+				int clientPort = RtspParser.getClientPort(input);
+				sessionThread.setClientPort(clientPort);
+				// 客户端端口
+				setClientPort(clientPort);
+				// 传输协议
+				setTransportProtocol(RtspParser.getTransportProtocol(input));
+				// 会话类型
+				setSessionType(RtspParser.getSessionType(input));
+				// 客户端IP
+				setClientIP(sessionThread.getClientAddress().getHostAddress());
+				// TODO 设置什么
+				// 在原有 的内容中还有setup ＝ true的内容，让RtspServer中的ServerThread跳过第一段循环
+				int[] interleaved = RtspParser.getInterleavedSetup(input);
+				if(interleaved != null){
+					setInterleaved(interleaved);
+				}
 
-			// 在原有 的内容中还有setup ＝ true的内容，让RtspServer中的ServerThread跳过第一段循环
+				// 接下来是一些配置？
+				sessionThread.setRtspState(RtspConstants.READY);
 
-			int[] interleaved = RtspParser.getInterleavedSetup(input);
-			if(interleaved != null){
-				setInterleaved(interleaved);
+				// TODO 准备dataSocket,需要了解是否正确
+				sessionThread.setRtpSocket(new RtpSocket(sessionThread.getClientAddress(), clientPort));
+				// 准备RtpSender，将RtpSocket注册到其中后，通过RtpSender来发送数据？
+
+				// 发送正确的数据
+				// TODO 不知道放在这里是不是正确
+				sessionThread.writeString(toString());
+			} catch (Exception e) {
+				Log.e(TAG, "something wrong happen in SETUP command!");
+				e.printStackTrace();
+				sessionThread.writeString(errString);
 			}
-
-			// 接下来是一些配置？
-			sessionThread.setRtspState(RtspConstants.READY);
-
-			// TODO 准备dataSocket,需要了解是否正确
-			sessionThread.setRtpSocket(new RtpSocket(sessionThread.getClientAddress(), clientPort));
-			// 准备RtpSender，将RtpSocket注册到其中后，通过RtpSender来发送数据？
-		} catch (Exception e) {
-			Log.e(TAG, "something wrong happen in SETUP command!");
-			e.printStackTrace();
 		}
 
+		sessionThread.writeString(toString());
 
 		Log.d(TAG, "rtsp SETUP finished!");
 	}
