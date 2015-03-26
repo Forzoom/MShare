@@ -111,16 +111,11 @@
 
         <activity android:name="org.mshare.main.ServerAvaterSettingActivity"
             android:label="头像设置">
+            <intent-filter>
+                <action android:name="org.mshare.main.ACTION_SERVER_AVATER_SETTING"/>
+            </intent-filter>
         </activity>
-        <!---->
-        <!--<receiver android:name="org.mshare.file.browser.MShareFileBrowser">-->
-            <!--<intent-filter>-->
-                <!--&lt;!&ndash; TODO 新添加了remounted的内容需要测试 &ndash;&gt;-->
-                <!--<action android:name="android.intent.action.MEDIA_REMOUNTED"/>-->
-                <!--<action android:name="android.intent.action.MEDIA_REMOVED"/>-->
-            <!--</intent-filter>-->
-        <!--</receiver>-->
-        <!---->
+
         <receiver 
             android:name="org.mshare.server.ftp.RequestStartStopReceiver"
             >

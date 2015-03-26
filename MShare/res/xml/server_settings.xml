@@ -4,10 +4,9 @@
         android:title="共享">
         <Preference android:title="头像">
             <!--不知道能不能用-->
-            <intent android:targetClass="org.mshare.main.ServerAvaterSettingActivity"
-                />
+            <intent android:action="org.mshare.main.ACTION_SERVER_AVATER_SETTING" />
         </Preference>
-        暂时先测试头像的内容
+        <!--暂时先测试头像的内容-->
         <!--<Preference android:title="背景色">-->
             <!--&lt;!&ndash;不知道能不能用&ndash;&gt;-->
             <!--<Intent android:targetClass="org.mshare.main.ServerAvaterSettingActivity"/>-->

@@ -3,8 +3,6 @@ package org.mshare.main;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.media.Image;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,10 +17,16 @@ public class ServerAvaterSettingActivity extends Activity {
 
 	private GridView gridView;
 
+	// 点击情况
+	private int selectPosition;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.server_avater_setting);
+
+		// 默认所选择的position是0
+		selectPosition = 0;
 
 		// 将所需要显示的头像图片预先加载，放在这里加载并不好，容易造成卡顿
 		Bitmap[] bitmaps = new Bitmap[2];
@@ -63,37 +67,59 @@ public class ServerAvaterSettingActivity extends Activity {
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
+
+			// 需要保证对应的Bitmap都是合适的尺寸的内容，那么该怎么做呢？
+
+			Bitmap targetBitmap = bitmaps[position];
+			// 判断是否需要对Bitmap进行处理
+
+			if (position == selectPosition) {
+//				Bitmap bitmapSelected = Bitmap.createBitmap()
+			}
+
 			if (convertView != null) {
 
 				ServerAvaterTag tag = (ServerAvaterTag)convertView.getTag();
-				tag.imageView.setImageBitmap(bitmaps[position]);
+				tag.avater.setImageBitmap(bitmaps[position]);
+				tag.avater.setAvaterSelected(position == selectPosition);
 
 			} else {
 				convertView = LayoutInflater.from(ServerAvaterSettingActivity.this).inflate(R.layout.server_avater_setting_item, null);
 
-				ImageView thumbnail = (ImageView)convertView.findViewById(R.id.server_avater_setting_item_image);
+				ServerAvaterImageView thumbnail = (ServerAvaterImageView)convertView.findViewById(R.id.server_avater_setting_item_image);
 				thumbnail.setImageBitmap(bitmaps[position]);
+				thumbnail.setAvaterSelected(position == selectPosition);
 				// 居中铺满
 				thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
 				ServerAvaterTag tag = new ServerAvaterTag();
-				tag.imageView = thumbnail;
+				tag.avater = thumbnail;
 
 				convertView.setTag(tag);
 			}
+
+
+			// 需要对不同的Bitmap进行处理
+
 			return convertView;
 		}
 	}
 
+	/**
+	 * 当前的点击情况
+	 */
 	private class ServerAvaterItemClickListener implements AdapterView.OnItemClickListener {
 
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			// 没有什么好办法来刷新当前的页面
+
 			// 对应选择的内容
+			selectPosition = position;
 		}
 	}
 
 	private class ServerAvaterTag {
-		private ImageView imageView;
+		private ServerAvaterImageView avater;
 	}
 }
