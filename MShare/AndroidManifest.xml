@@ -36,29 +36,16 @@
             android:name="org.mshare.main.JoinConn"
             android:label="@string/app_name" >
         </activity>
-        <activity
-            android:name="org.mshare.main.NewConn"
-            android:label="@string/app_name" >
-        </activity>
         <!-- 修改服务器配置 -->
         <activity
             android:name="org.mshare.main.ServerSettingActivity"
-			android:label="@string/activity_label_server_setting"
-            android:parentActivityName="org.mshare.main.NewConn" >
-        	<!-- Parent activity meta-data to support API level 7+ -->
-            <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value="org.mshare.main.NewConn" />
+			android:label="@string/activity_label_server_setting" >
 		</activity>
 		
 		<!-- 用于显示登录二维码的Activity -->
 		<activity
             android:name="org.mshare.main.QRCodeConnectActivity"
-            android:label="@string/activity_label_qrcode_connect"
-            android:parentActivityName="org.mshare.main.NewConn" >
-            <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value="org.mshare.main.NewConn" />
+            android:label="@string/activity_label_qrcode_connect">
 		</activity>
 		
 		<!-- 二维码扫描 -->
@@ -66,11 +53,7 @@
             android:name="org.mshare.scan.ScanActivity"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:screenOrientation="portrait"
-            android:parentActivityName="org.mshare.main.NewConn" >
-            <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value="org.mshare.main.NewConn" />
+            android:screenOrientation="portrait">
         </activity>
         
 		<!-- p2p测试用Activiy -->
@@ -120,26 +103,24 @@
 
         <!-- 测试图片显示 -->
 
-        <!-- MainActivity -->
+        <!-- 本地文件浏览 -->
         <activity
             android:name="org.mshare.main.FileBrowserActivity"
             android:label="@string/app_name" >
         </activity>
-        
-        <!-- MainActivity -->
-        <activity
-            android:name="org.mshare.main.MainActivity"
-            android:label="@string/app_name" >
+
+        <activity android:name="org.mshare.main.ServerAvaterSettingActivity"
+            android:label="头像设置">
         </activity>
-        
-        <receiver android:name="org.mshare.file.browser.MShareFileBrowser">
-            <intent-filter>
-                <!-- TODO 新添加了remounted的内容需要测试 -->
-                <action android:name="android.intent.action.MEDIA_REMOUNTED"/>
-                <action android:name="android.intent.action.MEDIA_REMOVED"/>
-            </intent-filter>
-        </receiver>
-        
+        <!---->
+        <!--<receiver android:name="org.mshare.file.browser.MShareFileBrowser">-->
+            <!--<intent-filter>-->
+                <!--&lt;!&ndash; TODO 新添加了remounted的内容需要测试 &ndash;&gt;-->
+                <!--<action android:name="android.intent.action.MEDIA_REMOUNTED"/>-->
+                <!--<action android:name="android.intent.action.MEDIA_REMOVED"/>-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
+        <!---->
         <receiver 
             android:name="org.mshare.server.ftp.RequestStartStopReceiver"
             >

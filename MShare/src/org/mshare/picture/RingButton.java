@@ -26,7 +26,9 @@ public class RingButton extends CanvasElement implements Parcelable {
 	public RingButton() {
 		setClickable(true);
         bounceAnimation = new BounceAnimation();
+		addAnimation(bounceAnimation);
         breatheAnimation = new BreatheAnimation();
+		addAnimation(breatheAnimation);
 	}
 	
 	@Override
@@ -35,6 +37,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		paint.setColor(ringColor);
 		paint.setStyle(Style.STROKE);
 		paint.setStrokeWidth(ringWidth);
+		Log.d(TAG, "draw ring button in center.x:" + center.x + " center.y:" + center.y + " innerRadius:" + innerRadius + " outerRadius:" + outerRadius + " ringWidth:" + ringWidth);
 		canvas.drawCircle(center.x, center.y, (innerRadius + outerRadius) / 2, paint);
 	}
 	
@@ -56,7 +59,9 @@ public class RingButton extends CanvasElement implements Parcelable {
 		if (bounceAnimation == null) {
 			Log.e(TAG, "bounce animation is null, and create a new one");
             bounceAnimation = new BounceAnimation();
+			addAnimation(bounceAnimation);
 		}
+		bounceAnimation.setOriginInnerRadius(innerRadius);
 		bounceAnimation.setTargetInnerRadius(newInnerRadius);
         bounceAnimation.setDuration(duration);
 		Log.d(TAG, "bounce inner radius : " + newInnerRadius + " startTime : " + startTime);
@@ -81,7 +86,9 @@ public class RingButton extends CanvasElement implements Parcelable {
 		if (breatheAnimation == null) {
 			Log.e(TAG, "breathe animation is null, create one now");
             breatheAnimation = new BreatheAnimation();
+			addAnimation(breatheAnimation);
 		}
+
 		breatheAnimation.setTargetOuterRadius(targetOuterRadius);
         breatheAnimation.setDuration(duration);
 		Log.d(TAG, "bounce outer radius : " + targetOuterRadius + " startTime : " + startTime);
@@ -187,12 +194,12 @@ public class RingButton extends CanvasElement implements Parcelable {
 		int originInnerRadius;
 		
 		public BounceAnimation() {
-			this.originInnerRadius = innerRadius;
 			setInterpolator(new BounceInterpolator());
 		}
 		
 		@Override
 		public void doAnimation(float ratio) {
+			Log.d(TAG, "bounce animation ratio : " + ratio);
 			innerRadius = originInnerRadius + (int)((targetInnerRadius - originInnerRadius) * ratio);
 		}
 
@@ -202,6 +209,14 @@ public class RingButton extends CanvasElement implements Parcelable {
 
 		public void setTargetInnerRadius(int targetInnerRadius) {
 			this.targetInnerRadius = targetInnerRadius;
+		}
+
+		public int getOriginInnerRadius() {
+			return originInnerRadius;
+		}
+
+		public void setOriginInnerRadius(int originInnerRadius) {
+			this.originInnerRadius = originInnerRadius;
 		}
 
 		@Override
@@ -214,7 +229,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		public void onStop() {
 			setClickable(true);
             // ÷ÿ÷√ƒ⁄»›
-            innerRadius = originInnerRadius;
+//            innerRadius = originInnerRadius;
 			super.onStop();
 		}
 	}

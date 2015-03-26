@@ -22,11 +22,12 @@ public class PictureBackground extends CanvasElement {
 	public PictureBackground() {
         setClickable(false);
         colorAnimation = new ColorAnimation();
+		addAnimation(colorAnimation);
 	}
 	
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
-		Log.d(TAG, "PictureBackground color : " + Integer.toHexString(currentColor));
+		Log.d(TAG, "PictureBackground color paint : " + Integer.toHexString(currentColor));
 		canvas.drawColor(currentColor);
 	}
 
@@ -67,6 +68,7 @@ public class PictureBackground extends CanvasElement {
         if (colorAnimation == null) {
             Log.e(TAG, "color animation is null, and create a new one");
             colorAnimation = new ColorAnimation();
+			addAnimation(colorAnimation);
         }
 
         colorAnimation.setStartColor(startColor);

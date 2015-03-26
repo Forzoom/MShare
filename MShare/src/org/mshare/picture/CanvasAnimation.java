@@ -47,7 +47,7 @@ public abstract class CanvasAnimation {
 	}
 	
 	/**
-	 *  调用用来改变内容
+	 * 调用用来改变内容
 	 * @param ratio 当前动画的进度
 	 */
 	public abstract void doAnimation(float ratio);
