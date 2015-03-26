@@ -54,9 +54,10 @@ public class SettingsButton extends CanvasElement {
 
     // 当前默认的AlphaAnimation
     public AlphaAnimation getDefaultAlphaAnimation() {
-        AlphaAnimation animation = new AlphaAnimation(this, 223);
-        animation.setDuration(300);
-        return animation;
+        AlphaAnimation alphaAnimation = new AlphaAnimation(this, 223);
+		addAnimation(alphaAnimation);
+        alphaAnimation.setDuration(300);
+        return alphaAnimation;
     }
 
     public void startAlphaAnimation(int targetAlpha) {
@@ -102,13 +103,8 @@ public class SettingsButton extends CanvasElement {
 		private int originAlpha = 255;
 		
 		public AlphaAnimation(CanvasElement owner, int targetAlpha) {
-			super(owner);
 			this.targetAlpha = targetAlpha;
-		}
-
-		public AlphaAnimation(CanvasElement owner) {
-			super(owner);
-			setInterpolator(new BounceInterpolator());
+            setInterpolator(new BounceInterpolator());
 		}
 
         @Override

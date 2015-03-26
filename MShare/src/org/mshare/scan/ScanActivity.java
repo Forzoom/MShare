@@ -43,7 +43,8 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 	private boolean hasSurface;
 	private DecodeThread decodeThread;
 	private ViewfinderView viewfinderView;
-	
+
+    // 保存连接信息
 	public static final String EXTRA_CONNECT_INFO = "connect_info";
 	
 	@Override
@@ -68,16 +69,6 @@ public class ScanActivity extends Activity implements SurfaceHolder.Callback {
 		decodeThread = new DecodeThread(this, null, null, new ViewfinderResultPointCallback(viewfinderView));
 		decodeThread.start();
 
-
-		Button button = (Button)findViewById(R.id.take_picture);
-		button.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				cameraManager.requestPreviewFrame(decodeThread.getHandler(), DecodeHandler.WHAT_DECODE);
-			}
-		});
-		
 		// 在3.0的版本之前需要下面的代码
 		// 在正式发布的时候应当删除
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {

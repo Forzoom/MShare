@@ -1405,7 +1405,6 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	@Override
 	public void onCrumbClick(FileBrowserFile file) {
-		// TODO Auto-generated method stub
 		Log.d(TAG, "onCrumbClick" + file.getName());
 		String path = file.getAbsolutePath();
 		executeCWDRequest(path);
@@ -1413,13 +1412,11 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	@Override
 	public void onBackButtonClick(FileBrowserFile file) {
-		// TODO Auto-generated method stub
 		executeCDURequest();
 	}
 
 	@Override
 	public void onItemClick(FileBrowserFile file) {
-		// TODO Auto-generated method stub
 		selectedFile = (FTPFile) file;
 		String fileName = file.getName();
 		Log.v("Path", fileName);
@@ -1447,7 +1444,6 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	@Override
 	public void onItemLongClick(FileBrowserFile file) {
-		// TODO Auto-generated method stub
 		Log.d(TAG, "onItemLongClick");
 		mshareFileMenu1.hideAnimation();
 		mshareFileMenu2.showAnimation();
@@ -1456,13 +1452,11 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	@Override
 	public void onGridViewClick() {
-		// TODO Auto-generated method stub
 		remoteBrowser.quitMultiSelectMode();
 	}
 
 	@Override
 	public void onRefreshButtonClick(FileBrowserFile file) {
-		// TODO Auto-generated method stub
 		String path = file.getAbsolutePath();
 		executeCWDRequest(path);
 	}

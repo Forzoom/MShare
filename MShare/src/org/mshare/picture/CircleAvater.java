@@ -14,8 +14,10 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Xfermode;
 import android.graphics.Bitmap.Config;
+import android.util.Log;
 
 public class CircleAvater extends CanvasElement {
+	private static final String TAG = CircleAvater.class.getSimpleName();
 
 	private Point center;
 	private int radius;
@@ -30,6 +32,7 @@ public class CircleAvater extends CanvasElement {
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
         if (center != null) {
+			Log.d(TAG, "draw circle avater in center.x :" + center.x + " center.y :" + center.y);
             canvas.drawBitmap(avater, center.x - radius, center.y - radius, paint);
         }
 

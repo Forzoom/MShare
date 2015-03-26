@@ -34,7 +34,7 @@ public class MshareFileMenu {
 		textView.setText(str);
 		
 		ImageView imageView = (ImageView)view.findViewById(R.id.menu_image);
-		imageView.setBackgroundResource(src);
+		imageView.setImageResource(src);
 		
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 		lp.weight = 1;
@@ -53,7 +53,7 @@ public class MshareFileMenu {
 		View menuItem = LayoutInflater.from(this.context).inflate(R.layout.menu_button_no_text, null);
 		
 		ImageView imageView = (ImageView)menuItem.findViewById(R.id.menu_image);
-		imageView.setBackgroundResource(resId);
+		imageView.setImageResource(resId);
 		
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 		lp.weight = 1;

@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.mshare.ftp.server.SessionThread;
-
 import android.util.Log;
 /**
  * 在SharedPreferences中所保存的realPath的值为""

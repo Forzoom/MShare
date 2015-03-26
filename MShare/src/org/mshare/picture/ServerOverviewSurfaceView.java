@@ -222,7 +222,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		isLooping = false;
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
-			Log.d(TAG, "draw");
+			Log.d(TAG, "surface view draw");
 			element.draw(canvas, canvasPaint);
 			if (element.hasAnimation()) {
 				isLooping = true;
@@ -264,20 +264,16 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         long startTime = System.currentTimeMillis();
 
         pictureBackground.stopColorAnimation();
-        CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
-        if (colorAnimation != null) {
-            colorAnimation.setDuration(500);
-        }
-        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStartColor(), startTime);
+        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStartColor(), startTime, 500);
 
         // 处理呼吸动画效果
         serverButton.stopBreatheAnimation();
+        // 等待这一次的动画结束
         CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
         if (breatheAnimation != null) {
-            breatheAnimation.setDuration(3000);
             breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_INFINITE);
         }
-        serverButton.startBreatheAnimation(getServerOuterRadius(), startTime);
+        serverButton.startBreatheAnimation(getServerOuterRadius(), startTime, 3000);
 
     }
 
@@ -285,11 +281,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
     public void stopServerAniamtion() {
         // 调整背景颜色
         pictureBackground.stopColorAnimation();
-        CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
-        if (colorAnimation != null) {
-            colorAnimation.setDuration(500);
-        }
-        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStopColor());
+        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStopColor(), System.currentTimeMillis(), 500);
 
         // 调整呼吸动画
         CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();

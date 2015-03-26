@@ -1,7 +1,7 @@
 package de.kp.net.rtsp.client;
 
 import java.net.URI;
-import de.kp.net.rtsp.RtspConstants;
+import org.mshare.server.rtsp.RtspConstants;
 import de.kp.net.rtsp.client.api.RequestListener;
 import de.kp.net.rtsp.client.api.Request;
 import de.kp.net.rtsp.client.api.Response;

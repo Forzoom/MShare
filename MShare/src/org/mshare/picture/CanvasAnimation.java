@@ -25,18 +25,12 @@ public abstract class CanvasAnimation {
 	public static int DURATION_UNSET = -1;
 	// 动画执行时间
 	private int duration = DURATION_UNSET;
-	
-	private CanvasElement owner;
-	
+
 	public static final int REPEAT_MODE_ONCE = 0;
 	public static final int REPEAT_MODE_INFINITE = 1;
 	
 	private int repeatMode = REPEAT_MODE_ONCE;
-	
-	public CanvasAnimation(CanvasElement owner) {
-		this.owner= owner; 
-	}
-	
+
 	/**
 	 * 在调用doAnimation之前使用interpolator进行变速
 	 * @param ratio
@@ -53,7 +47,7 @@ public abstract class CanvasAnimation {
 	}
 	
 	/**
-	 *  调用用来改变内容
+	 * 调用用来改变内容
 	 * @param ratio 当前动画的进度
 	 */
 	public abstract void doAnimation(float ratio);

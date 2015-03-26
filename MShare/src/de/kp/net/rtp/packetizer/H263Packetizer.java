@@ -8,7 +8,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import de.kp.net.rtp.RtpPacket;
 import de.kp.net.rtp.RtpSender;
-import de.kp.net.rtsp.RtspConstants;
+import org.mshare.server.rtsp.RtspConstants;
 
 public class H263Packetizer extends AbstractPacketizer implements Runnable {
 

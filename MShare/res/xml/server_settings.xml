@@ -2,6 +2,16 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <PreferenceCategory
         android:title="共享">
+        <Preference android:title="头像">
+            <intent android:action="org.mshare.main.ACTION_SERVER_AVATER_SETTING"
+                android:targetPackage="org.mshare.main"
+                android:targetClass="org.mshare.main.ServerAvaterSettingActivity" />
+        </Preference>
+        <!--暂时先测试头像的内容-->
+        <!--<Preference android:title="背景色">-->
+            <!--&lt;!&ndash;不知道能不能用&ndash;&gt;-->
+            <!--<Intent android:targetClass="org.mshare.main.ServerAvaterSettingActivity"/>-->
+        <!--</Preference>-->
         <EditTextPreference 
             android:key="nickname"
             android:title="昵称"
@@ -19,5 +29,4 @@
             android:summary="让文件共享更加安全，但会影响传输的速度"
             android:defaultValue="false"/>
     </PreferenceCategory>
-
 </PreferenceScreen>
