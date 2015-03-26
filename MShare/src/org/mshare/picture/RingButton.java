@@ -89,6 +89,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 			addAnimation(breatheAnimation);
 		}
 
+		breatheAnimation.setOriginOuterRadius(outerRadius);
 		breatheAnimation.setTargetOuterRadius(targetOuterRadius);
         breatheAnimation.setDuration(duration);
 		Log.d(TAG, "bounce outer radius : " + targetOuterRadius + " startTime : " + startTime);
@@ -106,16 +107,16 @@ public class RingButton extends CanvasElement implements Parcelable {
 
 	public BounceAnimation getBounceAnimation() {
         // surface没有创建的时候，将不能对animation进行操作
-        if (!canRefresh()) {
-            return null;
-        }
+//        if (!canRefresh()) {
+//            return null;
+//        }
 		return bounceAnimation;
 	}
 
 	public BreatheAnimation getBreatheAnimation() {
-        if (!canRefresh()) {
-            return null;
-        }
+//        if (!canRefresh()) {
+//            return null;
+//        }
 		return breatheAnimation;
 	}
 
@@ -161,7 +162,6 @@ public class RingButton extends CanvasElement implements Parcelable {
 		private int originOuterRadius;
 		
 		public BreatheAnimation() {
-			this.originOuterRadius = outerRadius;
 			setInterpolator(new BreatheInterpolator());
 		}
 		
@@ -176,6 +176,14 @@ public class RingButton extends CanvasElement implements Parcelable {
 
 		public void setTargetOuterRadius(int targetOuterRadius) {
 			this.targetOuterRadius = targetOuterRadius;
+		}
+
+		public int getOriginOuterRadius() {
+			return originOuterRadius;
+		}
+
+		public void setOriginOuterRadius(int originOuterRadius) {
+			this.originOuterRadius = originOuterRadius;
 		}
 
         @Override

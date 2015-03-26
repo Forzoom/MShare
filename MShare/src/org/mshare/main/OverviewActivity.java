@@ -153,6 +153,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// 二维码按钮
 		menuInStart.addButton(R.drawable.icon_folder, new LocalFileBrowserListener());
 		menuInStart.addButton(R.drawable.qrcode, new QrcodeViewListener());
+		menuInStart.addButton(R.drawable.qrcode, new BasicViewListener());
 		
 		// 设置surfaceView
 		surfaceView = (ServerOverviewSurfaceView)findViewById(R.id.server_overview_surface_view);
@@ -721,7 +722,17 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			
 		}
 	}
-	
+
+	private class BasicViewListener implements View.OnClickListener {
+
+		@Override
+		public void onClick(View v) {
+			// 启动
+			Intent startBasicIntent = new Intent(OverviewActivity.this, BasicConnectActivity.class);
+			startActivity(startBasicIntent);
+		}
+	}
+
 	/* 通过反射机制调用AP开启功能 */
 //	WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
 //	

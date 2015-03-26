@@ -81,10 +81,10 @@ public class SettingsButton extends CanvasElement {
 	}
 
 	public AlphaAnimation getAlphaAnimation() {
-		if (!canRefresh()) {
-            Log.e(TAG, "cannot get animation now!");
-            return null;
-        }
+//		if (!canRefresh()) {
+//            Log.e(TAG, "cannot get animation now!");
+//            return null;
+//        }
         return alphaAnimation;
 	}
 	

@@ -309,7 +309,6 @@ public class SessionThread extends Thread {
                     if (FtpCmd.isFtpCmd(line)) {
                         FtpCmd.dispatchCommand(this, line);
                     } else if (RtspCmd.isRtspCmd(line)) {
-
                         RtspCmd.dispatchCmd(this, line);
                     }
 

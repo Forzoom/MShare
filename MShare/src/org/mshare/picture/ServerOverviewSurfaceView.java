@@ -222,7 +222,6 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		isLooping = false;
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
-			Log.d(TAG, "surface view draw");
 			element.draw(canvas, canvasPaint);
 			if (element.hasAnimation()) {
 				isLooping = true;
