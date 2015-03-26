@@ -62,6 +62,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		if (bounceAnimation == null) {
 			Log.d(TAG, "bounce animation is null");
             bounceAnimation = new BounceAnimation(this, newInnerRadius);
+            bounceAnimation.setDuration(500);
 			return;
 		}
 		bounceAnimation.setTargetInnerRadius(newInnerRadius);
@@ -95,6 +96,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		if (breatheAnimation == null) {
 			Log.d(TAG, "breathe animation is null");
             breatheAnimation = new BreatheAnimation(this, targetOuterRadius);
+            breatheAnimation.setDuration(3000);
 			return;
 		}
 		breatheAnimation.setTargetOuterRadius(targetOuterRadius);

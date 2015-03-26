@@ -104,8 +104,6 @@ public class ServerService extends Service implements Runnable {
     private WakeLock wakeLock;
     private WifiLock wifiLock = null;
     
-    private static AccountFactory mAccountFactory;
-    
     // 管理Session的控制器
     private SessionController sessionController;
     // 用于通知线程新消息
@@ -153,12 +151,10 @@ public class ServerService extends Service implements Runnable {
         // 创建SessionController，并绑定SessionNotifier
         sessionController = new SessionController();
         sessionNotifier = new SessionNotifier(sessionController);
-        if (mAccountFactory == null) {
-        	Log.e(TAG, "AccountFactory is null until onStartCommand!");
-        }
-        mAccountFactory.bindSessionNotifier(sessionNotifier);
+        
+        AccountFactory.getInstance().bindSessionNotifier(sessionNotifier);
         // 设置验证器
-        sessionController.setVerifier(mAccountFactory.getVerifier());
+        sessionController.setVerifier(AccountFactory.getInstance().getVerifier());
         
         // 启动服务器线程
         Log.d(TAG, "Creating server thread");
@@ -241,9 +237,7 @@ public class ServerService extends Service implements Runnable {
             wakeLock = null;
         }
         
-        if (mAccountFactory != null) {
-        	mAccountFactory.releaseSessionNotifier();
-        }
+        AccountFactory.getInstance().releaseSessionNotifier();
 
         // 停止rtsp服务器
         rtspServer.stop();
@@ -493,7 +487,7 @@ public class ServerService extends Service implements Runnable {
 
     // 判断指定的文件是否是共享文件
     public static boolean isFileShared(File file) {
-    	return mAccountFactory.isFileShared(file);
+    	return AccountFactory.getInstance().isFileShared(file);
     }
 
     @Override

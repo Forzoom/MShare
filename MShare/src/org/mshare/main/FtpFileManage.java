@@ -1434,7 +1434,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
                 Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
                 String host = mFTPHost;
                 String port = "5544";
-                String rtspUriString = "rtsp://" + host + ":" + port + file.getAbsolutePath();
+                String rtspUriString = "rtsp://" + host + ":" + port + "/dog.mp4";
                 Log.d(TAG, "rtspUriString :" + rtspUriString);
                 startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
                 startActivity(startPlayActivity);

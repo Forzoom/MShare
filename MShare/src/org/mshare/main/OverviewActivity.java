@@ -660,8 +660,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
             // 启动了bounceAnimation
             RingButton serverButton = surfaceView.getServerButton();
 			serverButton.stopBounceAnimation();
-			CanvasAnimation bounceAnimation = serverButton.getBounceAnimation();
-			bounceAnimation.setDuration(500);
 			serverButton.startBounceAnimation(surfaceView.getServerInnerRadius(), startTime);
 			
 			// 修改服务器状态、启动或关闭服务器
@@ -676,8 +674,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			// 修改背景色到执行状态
             PictureBackground pictureBackground = surfaceView.getPictureBackground();
 		    pictureBackground.stopColorAnimation();
-			CanvasAnimation colorAnimation = pictureBackground.getColorAnimation();
-			colorAnimation.setDuration(500);
 			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime);
 		}
 	}
