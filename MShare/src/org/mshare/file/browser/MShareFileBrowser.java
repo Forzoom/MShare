@@ -2,7 +2,6 @@ package org.mshare.file.browser;
 
 import java.io.File;
 import java.util.ArrayList;
-
 import org.mshare.main.*;
 import org.mshare.file.browser.MShareFileAdapter.ItemContainer;
 import org.mshare.main.R;
