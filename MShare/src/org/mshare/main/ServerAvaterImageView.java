@@ -13,19 +13,33 @@ import android.widget.ImageView;
 public class ServerAvaterImageView extends ImageView {
 	private static final String TAG = ServerAvaterImageView.class.getSimpleName();
 
+	private Paint paint = new Paint();
+
 	// 判断当前是否被选择
 	private boolean isAvaterSelected = false;
 
 	public ServerAvaterImageView(Context context) {
 		super(context);
+		init();
 	}
 
 	public ServerAvaterImageView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		init();
 	}
 
 	public ServerAvaterImageView(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
+		init();
+	}
+
+	public void init() {
+
+		paint.setAntiAlias(true);
+		// 设置边框的颜色
+		int redColor = getResources().getColor(R.color.red08);
+		paint.setColor(redColor);
+
 	}
 
 	@Override
@@ -35,20 +49,19 @@ public class ServerAvaterImageView extends ImageView {
 
 		// 需要使用自己的判断内容
 
-		// 绘制边框
-		int borderWidth = 5;
-		int canvasWidth = canvas.getWidth();
-		int canvasHeight = canvas.getHeight();
+		if (isAvaterSelected()) { // 如果当前ImageView被选中
+			// 绘制边框
+			int borderWidth = 5;
+			int canvasWidth = canvas.getWidth();
+			int canvasHeight = canvas.getHeight();
 
-		Paint paint = new Paint();
-		paint.setAntiAlias(true);
-
-		// 绘制左右两竖
-		canvas.drawRect(0, 0, borderWidth, canvasWidth, paint);
-		canvas.drawRect(canvasWidth - borderWidth, 0, canvasWidth, canvasHeight, paint);
-		// 绘制上下
-		canvas.drawRect(borderWidth, 0, canvasWidth - borderWidth, borderWidth, paint);
-		canvas.drawRect(borderWidth, canvasHeight - borderWidth, canvasWidth - borderWidth, canvasHeight, paint);
+			// 绘制左右两竖
+			canvas.drawRect(0, 0, borderWidth, canvasWidth, paint);
+			canvas.drawRect(canvasWidth - borderWidth, 0, canvasWidth, canvasHeight, paint);
+			// 绘制上下
+			canvas.drawRect(borderWidth, 0, canvasWidth - borderWidth, borderWidth, paint);
+			canvas.drawRect(borderWidth, canvasHeight - borderWidth, canvasWidth - borderWidth, canvasHeight, paint);
+		}
 	}
 
 	// 设置当前是否被选择

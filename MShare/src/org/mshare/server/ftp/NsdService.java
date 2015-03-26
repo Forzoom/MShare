@@ -20,6 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.server.ftp;
 
 import org.mshare.main.R;
+import org.mshare.server.ServerSettings;
 
 import android.annotation.TargetApi;
 import android.app.Service;
@@ -102,7 +103,7 @@ public class NsdService extends Service {
         final NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(FTP_SERVICE_TYPE);
-        serviceInfo.setPort(FtpSettings.getPort());
+        serviceInfo.setPort(ServerSettings.getPort());
 
         new Thread(new Runnable() {
             @Override

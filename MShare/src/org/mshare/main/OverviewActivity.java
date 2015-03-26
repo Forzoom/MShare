@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mshare.file.MshareFileMenu;
-import org.mshare.server.ftp.FtpSettings;
+import org.mshare.server.ServerSettings;
 import org.mshare.server.ftp.ServerService;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
@@ -504,7 +504,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
 
 		// 当前上传路径
-//		uploadPathView.setText(FtpSettings.getUpload());
+//		uploadPathView.setText(ServerSettings.getUpload());
 		statusController.registerReceiver();
 	}
 	
@@ -705,9 +705,9 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			// 暂时在这里判断服务器是否正在运行，只有当服务器争取额运行的时候才能够打开qrcode
 			if (ServerService.isRunning()) {
 				String host = ServerService.getLocalInetAddress().toString();
-				String port = String.valueOf(FtpSettings.getPort());
-				String username = FtpSettings.getUsername();
-				String password = FtpSettings.getPassword();
+				String port = String.valueOf(ServerSettings.getPort());
+				String username = ServerSettings.getUsername();
+				String password = ServerSettings.getPassword();
 				
 				ConnectInfo connectInfo = new ConnectInfo(host, port, username, password);
 				

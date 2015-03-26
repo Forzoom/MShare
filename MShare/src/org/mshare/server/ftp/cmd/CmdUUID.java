@@ -3,7 +3,7 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.FtpSettings;
+import org.mshare.server.ServerSettings;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdUUID extends FtpCmd implements Runnable {
@@ -20,7 +20,7 @@ public class CmdUUID extends FtpCmd implements Runnable {
 	public void run() {
 		Log.d(TAG, "UUID executing");
 		
-		sessionThread.writeString("211 " + FtpSettings.getUUID() + "\r\n");
+		sessionThread.writeString("211 " + ServerSettings.getUUID() + "\r\n");
 		
 		Log.d(TAG, "UUID finished");
 	}

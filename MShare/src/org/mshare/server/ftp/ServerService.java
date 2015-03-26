@@ -54,8 +54,9 @@ import org.mshare.account.AccountFactory.Token;
 import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
+import org.mshare.server.ServerSettings;
 import org.mshare.server.rtsp.RtspConstants;
-import org.mshare.server.rtsp.RtspServer;
+
 import de.kp.rtspcamera.MediaConstants;
 
 /**
@@ -127,18 +128,18 @@ public class ServerService extends Service implements Runnable {
 
         // 创建nickname
         SharedPreferences defaultSp = PreferenceManager.getDefaultSharedPreferences(this);
-        String nickName = defaultSp.getString(FtpSettings.KEY_NICKNAME, FtpSettings.VALUE_NICKNAME_DEFAULT);
+        String nickName = defaultSp.getString(ServerSettings.KEY_NICKNAME, ServerSettings.VALUE_NICKNAME_DEFAULT);
         if (nickName.equals("")) {// 当前nickName仍是默认的""
         	Editor editor = defaultSp.edit();
         	// 修改为设备名称
-        	editor.putString(FtpSettings.KEY_NICKNAME, Build.MODEL);
+        	editor.putString(ServerSettings.KEY_NICKNAME, Build.MODEL);
         	editor.commit();
         }
         
         // 创建uuid
-        if (FtpSettings.getUUID().equals(FtpSettings.VALUE_UUID_DEFAULT)) {
+        if (ServerSettings.getUUID().equals(ServerSettings.VALUE_UUID_DEFAULT)) {
         	String uuid = UUID.randomUUID().toString();
-        	FtpSettings.setUUID(uuid);
+        	ServerSettings.setUUID(uuid);
         }
         
         // 创建SessionController，并绑定SessionNotifier
@@ -237,7 +238,7 @@ public class ServerService extends Service implements Runnable {
         // 允许出于TIME_WAIT状态的Socket连接下一个内容
         listenSocket.setReuseAddress(true);
         // 将其绑定到特定的端口号上
-        listenSocket.bind(new InetSocketAddress(FtpSettings.getPort()));
+        listenSocket.bind(new InetSocketAddress(ServerSettings.getPort()));
     }
 
     /**
@@ -332,7 +333,7 @@ public class ServerService extends Service implements Runnable {
     private void takeWakeLock() {
         if (wakeLock == null) {
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            if (FtpSettings.shouldTakeFullWakeLock()) {
+            if (ServerSettings.shouldTakeFullWakeLock()) {
                 Log.d(TAG, "takeWakeLock: Taking full wake lock");
                 wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
             } else {

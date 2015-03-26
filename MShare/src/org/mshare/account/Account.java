@@ -24,7 +24,7 @@ import java.io.File;
 import org.mshare.file.share.SharedLinkStorage;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.server.ftp.FtpSettings;
+import org.mshare.server.ServerSettings;
 
 import android.util.Log;
 
@@ -132,7 +132,7 @@ public abstract class Account {
 	 * @return
 	 */
 	public String getUpload() {
-		return getStorage().get(KEY_UPLOAD, FtpSettings.getUpload() + File.separator + getUsername());
+		return getStorage().get(KEY_UPLOAD, ServerSettings.getUpload() + File.separator + getUsername());
 	}
 	
 	/**

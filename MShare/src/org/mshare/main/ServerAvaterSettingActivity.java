@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -90,7 +91,7 @@ public class ServerAvaterSettingActivity extends Activity {
 				thumbnail.setImageBitmap(bitmaps[position]);
 				thumbnail.setAvaterSelected(position == selectPosition);
 				// 居中铺满
-				thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
+				thumbnail.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
 				ServerAvaterTag tag = new ServerAvaterTag();
 				tag.avater = thumbnail;
@@ -112,10 +113,14 @@ public class ServerAvaterSettingActivity extends Activity {
 
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			// 没有什么好办法来刷新当前的页面
-
 			// 对应选择的内容
 			selectPosition = position;
+
+
+			// 尝试view是否是ImageView
+			if (view instanceof ServerAvaterImageView) {
+				Log.e(TAG, "special tag, removed later! the view is a imageView, nice!");
+			}
 		}
 	}
 

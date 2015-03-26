@@ -1,8 +1,8 @@
 package org.mshare.server.ftp.cmd;
 
 import org.mshare.main.MShareApp;
+import org.mshare.server.ServerSettings;
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.FtpSettings;
 import org.mshare.server.ftp.SessionThread;
 
 import android.content.Context;
@@ -23,7 +23,7 @@ public class CmdNINA extends FtpCmd {
 		Context context = MShareApp.getAppContext();
 		
 		// 获得配置文件的内容
-		String nickName = PreferenceManager.getDefaultSharedPreferences(context).getString(FtpSettings.KEY_NICKNAME, FtpSettings.VALUE_NICKNAME_DEFAULT);
+		String nickName = PreferenceManager.getDefaultSharedPreferences(context).getString(ServerSettings.KEY_NICKNAME, ServerSettings.VALUE_NICKNAME_DEFAULT);
 		
 		// 如何在没有设置的情况下获得用户的名称
 				

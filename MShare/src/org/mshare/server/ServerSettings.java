@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package org.mshare.server.ftp;
+package org.mshare.server;
 
 import java.io.File;
 
@@ -34,9 +34,9 @@ import org.mshare.main.MShareApp;
  * @author HM
  *
  */
-public class FtpSettings {
+public class ServerSettings {
 
-    private static final String TAG = FtpSettings.class.getSimpleName();
+    private static final String TAG = ServerSettings.class.getSimpleName();
     public static final String KEY_USERNAME = "username";
     public static final String VALUE_USERNAME_DEFAULT = "username";
     public static final String KEY_PASSWORD = "password";
@@ -64,7 +64,11 @@ public class FtpSettings {
     
     public static final String KEY_NICKNAME = "nickname";
     public static final String VALUE_NICKNAME_DEFAULT = "nickname";
-    
+
+	// 对应的头像
+	public static final String KEY_AVATER = "avater";
+	public static final String VALUE_AVATER_DEFAULT = "";
+
     /**
      * 获得用户名称
      * @return
@@ -208,7 +212,7 @@ public class FtpSettings {
     }
 
     public static void setInputBufferSize(int inputBufferSize) {
-        FtpSettings.inputBufferSize = inputBufferSize;
+        ServerSettings.inputBufferSize = inputBufferSize;
     }
 
     public static boolean isAllowOverwrite() {
@@ -216,7 +220,7 @@ public class FtpSettings {
     }
 
     public static void setAllowOverwrite(boolean allowOverwrite) {
-        FtpSettings.allowOverwrite = allowOverwrite;
+        ServerSettings.allowOverwrite = allowOverwrite;
     }
 
     public static int getDataChunkSize() {
@@ -224,7 +228,7 @@ public class FtpSettings {
     }
 
     public static void setDataChunkSize(int dataChunkSize) {
-        FtpSettings.dataChunkSize = dataChunkSize;
+        ServerSettings.dataChunkSize = dataChunkSize;
     }
 
     public static int getSessionMonitorScrollBack() {
@@ -232,7 +236,7 @@ public class FtpSettings {
     }
 
     public static void setSessionMonitorScrollBack(int sessionMonitorScrollBack) {
-        FtpSettings.sessionMonitorScrollBack = sessionMonitorScrollBack;
+        ServerSettings.sessionMonitorScrollBack = sessionMonitorScrollBack;
     }
 
     public static int getServerLogScrollBack() {
@@ -240,7 +244,7 @@ public class FtpSettings {
     }
 
     public static void setLogScrollBack(int serverLogScrollBack) {
-        FtpSettings.serverLogScrollBack = serverLogScrollBack;
+        ServerSettings.serverLogScrollBack = serverLogScrollBack;
     }
 
 }

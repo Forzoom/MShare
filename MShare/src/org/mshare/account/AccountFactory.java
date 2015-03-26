@@ -8,7 +8,7 @@ import java.util.Set;
 import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.server.ftp.FtpSettings;
+import org.mshare.server.ServerSettings;
 import org.mshare.server.ftp.SessionNotifier;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.main.MShareApp;
@@ -177,7 +177,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		if (username != null && !account.isGuest() && password != null && password.equals(correctPassword)) {
 			Log.d(TAG, "User logged in");
 			return true;
-		} else if (FtpSettings.allowAnoymous() && correctUsername.equals(AccountFactory.AnonymousUsername)) {
+		} else if (ServerSettings.allowAnoymous() && correctUsername.equals(AccountFactory.AnonymousUsername)) {
 			// 设置权限为匿名账户权限
 			Log.i(TAG, "Guest logged in with password: " + password);
 			return true;
@@ -252,12 +252,12 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		}
 		
 		// 检测默认普通账户
-		if (!isAccountExists(context, FtpSettings.getUsername())) {
+		if (!isAccountExists(context, ServerSettings.getUsername())) {
 			
 			Log.d(TAG, "当前默认账户信息不存在");
 			Log.d(TAG, "+默认账户");
 			int permission = Permission.PERMISSION_READ | Permission.PERMISSION_WRITE;
-			boolean registerResult = AccountFactory.register(FtpSettings.getUsername(), FtpSettings.getPassword(), permission);
+			boolean registerResult = AccountFactory.register(ServerSettings.getUsername(), ServerSettings.getPassword(), permission);
 			Log.d(TAG, "默认账户, 结果:" + registerResult);
 		} else {
 			Log.d(TAG, "当前默认账户信息存在");

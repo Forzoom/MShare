@@ -246,7 +246,7 @@ public abstract class FtpCmd implements Runnable {
 //        try {
 //            if (param.charAt(0) == '/') {
 //                // The STOR contained an absolute path
-//                File chroot = FtpSettings.getRootDir();
+//                File chroot = ServerSettings.getRootDir();
 //                return new File(chroot, param);
 //            }
 //        } catch (Exception e) {
