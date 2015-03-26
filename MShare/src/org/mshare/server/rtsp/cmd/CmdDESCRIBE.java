@@ -171,27 +171,28 @@ public class CmdDESCRIBE extends RtspCmd {
 			Log.d(TAG, "try to get the file : " + fileName);
 			// TODO 需要保证所对应的是相对路径，以反斜杠开头？
 
-			Token token = sessionThread.getToken();
-			if (token == null || !token.isValid()) {
-				Log.e(TAG, "maybe has not authorized!");
-				sessionThread.writeString(errString);
-				break mainblock;
-			}
-
-			// 获得对应文件对象
-			SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
-			if (sharedLink == null) {
-				Log.e(TAG, "something wrong is happen, the file is null!");
-				sessionThread.writeString(errString);
-				break mainblock;
-			} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
-				Log.e(TAG, "the file is not a file!");
-				sessionThread.writeString(errString);
-				break mainblock;
-			}
-
-			// 获得文件流
-			File file = sharedLink.getRealFile();
+//			Token token = sessionThread.getToken();
+//			if (token == null || !token.isValid()) {
+//				Log.e(TAG, "maybe has not authorized!");
+//				sessionThread.writeString(errString);
+//				break mainblock;
+//			}
+//
+//			// 获得对应文件对象
+//			SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
+//			if (sharedLink == null) {
+//				Log.e(TAG, "something wrong is happen, the file is null!");
+//				sessionThread.writeString(errString);
+//				break mainblock;
+//			} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
+//				Log.e(TAG, "the file is not a file!");
+//				sessionThread.writeString(errString);
+//				break mainblock;
+//			}
+//
+//			// 获得文件流
+//			File file = sharedLink.getRealFile();
+			File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dog.mp4");
 			try {
 				sessionThread.setVideoInputStream(new FileInputStream(file));
 			} catch (FileNotFoundException e) {

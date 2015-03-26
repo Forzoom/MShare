@@ -141,12 +141,10 @@ final class DecodeHandler extends Handler {
 				activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
 			}
 			
-			
-			
 		} else {
 			Log.e(TAG, "fail, request again!");
 			Log.d(TAG, "request again preview frame in DecodeHandler, handler:" + this + " message:" + WHAT_DECODE);
-//			activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
+			activity.getCameraManager().requestPreviewFrame(this, WHAT_DECODE);
 		}
 
 	}

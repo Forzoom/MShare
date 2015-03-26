@@ -219,7 +219,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 				return;
 			}
 			
-			ConnectInfo connectInfo = ConnectInfo.parse(intent.getStringExtra("result"));
+			ConnectInfo connectInfo = intent.getParcelableExtra(ScanActivity.EXTRA_CONNECT_INFO);
 			
 			String port = connectInfo.getPort();
 			String host = connectInfo.getHost();
@@ -704,7 +704,8 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			
 			// 暂时在这里判断服务器是否正在运行，只有当服务器争取额运行的时候才能够打开qrcode
 			if (ServerService.isRunning()) {
-				String host = ServerService.getLocalInetAddress().toString();
+				String host = ServerService.getLocalInetAddress().toString().substring(1);
+				Log.d(TAG, "special log: " + host);
 				String port = String.valueOf(ServerSettings.getPort());
 				String username = ServerSettings.getUsername();
 				String password = ServerSettings.getPassword();
