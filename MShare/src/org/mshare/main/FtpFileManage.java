@@ -1512,7 +1512,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		private void setMenu1() {
 			this.mshareFileMenu1 = new MshareFileMenu(this, this.menuLayout);
 			MenuUpload menuUpload = new MenuUpload();	
-			this.mshareFileMenu1.addButton(R.drawable.account, "上传文件", menuUpload);	
+			this.mshareFileMenu1.addButton(R.drawable.upload, "上传文件", menuUpload);	
 		}
 		
 		//设置第二菜单
@@ -1524,10 +1524,10 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			MenuRename menuRename = new MenuRename();
 			MenuDelete menuDelete = new MenuDelete();
 			MenuCancel menuCancel = new MenuCancel();
-			this.mshareFileMenu2.addButton(R.drawable.account, "下载", menuDownload);
-			this.mshareFileMenu2.addButton(R.drawable.account, "重命名", menuRename);
-			this.mshareFileMenu2.addButton(R.drawable.account, "删除", menuDelete);
-			this.mshareFileMenu2.addButton(R.drawable.account, "撤消", menuCancel);
+			this.mshareFileMenu2.addButton(R.drawable.download, "下载", menuDownload);
+			this.mshareFileMenu2.addButton(R.drawable.rename, "重命名", menuRename);
+			this.mshareFileMenu2.addButton(R.drawable.delete, "删除", menuDelete);
+			this.mshareFileMenu2.addButton(R.drawable.cancel, "撤消", menuCancel);
 			this.mshareFileMenu2.hide();
 		}
 		
@@ -1536,8 +1536,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			this.mshareFileMenu3 = new MshareFileMenu(this, this.menuLayout);
 			MenuPaste menuPaste = new MenuPaste();
 			MenuCancel menuCancel = new MenuCancel();
-			this.mshareFileMenu3.addButton(R.drawable.account, "粘贴", menuPaste);
-			this.mshareFileMenu3.addButton(R.drawable.account, "取消", menuCancel);
+			this.mshareFileMenu3.addButton(R.drawable.paste, "粘贴", menuPaste);
+			this.mshareFileMenu3.addButton(R.drawable.cancel, "取消", menuCancel);
 			this.mshareFileMenu3.hide();
 		}
 		
