@@ -38,6 +38,7 @@ import org.mshare.account.AccountFactory.Verifier;
 import android.util.Log;
 
 import org.mshare.server.rtsp.RtspCmd;
+import org.mshare.server.rtsp.cmd.RtspError;
 
 import de.kp.net.rtp.RtpSocket;
 import de.kp.net.rtp.packetizer.AbstractPacketizer;
@@ -316,9 +317,12 @@ public class SessionThread extends Thread {
 
 
 						// 接受rtsp命令
+						if (RtspCmd.isRtspCmd(line)) {
+							RtspCmd.dispatchCmd(this, line);
+						}
 
-						// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？
-
+						// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
+						writeString(new RtspError(this, line, getCseq()).toString());
 					} else {
 						// 只能接受ftp命令
 						if (FtpCmd.isFtpCmd(line)) {

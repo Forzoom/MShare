@@ -86,7 +86,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private ArrayList<HashMap<String, Object>> listImageItem;  
     private SimpleAdapter simpleAdapter;
     
-    private ListView mListView;
     private String mSdcardRootPath;
     private Object mLock = new Object();
 	private int mSelectedPosistion = -1;
