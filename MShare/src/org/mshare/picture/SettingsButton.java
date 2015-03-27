@@ -46,7 +46,7 @@ public class SettingsButton extends CanvasElement {
 
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
-		Log.d(TAG, "draw settings button");
+//		Log.d(TAG, "draw settings button");
 		paint.setAlpha(alpha);
 		canvas.drawBitmap(solidIconBitmap, x, y, paint);
 		paint.setAlpha(255);

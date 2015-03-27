@@ -32,7 +32,7 @@ public class CircleAvater extends CanvasElement {
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
         if (center != null) {
-			Log.d(TAG, "draw circle avater in center.x :" + center.x + " center.y :" + center.y);
+//			Log.d(TAG, "draw circle avater in center.x :" + center.x + " center.y :" + center.y);
             canvas.drawBitmap(avater, center.x - radius, center.y - radius, paint);
         }
 

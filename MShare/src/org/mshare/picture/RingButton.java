@@ -37,7 +37,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		paint.setColor(ringColor);
 		paint.setStyle(Style.STROKE);
 		paint.setStrokeWidth(ringWidth);
-		Log.d(TAG, "draw ring button in center.x:" + center.x + " center.y:" + center.y + " innerRadius:" + innerRadius + " outerRadius:" + outerRadius + " ringWidth:" + ringWidth);
+//		Log.d(TAG, "draw ring button in center.x:" + center.x + " center.y:" + center.y + " innerRadius:" + innerRadius + " outerRadius:" + outerRadius + " ringWidth:" + ringWidth);
 		canvas.drawCircle(center.x, center.y, (innerRadius + outerRadius) / 2, paint);
 	}
 	

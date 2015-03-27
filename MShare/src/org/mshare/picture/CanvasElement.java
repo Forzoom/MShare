@@ -33,7 +33,7 @@ public abstract class CanvasElement  {
 			if (animation.isStarted()) {
 				// 需要startTime调整ratio
 				float ratio = (float)(currentTime - animation.getStartTime()) / (float)animation.getDuration();
-				Log.d(TAG, "ratio : " + ratio + " currentTime : " + currentTime + " startTime : " + animation.getStartTime());
+//				Log.d(TAG, "ratio : " + ratio + " currentTime : " + currentTime + " startTime : " + animation.getStartTime());
 				// 准备停止
 				if (ratio > 1.0f) {
 					ratio = 1.0f;
