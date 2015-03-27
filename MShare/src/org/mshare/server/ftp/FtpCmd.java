@@ -20,6 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.server.ftp;
 
 import java.lang.reflect.Constructor;
+import java.util.Locale;
 
 import org.mshare.account.AccountFactory.Token;
 import org.mshare.server.ftp.cmd.*;
@@ -117,37 +118,47 @@ public abstract class FtpCmd implements Runnable {
             return;
         }
 
-        verb = verb.trim().toUpperCase();
+        verb = verb.trim().toUpperCase(Locale.US);
         Token token = session.getToken();
-		Class<?> verbClass = null;
+		Class<? extends FtpCmd> verbClass = null;
 		for (int i = 0; i < cmdClasses.length; i++) {
 			if (cmdClasses[i].getName().equals(verb)) {
 				verbClass = cmdClasses[i].getCommand();
+				Log.d(TAG, "find verb " + verbClass);
 			}
 		}
         
         // 对于已经登录的用户，将无条件地执行所发送的命令
         if (token != null && token.isValid()) {
         	if (token.accessWrite()) { // 检测写权限
-				findAndExecuteCommand(session, verbClass, inputString, allowCmdWhileWrite);
+        		Log.d(TAG, "only write");
+				if (!findAndExecuteCommand(session, verbClass, inputString, allowCmdWhileWrite)) {
+					session.writeString(SessionThread.unrecognizedCmdMsg);
+				}
         	} else if (token.accessRead()) { // 检测读权限
-				findAndExecuteCommand(session, verbClass, inputString, allowedCmdsWhileRead);
-                session.writeString("530 user is not allowed to use that command\r\n");
+        		Log.d(TAG, "only read");
+        		if (!findAndExecuteCommand(session, verbClass, inputString, allowedCmdsWhileRead)) {
+					session.writeString(SessionThread.unrecognizedCmdMsg);
+				}
         	} else {
         		Log.e(TAG, "permission denied");
         		session.writeString("530 user is not allowed to use that command\r\n");
         	}
         } else {
-			findAndExecuteCommand(session, verbClass, inputString, allowedCmdsWhileNotLoggedIn);
-            session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
+			if (!findAndExecuteCommand(session, verbClass, inputString, allowedCmdsWhileNotLoggedIn)) {
+				Log.d(TAG, "only receive user and pass");
+	            session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
+			}
         }
     }
 
 	// 分发到具体的cmd集合之中，在这些集合中进行寻找
 	// 用于内部分发命令，根据用户的不同权限
-	private static void findAndExecuteCommand(SessionThread session, Class<?> verb, String inputString, Class<?>[] commands) {
+	private static boolean findAndExecuteCommand(SessionThread session, Class<? extends FtpCmd> verb, String inputString, Class<?>[] commands) {
+		
 		for (int i = 0; i < commands.length; i++) {
 			if (verb.equals(commands[i])) {
+				Log.d(TAG, "command[i] " + commands[i]);
 				// 对应的构造函数
 				Constructor<? extends FtpCmd> constructor = null;
 				// 对应的Cmd对象
@@ -155,30 +166,32 @@ public abstract class FtpCmd implements Runnable {
 
 				// 创建反射构造函数
 				try {
-					constructor = cmdClasses[i].getCommand().getConstructor(new Class[] { SessionThread.class, String.class });
+					constructor = verb.getConstructor(new Class[] { SessionThread.class, String.class });
 				} catch (NoSuchMethodException e) {
 					Log.e(TAG, "FtpCmd subclass lacks expected " + "constructor ");
-					return;
+					return false;
 				}
 				// 创建Cmd对象
 				try {
 					cmdInstance = constructor.newInstance(new Object[] { session, inputString });
 				} catch (Exception e) {
 					Log.e(TAG, "Instance creation error on FtpCmd");
-					return;
+					return false;
 				}
 				// 创建cmd对象失败的时候
 				if (cmdInstance == null) {
 					// If we couldn't find a matching command,
 					Log.d(TAG, "Ignoring unrecognized FTP verb: " + verb);
 					session.writeString(SessionThread.unrecognizedCmdMsg);
-					return;
+					return false;
 				}
 
 				// 创建cmd对象成功,并且直接执行
 				cmdInstance.run();
+				return true;
 			}
 		}
+		return false;
 	}
 
     /**

@@ -26,7 +26,7 @@ public class BasicConnectActivity extends Activity {
 		hostView = (TextView)findViewById(R.id.basic_connect_host);
 		hostView.setText(ServerService.getLocalInetAddress().getHostAddress().toString().substring(1));
 		portView = (TextView)findViewById(R.id.basic_connect_port);
-		portView.setText(ServerSettings.getPort());
+		portView.setText(ServerSettings.getPort() + "");
 		usernameView = (TextView)findViewById(R.id.basic_connect_username);
 		usernameView.setText(ServerSettings.getUsername());
 		passwordView = (TextView)findViewById(R.id.basic_connect_password);
