@@ -75,29 +75,8 @@ public abstract class FtpCmd implements Runnable {
     protected static void dispatchCommand(SessionThread session, String inputString) {
         // 使用空格来分割
         String[] strings = inputString.split(" ");
-        // 对于不能识别的Cmd
-        String unrecognizedCmdMsg = "502 Command not recognized\r\n";
-        // 不能识别
-        if (strings == null) {
-            // There was some egregious sort of parsing error
-            String errString = "502 Command parse error\r\n";
-            Log.d(TAG, errString);
-            session.writeString(errString);
-            return;
-        }
-        // 没有识别出内容
-        if (strings.length < 1) {
-            Log.d(TAG, "No strings parsed");
-            session.writeString(unrecognizedCmdMsg);
-            return;
-        }
         // 对应的Cmd的名称
         String verb = strings[0];
-        if (verb.length() < 1) {
-            Log.i(TAG, "Invalid command verb");
-            session.writeString(unrecognizedCmdMsg);
-            return;
-        }
 
         // 需要优化
         if (!isFtpCmd(inputString)) {
@@ -131,7 +110,7 @@ public abstract class FtpCmd implements Runnable {
         if (cmdInstance == null) {
             // If we couldn't find a matching command,
             Log.d(TAG, "Ignoring unrecognized FTP verb: " + verb);
-            session.writeString(unrecognizedCmdMsg);
+            session.writeString(SessionThread.unrecognizedCmdMsg);
             return;
         }
 
@@ -196,6 +175,8 @@ public abstract class FtpCmd implements Runnable {
             Log.i(TAG, "Invalid command verb");
             return false;
         }
+		verb = verb.trim();
+		verb = verb.toUpperCase();
         // 可是没有办法对应
         for (int i = 0; i < cmdClasses.length; i++) {
             if (cmdClasses[i].getName().equals(verb)) {
@@ -204,56 +185,5 @@ public abstract class FtpCmd implements Runnable {
         }
         return false;
     }
-
-    /**
-     * An FTP parameter is that part of the input string that occurs after the first
-     * space, including any subsequent spaces. Also, we want to chop off the trailing
-     * '\r\n', if present.
-     *
-     * Some parameters shouldn't be logged or output (e.g. passwords), so the caller can
-     * use silent==true in that case.
-     * @return 即便没有内容，也会返回""
-     */
-    static public String getParameter(String input, boolean silent) {
-        if (input == null) {
-            return "";
-        }
-        int firstSpacePosition = input.indexOf(' ');
-        if (firstSpacePosition == -1) {
-            return "";
-        }
-        String retString = input.substring(firstSpacePosition + 1);
-
-        // Remove trailing whitespace
-        // todo: trailing whitespace may be significant, just remove \r\n
-        // 删除所有的结尾处的空白
-        retString = retString.replaceAll("\\s+$", "");
-
-        if (!silent) {
-            Log.d(TAG, "Parsed argument: " + retString);
-        }
-        return retString;
-    }
-
-    /**
-     * A wrapper around getParameter, for when we don't want it to be silent.
-     */
-    static public String getParameter(String input) {
-        return getParameter(input, false);
-    }
-
-//    public static File inputPathToChrootedFile(File existingPrefix, String param) {
-//        try {
-//            if (param.charAt(0) == '/') {
-//                // The STOR contained an absolute path
-//                File chroot = ServerSettings.getRootDir();
-//                return new File(chroot, param);
-//            }
-//        } catch (Exception e) {
-//        }
-//
-//        // The STOR contained a relative path
-//        return new File(existingPrefix, param);
-//    }
 
 }

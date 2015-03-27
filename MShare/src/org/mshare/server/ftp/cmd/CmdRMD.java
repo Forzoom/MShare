@@ -21,9 +21,9 @@ package org.mshare.server.ftp.cmd;
 
 import java.io.File;
 
-import org.mshare.file.share.SharedDirectory;
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.MediaUpdater;
 import org.mshare.server.ftp.SessionThread;
 
@@ -42,7 +42,7 @@ public class CmdRMD extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "RMD executing");
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         SharedLink toRemove;
         String errString = null;
         mainblock: {

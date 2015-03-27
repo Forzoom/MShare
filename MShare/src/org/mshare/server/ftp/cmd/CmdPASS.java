@@ -21,6 +21,7 @@ package org.mshare.server.ftp.cmd;
 
 import org.mshare.account.AccountFactory.Token;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.ftp.Util;
 
@@ -39,11 +40,10 @@ public class CmdPASS extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "Executing PASS");
-        String attemptPassword = getParameter(input); // silent
+        String attemptPassword = FtpParser.getParameter(input); // silent
         
         if (sessionThread.sessionInfo.getUsername() == null) {
-        	// TODO 可能使用ACCT来创建Account
-        	Log.e(TAG, "必须先调用USER");
+        	Log.e(TAG, "send USER first!");
         	sessionThread.writeString("503 Must send USER first\r\n");
         	return;
         }
@@ -51,7 +51,7 @@ public class CmdPASS extends FtpCmd implements Runnable {
         // 输入的内容可能会有错误
         if (attemptPassword != null && !attemptPassword.equals("")) {
         	if (sessionThread.authAttempt(sessionThread.sessionInfo.getUsername(), attemptPassword) != null) {
-        		Log.i(TAG, "User " + sessionThread.sessionInfo.getUsername() + " password verified");
+        		Log.i(TAG, "User " + sessionThread.sessionInfo.getUsername() + " verified");
         		
         		Token token = sessionThread.getToken();
         		if (token.isGuest()) {
@@ -65,7 +65,10 @@ public class CmdPASS extends FtpCmd implements Runnable {
                 sessionThread.writeString("530 Login incorrect.\r\n");
         	}
         } else {
-        	Log.e(TAG, "未指定尝试密码");
+        	Log.e(TAG, "password is empty");
+			// TODO 暂时在这里使用530表示没有密码，即密码不正确
+			sessionThread.writeString("530 Login incorrect.\r\n");
         }
+		Log.d(TAG, "finished PASS");
     }
 }

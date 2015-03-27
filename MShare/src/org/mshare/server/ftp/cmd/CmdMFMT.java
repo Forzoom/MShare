@@ -19,7 +19,6 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp.cmd;
 
-import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -27,6 +26,7 @@ import java.util.Locale;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -48,7 +48,7 @@ public class CmdMFMT extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "run: MFMT executing, input: " + mInput);
-        String[] params = getParameter(mInput).split(" ");
+        String[] params = FtpParser.getParameter(mInput).split(" ");
 
         if (params.length != 2) {
             sessionThread.writeString("500 wrong number of parameters\r\n");

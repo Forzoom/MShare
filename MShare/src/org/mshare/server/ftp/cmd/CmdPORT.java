@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -42,7 +43,7 @@ public class CmdPORT extends FtpCmd implements Runnable {
         Log.d(TAG, "PORT executing");
         String errString = null;
         mainBlock: {
-            String param = getParameter(input);
+            String param = FtpParser.getParameter(input);
             // ²»Ö§³ÖIPv6
             if (param.contains("|") && param.contains("::")) {
                 errString = "550 No IPv6 support, reconfigure your client\r\n";

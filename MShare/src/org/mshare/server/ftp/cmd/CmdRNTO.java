@@ -20,15 +20,14 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.server.ftp.cmd;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.main.MShareUtil;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
-import android.test.RenamingDelegatingContext;
 import android.util.Log;
 
 public class CmdRNTO extends FtpCmd implements Runnable {
@@ -44,7 +43,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "RNTO executing");
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         String errString = null;
         // 这需要文件的写权限
         // 这里的文件重命名操作确实有点麻烦，不知道为什么要这么做

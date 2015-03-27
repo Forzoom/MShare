@@ -22,6 +22,7 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdTYPE extends FtpCmd implements Runnable {
@@ -38,7 +39,7 @@ public class CmdTYPE extends FtpCmd implements Runnable {
     public void run() {
         String output;
         Log.d(TAG, "TYPE executing");
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         if (param.equals("I") || param.equals("L 8")) {
             output = "200 Binary type set\r\n";
             sessionThread.setBinaryMode(true);

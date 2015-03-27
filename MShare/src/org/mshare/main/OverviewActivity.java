@@ -166,7 +166,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
         surfaceView.setServerButtonListener(new ServerButtonListener());
         surfaceView.setSettingsButtonListener(new SettingsButtonListener());
 
-		// 添加加入链接的组件
+		// 客户端界面中加入连接的GridView
 		gridview = (ServerListGridView) findViewById(R.id.gridview);
 		gridview.setGestureDetector(gestureDetector);
 		

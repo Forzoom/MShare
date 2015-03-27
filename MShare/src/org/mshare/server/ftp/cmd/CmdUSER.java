@@ -22,6 +22,7 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdUSER extends FtpCmd implements Runnable {
@@ -38,7 +39,7 @@ public class CmdUSER extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "USER executing");
-        String username = FtpCmd.getParameter(input);
+        String username = FtpParser.getParameter(input);
         // 只允许这样的用户名
         if (!username.matches("[A-Za-z0-9]+")) {
         	Log.e(TAG, "Invalid username " + username);

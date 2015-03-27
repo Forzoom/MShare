@@ -19,6 +19,7 @@ package org.mshare.server.ftp.cmd;
 
 import android.util.Log;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdREST extends FtpCmd implements Runnable {
@@ -33,7 +34,7 @@ public class CmdREST extends FtpCmd implements Runnable {
 
     @Override
     public void run() {
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         long offset;
         try {
             offset = Long.parseLong(param);

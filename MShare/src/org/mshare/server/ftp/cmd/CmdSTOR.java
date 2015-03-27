@@ -19,7 +19,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp.cmd;
 
-import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdSTOR extends CmdAbstractStore implements Runnable {
@@ -33,6 +33,6 @@ public class CmdSTOR extends CmdAbstractStore implements Runnable {
     @Override
     public void run() {
     	// 对于重名文件，原文件将被删除并覆盖，如果出现了原文件，需要客户端设置是否是重命名还是覆盖
-        doStorOrAppe(getParameter(input), false);
+        doStorOrAppe(FtpParser.getParameter(input), false);
     }
 }
