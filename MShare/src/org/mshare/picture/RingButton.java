@@ -79,7 +79,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 
     /**
      * 启动呼吸动画
-     * @param targetOuterRadius
+     * @param endOuterRadius
      * @param startTime
      */
 	public void startBreatheAnimation(int targetOuterRadius, long startTime, int duration) {
@@ -89,10 +89,10 @@ public class RingButton extends CanvasElement implements Parcelable {
 			addAnimation(breatheAnimation);
 		}
 
-		breatheAnimation.setOriginOuterRadius(outerRadius);
-		breatheAnimation.setTargetOuterRadius(targetOuterRadius);
+		breatheAnimation.setStartOuterRadius(outerRadius);
+		breatheAnimation.setEndOuterRadius(targetOuterRadius);
         breatheAnimation.setDuration(duration);
-		Log.d(TAG, "bounce outer radius : " + targetOuterRadius + " startTime : " + startTime);
+		Log.d(TAG, "breathe outer radius : " + targetOuterRadius + " startTime : " + startTime);
 		breatheAnimation.start(startTime);
 	}
 
@@ -158,8 +158,8 @@ public class RingButton extends CanvasElement implements Parcelable {
      */
 	public class BreatheAnimation extends CanvasAnimation {
 
-		private int targetOuterRadius;
-		private int originOuterRadius;
+		private int endOuterRadius;
+		private int startOuterRadius;
 		
 		public BreatheAnimation() {
 			setInterpolator(new BreatheInterpolator());
@@ -167,29 +167,31 @@ public class RingButton extends CanvasElement implements Parcelable {
 		
 		@Override
 		public void doAnimation(float ratio) {
-			outerRadius = originOuterRadius + (int)((targetOuterRadius - originOuterRadius) * ratio);
+			Log.d(TAG, "origin outer radius " + startOuterRadius + " target outer radius :" + endOuterRadius + " ratio : " + ratio);
+			outerRadius = startOuterRadius + (int)((endOuterRadius - startOuterRadius) * ratio);
 		}
 
-		public int getTargetOuterRadius() {
-			return targetOuterRadius;
+		public int getEndOuterRadius() {
+			return endOuterRadius;
 		}
 
-		public void setTargetOuterRadius(int targetOuterRadius) {
-			this.targetOuterRadius = targetOuterRadius;
+		public void setEndOuterRadius(int targetOuterRadius) {
+			Log.d(TAG, "the target outer radius : " + targetOuterRadius);
+			this.endOuterRadius = targetOuterRadius;
 		}
 
-		public int getOriginOuterRadius() {
-			return originOuterRadius;
+		public int getStartOuterRadius() {
+			return startOuterRadius;
 		}
 
-		public void setOriginOuterRadius(int originOuterRadius) {
-			this.originOuterRadius = originOuterRadius;
+		public void setStartOuterRadius(int originOuterRadius) {
+			this.startOuterRadius = originOuterRadius;
 		}
 
         @Override
         public void onStop() {
             // 重置最后的内容
-            outerRadius = originOuterRadius;
+//            outerRadius = startOuterRadius;
         }
     }
 

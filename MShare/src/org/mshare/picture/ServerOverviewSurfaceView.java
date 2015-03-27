@@ -171,6 +171,8 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         // 圆环的参数设置不得不放在这里，因为要使用canvasWidth
         serverInnerRadius = canvasWidth / 4 - 50;
         serverOuterRadius = canvasWidth / 4 + 30;
+        Log.d(TAG, "server inner radius " + serverInnerRadius);
+        Log.d(TAG, "server outer radius " + serverOuterRadius);
         Point center = new Point(canvasWidth / 2, canvasHeight / 2);
         serverButton.setRingColor(ringColor);
         serverButton.setCenter(center);
@@ -304,7 +306,9 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         if (breatheAnimation != null) {
             breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_INFINITE);
         }
+        Log.d(TAG, "start animation : " + getServerOuterRadius());
         serverButton.startBreatheAnimation(getServerOuterRadius(), startTime, 3000);
+        
 
     }
 

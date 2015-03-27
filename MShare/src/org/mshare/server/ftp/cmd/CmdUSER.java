@@ -58,6 +58,7 @@ public class CmdUSER extends FtpCmd implements Runnable {
 //        }
 
         sessionThread.writeString("331 Send password\r\n");
+        Log.d(TAG, "USER finished");
     }
 
 }

@@ -659,6 +659,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
             // 启动了bounceAnimation
             RingButton serverButton = surfaceView.getServerButton();
 			serverButton.stopBounceAnimation();
+			Log.d(TAG, "the server inner radius : " + surfaceView.getServerInnerRadius());
 			serverButton.startBounceAnimation(surfaceView.getServerInnerRadius(), startTime, 500);
 			
 			// 修改服务器状态、启动或关闭服务器
