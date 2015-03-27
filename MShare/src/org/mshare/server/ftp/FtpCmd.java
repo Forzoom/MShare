@@ -49,7 +49,8 @@ public abstract class FtpCmd implements Runnable {
             new FtpCmdMap("XRMD", CmdRMD.class), // synonym
             new FtpCmdMap("MDTM", CmdMDTM.class), //
             new FtpCmdMap("MFMT", CmdMFMT.class), //
-            new FtpCmdMap("REST", CmdREST.class), //
+            new FtpCmdMap("REST", CmdREST.class), ////
+			new FtpCmdMap("SITE", CmdSITE.class), //
             new FtpCmdMap("SITE", CmdSITE.class), //
             new FtpCmdMap("UUID", CmdUUID.class), //
 			new FtpCmdMap("NINA", CmdNINA.class),

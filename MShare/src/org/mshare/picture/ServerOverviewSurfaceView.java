@@ -195,9 +195,41 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	}
 
 	@Override
-	public void surfaceChanged(SurfaceHolder holder, int format, int width,
-			int height) {
+	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 		Log.d(TAG, "surface changed");
+
+		Canvas canvas = holder.lockCanvas();
+		int canvasWidth = canvas.getWidth();
+		int canvasHeight = canvas.getHeight();
+
+		// 修正所有的图片内容
+		int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
+		int paddingTop = 12;
+		settingsButton.setX(x);
+		settingsButton.setY(paddingTop);
+		settingsButton.setPadding(12, paddingTop, 12, 12);
+
+		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
+		serverInnerRadius = canvasWidth / 4 - 50;
+		serverOuterRadius = canvasWidth / 4 + 30;
+		Point center = new Point(canvasWidth / 2, canvasHeight / 2);
+		serverButton.setRingColor(ringColor);
+		serverButton.setCenter(center);
+		serverButton.setRadius(canvasWidth / 4 - 20, canvasWidth / 4);
+
+		int avaterRadius = canvasWidth / 4;
+		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(R.drawable.avater_1, avaterRadius);
+
+		circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
+		circleAvater.setRadius(avaterRadius);
+		circleAvater.setAvater(avaterBitmap);
+
+		// 绘制基本内容
+		for (int i = 0, len = canvasElements.size(); i < len; i++) {
+			CanvasElement canvasElement = canvasElements.get(i);
+			canvasElement.draw(canvas, canvasPaint);
+		}
+
 	}
 
 	@Override

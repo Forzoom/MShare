@@ -22,6 +22,8 @@ import it.sauronsoftware.ftp4j.FTPDataTransferListener;
 import it.sauronsoftware.ftp4j.FTPException;
 import it.sauronsoftware.ftp4j.FTPFile;
 import it.sauronsoftware.ftp4j.FTPIllegalReplyException;
+import it.sauronsoftware.ftp4j.FTPReply;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -1427,14 +1429,33 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				showDialog(DIALOG_LOAD);
 //				executeOpenRequest();
 
-                // 尝试播放
-                Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
-                String host = mFTPHost;
-                String port = "5544";
-                String rtspUriString = "rtsp://" + host + ":" + port + "/dog.mp4";
-                Log.d(TAG, "rtspUriString :" + rtspUriString);
-                startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
-                startActivity(startPlayActivity);
+				// 启动rtsp模式
+				try {
+					FTPReply reply = mFTPClient.sendCustomCommand("RTSP");
+					if (reply.getCode() == 211) {
+						// 尝试播放
+						Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
+						String host = mFTPHost;
+						String port = "5544";
+						String rtspUriString = "rtsp://" + host + ":" + port + "/dog.mp4";
+						Log.d(TAG, "rtspUriString :" + rtspUriString);
+						startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
+						// 需要添加ForResult的情况，不知道是否会立即返回？
+						startActivity(startPlayActivity);
+					} else {
+						// 错误的情况
+					}
+				} catch (FTPIllegalReplyException e) {
+					// 当发生错误的时候，就不能启动继续播放了
+					Log.e(TAG, "something wrong happen");
+					e.printStackTrace();
+					Toast.makeText(this, "不能播放", Toast.LENGTH_SHORT).show();
+				} catch (IOException e) {
+					Log.e(TAG, "something wrong happen");
+					e.printStackTrace();
+					Toast.makeText(this, "不能播放", Toast.LENGTH_SHORT).show();
+				}
+
 			}else{
 				showDialog(DIALOG_LOAD);
 				new CmdOPEN().execute();

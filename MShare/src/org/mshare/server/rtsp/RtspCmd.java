@@ -13,6 +13,7 @@ import org.mshare.server.rtsp.cmd.CmdTEARDOWN;
 
 import java.lang.reflect.Constructor;
 import java.util.Date;
+import java.util.Locale;
 
 public abstract class RtspCmd implements Runnable {
     private static final String TAG = RtspCmd.class.getSimpleName();
@@ -133,7 +134,7 @@ public abstract class RtspCmd implements Runnable {
     public static void dispatchCmd(SessionThread session, String inputString) {
         // 分割
         String[] strings = inputString.split(" ");
-        String cmd = RtspParser.getCmd(strings);
+        String cmd = RtspParser.getCmd(strings).trim().toUpperCase(Locale.US);
 
         // 判断当前能否使用Cmd
         Token token = session.getToken();
@@ -196,8 +197,7 @@ public abstract class RtspCmd implements Runnable {
             Log.i(TAG, "Invalid command verb");
             return false;
         }
-		verb = verb.trim();
-		verb = verb.toUpperCase();
+		verb = verb.trim().toUpperCase(Locale.US);
         // 可是没有办法对应
         for (int i = 0; i < cmdClasses.length; i++) {
             if (cmdClasses[i].getName().equals(verb)) {

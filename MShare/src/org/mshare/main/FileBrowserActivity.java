@@ -2,12 +2,16 @@ package org.mshare.main;
 
 import java.io.File;
 
+import org.mshare.account.AccountFactory;
+import org.mshare.account.AdminAccount;
 import org.mshare.file.MshareFileManage;
 import org.mshare.file.MshareFileMenu;
 import org.mshare.file.browser.FileBrowserCallback;
 import org.mshare.file.browser.FileBrowserFile;
 import org.mshare.file.browser.LocalBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
+import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkSystem;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -409,6 +413,25 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
         @Override
         public void onClick(View v) {
             // 获得当前所选择的内容，需要将长按的内容保存下来
+
+			Log.d(TAG, "share file");
+			// 在
+			if (fileBrowser.getMode() == MShareFileBrowser.MODE_MULTI_SELECT) {
+				FileBrowserFile[] files = fileBrowser.getMultiSelectedFiles();
+				// 对于所有的文件内容，都应该添加到SharedLink中
+				AccountFactory.Token token = AccountFactory.getInstance().getAdminAccountToken();
+				for (int i = 0; i < files.length; i++) {
+					//  对应的是真实的文件路径
+
+					FileBrowserFile file = files[i];
+
+					SharedLink sharedLink = SharedLink.newSharedLink(SharedLinkSystem.SEPARATOR + file.getName(), file.getAbsolutePath());
+					// 持久化并添加内容
+					token.getSystem().persist(sharedLink);
+					token.getSystem().addSharedPath(sharedLink);
+
+				}
+			}
         }
     }
 

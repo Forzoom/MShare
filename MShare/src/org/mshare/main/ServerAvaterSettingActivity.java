@@ -91,7 +91,7 @@ public class ServerAvaterSettingActivity extends Activity {
 				thumbnail.setImageBitmap(bitmaps[position]);
 				thumbnail.setAvaterSelected(position == selectPosition);
 				// ¾ÓÖÐÆÌÂú
-				thumbnail.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+				thumbnail.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
 				ServerAvaterTag tag = new ServerAvaterTag();
 				tag.avater = thumbnail;
