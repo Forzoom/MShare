@@ -19,10 +19,9 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp.cmd;
 
-import java.io.File;
-
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -40,7 +39,7 @@ public class CmdRNFR extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "Executing RNFR");
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         String errString = null;
         SharedLink file = null;
         mainblock: {

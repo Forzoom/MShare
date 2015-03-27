@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.Defaults;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -44,7 +45,7 @@ public class CmdRETR extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "RETR executing");
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         File fileToRetr;
         String errString = null;
 

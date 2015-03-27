@@ -38,6 +38,7 @@ import org.mshare.account.AccountFactory.Verifier;
 import android.util.Log;
 
 import org.mshare.server.rtsp.RtspCmd;
+import org.mshare.server.rtsp.cmd.RtspError;
 
 import de.kp.net.rtp.RtpSocket;
 import de.kp.net.rtp.packetizer.AbstractPacketizer;
@@ -76,6 +77,8 @@ public class SessionThread extends Thread {
      * 所有通过writeString的内容都将使用
      */
 
+	private boolean isRtspEnabled = false;
+
 	// rtsp传输数据所使用的
 	private RtpSocket rtpSocket;
 
@@ -104,8 +107,11 @@ public class SessionThread extends Thread {
 
     // 需要保证verifier能够被正常的初始化?
     public Verifier verifier;
-    
-    public SessionThread(Socket socket, LocalDataSocket dataSocket) {
+
+	// ftp命令无法识别时的返回
+	public static String unrecognizedCmdMsg = "502 Command not recognized\r\n";
+
+	public SessionThread(Socket socket, LocalDataSocket dataSocket) {
         this.cmdSocket = socket;
         this.localDataSocket = dataSocket;
         this.sendWelcomeBanner = true;
@@ -298,7 +304,6 @@ public class SessionThread extends Thread {
             // use 8k buffer
             BufferedReader in = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream()), 8192);
 
-            // 将这里的内容转变成handler来处理？
             while (true) {
                 String line;
                 line = in.readLine(); // will accept \r\n or \n for terminator
@@ -306,12 +311,27 @@ public class SessionThread extends Thread {
                     ServerService.writeMonitor(true, line);
                     Log.i(TAG, "Received line from client: " + line);
                     // 直接在这里调用就好了
-                    if (FtpCmd.isFtpCmd(line)) {
-                        FtpCmd.dispatchCommand(this, line);
-                    } else if (RtspCmd.isRtspCmd(line)) {
-                        RtspCmd.dispatchCmd(this, line);
-                    }
+					// 在这里需要判断当前rtsp是否开启了
+					if (isRtspEnabled()) {
+						// 应该能够接受关闭rtsp的命令
 
+
+						// 接受rtsp命令
+						if (RtspCmd.isRtspCmd(line)) {
+							RtspCmd.dispatchCmd(this, line);
+						}
+
+						// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
+						writeString(new RtspError(this, line, getCseq()).toString());
+					} else {
+						// 只能接受ftp命令
+						if (FtpCmd.isFtpCmd(line)) {
+							FtpCmd.dispatchCommand(this, line);
+						} else {
+							// 失败的时候，返回ftp错误
+							writeString(unrecognizedCmdMsg);
+						}
+					}
                 } else {
                     Log.i(TAG, "readLine gave null, quitting");
                     break;
@@ -414,11 +434,11 @@ public class SessionThread extends Thread {
     	
     	if (verifier == null) {
     		Log.e(TAG, "verifier is null");
+			return null;
     	}
         if ((newToken = verifier.auth(username, password, this)) != null) {
         	setToken(newToken);
             Log.i(TAG, "Authentication complete");
-            // TODO 关键是文件的存储和创建不是由SharedLinkSystem来控制，而是跨越来太多的层次
         } else {
         	authFails++;
             Log.i(TAG, "Auth failed: " + authFails + "/" + MAX_AUTH_FAILS);
@@ -535,5 +555,19 @@ public class SessionThread extends Thread {
 
 	public void setVideoPacketizer(AbstractPacketizer videoPacketizer) {
 		this.videoPacketizer = videoPacketizer;
+	}
+
+	public void startUsingRtsp() {
+		Log.d(TAG, "try start using Rtsp");
+		isRtspEnabled = true;
+	}
+
+	public void stopRtsp() {
+		Log.d(TAG, "try stop Rtsp");
+		isRtspEnabled = false;
+	}
+
+	public boolean isRtspEnabled() {
+		return isRtspEnabled;
 	}
 }

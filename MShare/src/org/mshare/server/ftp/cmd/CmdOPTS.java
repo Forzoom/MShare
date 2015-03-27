@@ -22,6 +22,7 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdOPTS extends FtpCmd implements Runnable {
@@ -37,7 +38,7 @@ public class CmdOPTS extends FtpCmd implements Runnable {
 
     @Override
     public void run() {
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         String errString = null;
 
         mainBlock: {

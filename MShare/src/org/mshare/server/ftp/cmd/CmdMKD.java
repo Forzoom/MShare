@@ -19,13 +19,10 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp.cmd;
 
-import java.io.File;
-
 import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
-import org.mshare.main.MShareUtil;
-import org.mshare.main.UploadFileChooserAdapter;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -48,7 +45,7 @@ public class CmdMKD extends FtpCmd implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "MKD executing");
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         SharedLink toCreate;
         String errString = null;
         mainblock: {

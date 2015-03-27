@@ -52,17 +52,49 @@ public abstract class FtpCmd implements Runnable {
             new FtpCmdMap("REST", CmdREST.class), //
             new FtpCmdMap("SITE", CmdSITE.class), //
             new FtpCmdMap("UUID", CmdUUID.class), //
+			new FtpCmdMap("NINA", CmdNINA.class),
+			new FtpCmdMap("RTSP", CmdRTSP.class),
+			new FtpCmdMap("CRTP", CmdCRTP.class)
     };
+
+	// 会将所有的内容都复制一遍，并不是很好
+	private static Class<?>[] allowCmdWhileWrite = {
+			CmdSYST.class,
+			CmdUSER.class, CmdPASS.class,
+			CmdTYPE.class, CmdCWD.class,
+			CmdPWD.class, CmdLIST.class,
+			CmdPASV.class, CmdRETR.class,
+			CmdNLST.class, CmdNOOP.class,
+			CmdSTOR.class, CmdDELE.class,
+			CmdRNFR.class, CmdRNTO.class,
+			CmdRMD.class, CmdMKD.class,
+			CmdOPTS.class, CmdPORT.class,
+			CmdQUIT.class, CmdFEAT.class,
+			CmdSIZE.class, CmdCDUP.class,
+			CmdAPPE.class, CmdCDUP.class, //
+			CmdPWD.class, //
+			CmdMKD.class, //
+			CmdRMD.class, //
+			CmdMDTM.class, //
+			CmdMFMT.class, //
+			CmdREST.class, //
+			CmdSITE.class, //
+			CmdUUID.class, //
+			CmdNINA.class,
+			CmdRTSP.class,
+			CmdCRTP.class
+	};
 
     // 所有读权限所能够发送的命令
     private static Class<?>[] allowedCmdsWhileRead = { CmdUSER.class, CmdPASS.class, //
             CmdCWD.class, CmdLIST.class, CmdMDTM.class, CmdNLST.class, CmdPASV.class, //
             CmdPWD.class, CmdQUIT.class, CmdRETR.class, CmdSIZE.class, CmdTYPE.class, //
-            CmdCDUP.class, CmdNOOP.class, CmdSYST.class, CmdPORT.class, CmdUUID.class
+            CmdCDUP.class, CmdNOOP.class, CmdSYST.class, CmdPORT.class, CmdUUID.class,
+			CmdNINA.class, CmdRTSP.class, CmdCRTP.class // 即便是只有读取权限的用户，也允许使用RTSP
     };
 
     private static Class<?>[] allowedCmdsWhileNotLoggedIn = {
-    	CmdUSER.class, CmdPASS.class, CmdQUIT.class, CmdUUID.class
+    	CmdUSER.class, CmdPASS.class, CmdQUIT.class, CmdUUID.class, CmdNINA.class
     };
     
     public FtpCmd(SessionThread sessionThread) {
@@ -72,112 +104,82 @@ public abstract class FtpCmd implements Runnable {
     @Override
     abstract public void run();
 
+	// 根据权限进行分发工作
     protected static void dispatchCommand(SessionThread session, String inputString) {
         // 使用空格来分割
         String[] strings = inputString.split(" ");
-        // 对于不能识别的Cmd
-        String unrecognizedCmdMsg = "502 Command not recognized\r\n";
-        // 不能识别
-        if (strings == null) {
-            // There was some egregious sort of parsing error
-            String errString = "502 Command parse error\r\n";
-            Log.d(TAG, errString);
-            session.writeString(errString);
-            return;
-        }
-        // 没有识别出内容
-        if (strings.length < 1) {
-            Log.d(TAG, "No strings parsed");
-            session.writeString(unrecognizedCmdMsg);
-            return;
-        }
         // 对应的Cmd的名称
         String verb = strings[0];
-        if (verb.length() < 1) {
-            Log.i(TAG, "Invalid command verb");
-            session.writeString(unrecognizedCmdMsg);
-            return;
-        }
 
-        // 需要优化
         if (!isFtpCmd(inputString)) {
             Log.e(TAG, "something wrong happen? the command is not ftp command!");
+			session.writeString(SessionThread.unrecognizedCmdMsg);
             return;
         }
 
-        FtpCmd cmdInstance = null;
-        verb = verb.trim();
-        verb = verb.toUpperCase();
-        // 通过CmdMap所形成的一个映射关系
-        for (int i = 0; i < cmdClasses.length; i++) {
-
-            // 将verb的内容移动出来
-            if (cmdClasses[i].getName().equals(verb)) {
-                Constructor<? extends FtpCmd> constructor;
-                try {
-                    constructor = cmdClasses[i].getCommand().getConstructor(new Class[] { SessionThread.class, String.class });
-                } catch (NoSuchMethodException e) {
-                    Log.e(TAG, "FtpCmd subclass lacks expected " + "constructor ");
-                    return;
-                }
-                try {
-                    cmdInstance = constructor.newInstance(new Object[] { session, inputString });
-                } catch (Exception e) {
-                    Log.e(TAG, "Instance creation error on FtpCmd");
-                    return;
-                }
-            }
-        }
-        if (cmdInstance == null) {
-            // If we couldn't find a matching command,
-            Log.d(TAG, "Ignoring unrecognized FTP verb: " + verb);
-            session.writeString(unrecognizedCmdMsg);
-            return;
-        }
-
-        // 判断能够使用哪些Cmd
-        // 需要先判断当前是否能够使用该Cmd，然后再创建
-
+        verb = verb.trim().toUpperCase();
         Token token = session.getToken();
+		Class<?> verbClass = null;
+		for (int i = 0; i < cmdClasses.length; i++) {
+			if (cmdClasses[i].getName().equals(verb)) {
+				verbClass = cmdClasses[i].getCommand();
+			}
+		}
         
         // 对于已经登录的用户，将无条件地执行所发送的命令
         if (token != null && token.isValid()) {
-        	// TODO 在用户的权限上不能够很好地告知客户端,下面的方式不是很好
         	if (token.accessWrite()) { // 检测写权限
-        		cmdInstance.run();
+				findAndExecuteCommand(session, verbClass, inputString, allowCmdWhileWrite);
         	} else if (token.accessRead()) { // 检测读权限
-        		boolean validCmd = false;
-                for (Class<?> cl : allowedCmdsWhileRead) {
-                    if (cmdInstance.getClass().equals(cl)) {
-                        validCmd = true;
-                        break;
-                    }
-                }
-                if (validCmd == true) {
-                    cmdInstance.run();
-                } else {
-                    session.writeString("530 user is not allowed to use that command\r\n");
-                }
+				findAndExecuteCommand(session, verbClass, inputString, allowedCmdsWhileRead);
+                session.writeString("530 user is not allowed to use that command\r\n");
         	} else {
-        		// TODO 将返回无法执行
-        		Log.e(TAG, "没有任何权限");
+        		Log.e(TAG, "permission denied");
         		session.writeString("530 user is not allowed to use that command\r\n");
         	}
         } else {
-        	boolean validCmd = false;
-            for (Class<?> cl : allowedCmdsWhileNotLoggedIn) {
-                if (cmdInstance.getClass().equals(cl)) {
-                    validCmd = true;
-                    break;
-                }
-            }
-            if (validCmd == true) {
-                cmdInstance.run();
-            } else {
-                session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
-            }
+			findAndExecuteCommand(session, verbClass, inputString, allowedCmdsWhileNotLoggedIn);
+            session.writeString("530 Login first with USER and PASS, or QUIT\r\n");
         }
     }
+
+	// 分发到具体的cmd集合之中，在这些集合中进行寻找
+	// 用于内部分发命令，根据用户的不同权限
+	private static void findAndExecuteCommand(SessionThread session, Class<?> verb, String inputString, Class<?>[] commands) {
+		for (int i = 0; i < commands.length; i++) {
+			if (verb.equals(commands[i])) {
+				// 对应的构造函数
+				Constructor<? extends FtpCmd> constructor = null;
+				// 对应的Cmd对象
+				FtpCmd cmdInstance = null;
+
+				// 创建反射构造函数
+				try {
+					constructor = cmdClasses[i].getCommand().getConstructor(new Class[] { SessionThread.class, String.class });
+				} catch (NoSuchMethodException e) {
+					Log.e(TAG, "FtpCmd subclass lacks expected " + "constructor ");
+					return;
+				}
+				// 创建Cmd对象
+				try {
+					cmdInstance = constructor.newInstance(new Object[] { session, inputString });
+				} catch (Exception e) {
+					Log.e(TAG, "Instance creation error on FtpCmd");
+					return;
+				}
+				// 创建cmd对象失败的时候
+				if (cmdInstance == null) {
+					// If we couldn't find a matching command,
+					Log.d(TAG, "Ignoring unrecognized FTP verb: " + verb);
+					session.writeString(SessionThread.unrecognizedCmdMsg);
+					return;
+				}
+
+				// 创建cmd对象成功,并且直接执行
+				cmdInstance.run();
+			}
+		}
+	}
 
     /**
      * 判断所接受到的内容是否是FTP的命令
@@ -196,6 +198,8 @@ public abstract class FtpCmd implements Runnable {
             Log.i(TAG, "Invalid command verb");
             return false;
         }
+		verb = verb.trim();
+		verb = verb.toUpperCase();
         // 可是没有办法对应
         for (int i = 0; i < cmdClasses.length; i++) {
             if (cmdClasses[i].getName().equals(verb)) {
@@ -204,56 +208,5 @@ public abstract class FtpCmd implements Runnable {
         }
         return false;
     }
-
-    /**
-     * An FTP parameter is that part of the input string that occurs after the first
-     * space, including any subsequent spaces. Also, we want to chop off the trailing
-     * '\r\n', if present.
-     *
-     * Some parameters shouldn't be logged or output (e.g. passwords), so the caller can
-     * use silent==true in that case.
-     * @return 即便没有内容，也会返回""
-     */
-    static public String getParameter(String input, boolean silent) {
-        if (input == null) {
-            return "";
-        }
-        int firstSpacePosition = input.indexOf(' ');
-        if (firstSpacePosition == -1) {
-            return "";
-        }
-        String retString = input.substring(firstSpacePosition + 1);
-
-        // Remove trailing whitespace
-        // todo: trailing whitespace may be significant, just remove \r\n
-        // 删除所有的结尾处的空白
-        retString = retString.replaceAll("\\s+$", "");
-
-        if (!silent) {
-            Log.d(TAG, "Parsed argument: " + retString);
-        }
-        return retString;
-    }
-
-    /**
-     * A wrapper around getParameter, for when we don't want it to be silent.
-     */
-    static public String getParameter(String input) {
-        return getParameter(input, false);
-    }
-
-//    public static File inputPathToChrootedFile(File existingPrefix, String param) {
-//        try {
-//            if (param.charAt(0) == '/') {
-//                // The STOR contained an absolute path
-//                File chroot = ServerSettings.getRootDir();
-//                return new File(chroot, param);
-//            }
-//        } catch (Exception e) {
-//        }
-//
-//        // The STOR contained a relative path
-//        return new File(existingPrefix, param);
-//    }
 
 }

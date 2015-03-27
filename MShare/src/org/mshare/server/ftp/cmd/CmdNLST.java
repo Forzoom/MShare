@@ -26,12 +26,8 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp.cmd;
 
-import java.io.File;
-
-import org.mshare.file.share.SharedFile;
 import org.mshare.file.share.SharedLink;
-import org.mshare.file.share.SharedLinkSystem;
-import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -53,7 +49,7 @@ public class CmdNLST extends CmdAbstractListing implements Runnable {
         String errString = null;
 
         mainblock: {
-            String param = getParameter(input);
+            String param = FtpParser.getParameter(input);
             if (param.startsWith("-")) {
                 // Ignore options to list, which start with a dash
                 param = "";

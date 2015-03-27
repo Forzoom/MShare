@@ -19,7 +19,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp.cmd;
 
-import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdAPPE extends CmdAbstractStore implements Runnable {
@@ -32,6 +32,6 @@ public class CmdAPPE extends CmdAbstractStore implements Runnable {
 
 	@Override
     public void run() {
-		doStorOrAppe(getParameter(input), true);
+		doStorOrAppe(FtpParser.getParameter(input), true);
 	}
 }

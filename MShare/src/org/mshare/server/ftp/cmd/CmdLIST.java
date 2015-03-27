@@ -26,16 +26,12 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.mshare.server.ftp.cmd;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 import org.mshare.file.share.SharedLink;
-import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -57,13 +53,13 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         String errString = null;
 
         mainblock: {
-            String param = getParameter(input);
+            String param = FtpParser.getParameter(input);
             Log.d(TAG, "LIST parameter: " + param);
             // 所有的LIST参数都将被忽略
             while (param.startsWith("-")) {
                 // Skip all dashed -args, if present
                 Log.d(TAG, "LIST is skipping dashed arg " + param);
-                param = getParameter(param);
+                param = FtpParser.getParameter(param);
             }
             
             // 筛除文件名不合格的文件

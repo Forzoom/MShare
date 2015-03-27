@@ -133,7 +133,6 @@ public abstract class RtspCmd implements Runnable {
     public static void dispatchCmd(SessionThread session, String inputString) {
         // 分割
         String[] strings = inputString.split(" ");
-
         String cmd = RtspParser.getCmd(strings);
 
         // 判断当前能否使用Cmd
@@ -197,6 +196,8 @@ public abstract class RtspCmd implements Runnable {
             Log.i(TAG, "Invalid command verb");
             return false;
         }
+		verb = verb.trim();
+		verb = verb.toUpperCase();
         // 可是没有办法对应
         for (int i = 0; i < cmdClasses.length; i++) {
             if (cmdClasses[i].getName().equals(verb)) {

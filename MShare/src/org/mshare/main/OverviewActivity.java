@@ -86,7 +86,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private ArrayList<HashMap<String, Object>> listImageItem;  
     private SimpleAdapter simpleAdapter;
     
-    private ListView mListView;
     private String mSdcardRootPath;
     private Object mLock = new Object();
 	private int mSelectedPosistion = -1;
@@ -166,7 +165,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
         surfaceView.setServerButtonListener(new ServerButtonListener());
         surfaceView.setSettingsButtonListener(new SettingsButtonListener());
 
-		// 添加加入链接的组件
+		// 客户端界面中加入连接的GridView
 		gridview = (ServerListGridView) findViewById(R.id.gridview);
 		gridview.setGestureDetector(gestureDetector);
 		

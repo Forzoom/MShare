@@ -1,10 +1,10 @@
 package org.mshare.server.ftp.cmd;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
+import org.mshare.server.ftp.FtpParser;
 import org.mshare.server.ftp.SessionThread;
 
 import android.util.Log;
@@ -29,7 +29,7 @@ public class CmdSIZE extends FtpCmd {
     public void run() {
         Log.d(TAG, "SIZE executing");
         String errString = null;
-        String param = getParameter(input);
+        String param = FtpParser.getParameter(input);
         long size = 0;
         mainblock: {
             SharedLink currentDir = sessionThread.getToken().getSystem().getWorkingDir();
