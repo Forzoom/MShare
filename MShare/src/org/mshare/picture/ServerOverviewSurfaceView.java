@@ -177,7 +177,6 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         settingsButton.setPadding(12, paddingTop, 12, 12);
         addElement(settingsButton);
 
-		ServerSettings.setAvaterPicked(true);
 		// 如何判断当前已经有头像了呢？
 		if (ServerSettings.isAvaterPicked()) {
 			int avaterRadius = canvasWidth / 4;
