@@ -155,7 +155,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// ∂˛Œ¨¬Î∞¥≈•
 		menuInStart.addButton(R.drawable.icon_folder, new LocalFileBrowserListener());
 		menuInStart.addButton(R.drawable.qrcode, new QrcodeViewListener());
-		menuInStart.addButton(R.drawable.qrcode, new BasicViewListener());
+		menuInStart.addButton(R.drawable.info, new BasicViewListener());
 		
 		// …Ë÷√surfaceView
 		surfaceView = (ServerOverviewSurfaceView)findViewById(R.id.server_overview_surface_view);
