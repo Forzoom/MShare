@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.ServerService;
 
 /**

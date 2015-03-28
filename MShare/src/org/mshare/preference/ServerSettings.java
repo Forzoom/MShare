@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package org.mshare.server;
+package org.mshare.preference;
 
 import java.io.File;
 
@@ -67,7 +67,7 @@ public class ServerSettings {
 
 	// 对应的头像
 	public static final String KEY_AVATER = "avater";
-	public static final String VALUE_AVATER_DEFAULT = "";
+	public static final boolean VALUE_AVATER_DEFAULT = false;
 
     /**
      * 获得用户名称
@@ -132,7 +132,14 @@ public class ServerSettings {
         Log.v(TAG, "uuid is " + uuid);
         return uuid;
     }
-    
+
+	public static boolean isAvaterPicked() {
+		final SharedPreferences sp = getSharedPreferences();
+		boolean isAvaterPicked = sp.getBoolean(KEY_AVATER, VALUE_AVATER_DEFAULT);
+		Log.d(TAG, "is avater picked ? " + isAvaterPicked);
+		return isAvaterPicked;
+	}
+
     /**
      * 设置用户名
      * @param username
@@ -179,7 +186,14 @@ public class ServerSettings {
     	editor.putString(KEY_UUID, uuid);
     	editor.commit();
     }
-    
+
+	public static void setAvaterPicked(boolean isAvaterPicked) {
+		final SharedPreferences sp = getSharedPreferences();
+		SharedPreferences.Editor editor = sp.edit();
+		editor.putBoolean(KEY_AVATER, isAvaterPicked);
+		editor.commit();
+	}
+
     /**
      * 是否保持唤醒状态
      * @return

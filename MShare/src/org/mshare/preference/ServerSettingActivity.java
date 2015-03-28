@@ -1,10 +1,12 @@
-package org.mshare.main;
+package org.mshare.preference;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+
+import org.mshare.main.R;
 
 public class ServerSettingActivity extends Activity {
 

@@ -8,7 +8,7 @@ import java.util.Set;
 import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.SessionNotifier;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.main.MShareApp;

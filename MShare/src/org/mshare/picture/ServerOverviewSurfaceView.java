@@ -5,8 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.mshare.avater.CircleAvaterCreator;
+import org.mshare.main.MShareApp;
 import org.mshare.main.R;
 import org.mshare.main.StatusController;
+import org.mshare.preference.ServerSettings;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -40,12 +43,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	
 	// 统一画笔
 	private Paint canvasPaint = new Paint();
-	// 当前是否在循环绘制
-	private boolean isLooping = false;
-	
-	// 刷新SurfaceView所用的Handler
-	private RefreshHandler refreshHandler;
-	
+
 	// 背景颜色
     private int ringColor;
 	private int stopColor;
@@ -96,7 +94,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		
 		// 设置GestureDetector和refreshHandler
 		gestureDetector = new GestureDetector(getContext(), new GestureListener());
-		refreshHandler = new RefreshHandler(Looper.myLooper(), this);
+		RefreshHandler.init(Looper.myLooper(), this);
 		
 		// 设置画笔
 		canvasPaint.setAntiAlias(true);
@@ -115,26 +113,22 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         // 背景
         if (pictureBackground == null) {
             pictureBackground = new PictureBackground();
-            addElement(pictureBackground);
         }
 
         // 头像
         if (circleAvater == null) {
             circleAvater = new CircleAvater();
-            addElement(circleAvater);
         }
 
         // 设置按钮
         if (settingsButton == null) {
             Bitmap settingsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.settings);
             settingsButton = new SettingsButton(settingsBitmap);
-            addElement(settingsButton);
         }
 
         // 服务器按钮
         if (serverButton == null) {// null情况下，仅仅是添加而已
             serverButton = new RingButton();
-            addElement(serverButton);
         }
     }
 	
@@ -150,6 +144,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		isSurfaceCreated = true;
 		
 		Canvas canvas = holder.lockCanvas();
+		Log.d(TAG, "lockCanvas create");
 		canvas.drawColor(getResources().getColor(R.color.blue08));
 		int canvasWidth = canvas.getWidth(), canvasHeight = canvas.getHeight();
 
@@ -171,7 +166,8 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
                 pictureBackground.setCurrentColor(operatingColor);
                 break;
         }
-
+        addElement(pictureBackground);
+        
         Log.d(TAG, "picture background " + Integer.toHexString(pictureBackground.getCurrentColor()));
         
         int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
@@ -179,6 +175,27 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         settingsButton.setX(x);
         settingsButton.setY(paddingTop);
         settingsButton.setPadding(12, paddingTop, 12, 12);
+        addElement(settingsButton);
+
+		ServerSettings.setAvaterPicked(true);
+		// 如何判断当前已经有头像了呢？
+		if (ServerSettings.isAvaterPicked()) {
+			int avaterRadius = canvasWidth / 4;
+			FileInputStream is = null;
+			try {
+				is = MShareApp.getAppContext().openFileInput("avater");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+	
+			if (is != null) {
+				Bitmap avaterBitmap = CircleAvaterCreator.createAvater(is, avaterRadius);
+				circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
+				circleAvater.setRadius(avaterRadius);
+				circleAvater.setAvater(avaterBitmap);
+				addElement(circleAvater);
+			}
+		}
 
         // 圆环的参数设置不得不放在这里，因为要使用canvasWidth
         bounceInnerRadius = canvasWidth / 4 - 50;
@@ -189,23 +206,8 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         serverButton.setRingColor(ringColor);
         serverButton.setCenter(center);
         serverButton.setRadius(canvasWidth / 4 - 20, canvasWidth / 4);
-
-		int avaterRadius = canvasWidth / 4;
-		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(R.drawable.avater_1, avaterRadius);
-
-		// 当出现问题的时候，该怎么办？使用默认的头像？
-		try {
-			avaterBitmap = BitmapFactory.decodeStream(getContext().openFileInput("avater"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
-		circleAvater.setRadius(avaterRadius);
-		circleAvater.setAvater(avaterBitmap);
-
+        addElement(serverButton);
+		
 		// 绘制基本内容
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement canvasElement = canvasElements.get(i);
@@ -213,7 +215,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		}
 		
 		holder.unlockCanvasAndPost(canvas);
-		
+		Log.d(TAG, "unlockCanvas create");
 		// 临时用于启动呼吸效果
 	}
 
@@ -222,6 +224,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		Log.d(TAG, "surface changed");
 
 		Canvas canvas = holder.lockCanvas();
+		Log.d(TAG, "lockCanvas change");
 		int canvasWidth = canvas.getWidth();
 		int canvasHeight = canvas.getHeight();
 
@@ -233,6 +236,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		settingsButton.setPadding(12, paddingTop, 12, 12);
 
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
+		// 需要将这些内容改变成比例的
 		bounceInnerRadius = canvasWidth / 4 - 50;
 		breatheOuterRadius = canvasWidth / 4 + 30;
 		Point center = new Point(canvasWidth / 2, canvasHeight / 2);
@@ -241,11 +245,23 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		serverButton.setRadius(canvasWidth / 4 - 20, canvasWidth / 4);
 
 		int avaterRadius = canvasWidth / 4;
-		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(R.drawable.avater_1, avaterRadius);
 
-		circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
-		circleAvater.setRadius(avaterRadius);
-		circleAvater.setAvater(avaterBitmap);
+		// 如何判断当前已经有头像了呢？
+		if (ServerSettings.isAvaterPicked()) {
+			FileInputStream is = null;
+			try {
+				is = MShareApp.getAppContext().openFileInput("avater");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+
+			if (is != null) {
+				Bitmap avaterBitmap = CircleAvaterCreator.createAvater(is, avaterRadius);
+				circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
+				circleAvater.setRadius(avaterRadius);
+				circleAvater.setAvater(avaterBitmap);
+			}
+		}
 
 		// 绘制基本内容
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
@@ -253,22 +269,27 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 			canvasElement.draw(canvas, canvasPaint);
 		}
 
-		// 判断当前的服务器状态
+		holder.unlockCanvasAndPost(canvas);
+		Log.d(TAG, "unlockCanvas change");
+		// TODO 当前如果就有需要的动画的话要怎么办?
+		
+//		// 判断当前的服务器状态
 		if (statusController.getServerStatus() == StatusController.STATUS_SERVER_STARTED) {
 			// 需要启动呼吸动画
 			serverButton.stopBreatheAnimation();
 			serverButton.startBreatheAnimation(breatheOuterRadius, System.currentTimeMillis(), DURATION_BREATHE_ANIMATION);
 		}
 		
-		holder.unlockCanvasAndPost(canvas);
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		Log.d(TAG, "surface destoryed");
 		isSurfaceCreated = false;
-		isLooping = false;
+		canvasElements.clear();
+		RefreshHandler.getInstance().setRefreshLooping(false);
 	}
+
 
 	@Override
 	public boolean handleMessage(Message msg) {
@@ -280,25 +301,32 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		
 		// 获得需要刷新的区域，仅仅能够在这里刷新
 		Canvas canvas = surfaceHolder.lockCanvas();
-		isLooping = false;
+		Log.d(TAG, "lockCanvas handle " + canvas);
+		
+		boolean needLooping = false;
 		Log.d(TAG, "has " + canvasElements.size() + " element");
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
 			element.draw(canvas, canvasPaint);
 			if (element.hasAnimation()) {
-				isLooping = true;
+				needLooping = true;
 			}
 		}
 
-		if (isLooping) {
-			startLooping();
-		}
-
+		Log.d(TAG, "unlockCanvas handle " + canvas);
 		surfaceHolder.unlockCanvasAndPost(canvas);
+
+		RefreshHandler handler = RefreshHandler.getInstance();
+		handler.setRefreshLooping(needLooping);
+		if (handler != null && needLooping) {
+			Message newMessage = handler.obtainMessage();
+			handler.sendMessageDelayed(newMessage, 20);
+		}
 
 		return false;
 	}
-	
+
+
 	//判断surface是否创建
 	public boolean isSurfaceCreated() {
 		return isSurfaceCreated;
@@ -308,6 +336,10 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		canvasElements.add(canvasElement);
 	}
 
+	public void removeElement(CanvasElement canvasElement) {
+		canvasElements.remove(canvasElement);
+	}
+	
 	public boolean shouldLooping() {
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
@@ -455,19 +487,9 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 				CanvasElement element = canvasElements.get(index);
 				element.click(x, y);
 			}
-			
-			// TODO 修改成函数
-			if (!isLooping) {
-				startLooping();
-			}
-			
+
 			return super.onDown(e);
 		}
-	}
-
-	public void startLooping() {
-		Message message = refreshHandler.obtainMessage();
-		message.sendToTarget();
 	}
 
 }

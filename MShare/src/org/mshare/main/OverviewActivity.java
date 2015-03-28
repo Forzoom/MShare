@@ -14,7 +14,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mshare.file.MshareFileMenu;
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettingActivity;
+import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.ServerService;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
@@ -534,21 +535,26 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	@Override
 	public void onServerStatusChange(int status) {
 		Log.d(TAG, "onServerStatus");
+		
+		if (surfaceView.isSurfaceCreated()) {
+
+			// 可以将operating的颜色变化放在这里
+			if (status == StatusController.STATUS_SERVER_STARTED) {
+	            // 使用启动动画
+	            surfaceView.startServerAnimation();
+
+			} else if (status == StatusController.STATUS_SERVER_STOPPED) {
+	            // 使用停止动画
+	            surfaceView.stopServerAniamtion();
+			}	
+		}
+		
 		// 可以将operating的颜色变化放在这里
 		if (status == StatusController.STATUS_SERVER_STARTED) {
-            // 使用启动动画
-            surfaceView.startServerAnimation();
-
             // 菜单动画
             menuInStop.hideAnimation();
             menuInStart.showAnimation();
-			surfaceView.startLooping();
 		} else if (status == StatusController.STATUS_SERVER_STOPPED) {
-            // 使用停止动画
-			//
-            surfaceView.stopServerAniamtion();
-			surfaceView.startLooping();
-
             // 处理菜单动画
             menuInStart.hideAnimation();
             menuInStop.showAnimation();
@@ -678,7 +684,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
             PictureBackground pictureBackground = surfaceView.getPictureBackground();
 		    pictureBackground.stopColorAnimation();
 			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime, ServerOverviewSurfaceView.DURATION_COLOR_ANIMATION);
-			surfaceView.startLooping();
 		}
 	}
 	
@@ -737,19 +742,5 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		}
 	}
 
-	/* 通过反射机制调用AP开启功能 */
-//	WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
-//	
-//	try {
-//		// 用于获得WifiConfiguration
-//		Method getWifiApConfigurationMethod = wm.getClass().getDeclaredMethod("getWifiApConfiguration");
-//		WifiConfiguration config = (WifiConfiguration)getWifiApConfigurationMethod.invoke(wm);
-//		
-//		Method setWifiApEnabledMethod = wm.getClass().getDeclaredMethod("setWifiApEnabled");
-//		setWifiApEnabledMethod.invoke(wm, config, enable);
-//		
-//	} catch (Exception e) {
-//		Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
-//		e.printStackTrace();
-//	}
+
 }
