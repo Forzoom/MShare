@@ -5,8 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.mshare.avater.CircleAvaterCreator;
+import org.mshare.main.MShareApp;
 import org.mshare.main.R;
 import org.mshare.main.StatusController;
+import org.mshare.preference.ServerSettings;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -233,6 +236,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		settingsButton.setPadding(12, paddingTop, 12, 12);
 
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
+		// 需要将这些内容改变成比例的
 		bounceInnerRadius = canvasWidth / 4 - 50;
 		breatheOuterRadius = canvasWidth / 4 + 30;
 		Point center = new Point(canvasWidth / 2, canvasHeight / 2);
@@ -241,11 +245,27 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		serverButton.setRadius(canvasWidth / 4 - 20, canvasWidth / 4);
 
 		int avaterRadius = canvasWidth / 4;
-		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(R.drawable.avater_1, avaterRadius);
 
-		circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
-		circleAvater.setRadius(avaterRadius);
-		circleAvater.setAvater(avaterBitmap);
+		// 如何判断当前已经有头像了呢？
+		if (ServerSettings.isAvaterPicked()) {
+
+			FileInputStream is = null;
+			try {
+
+				is = MShareApp.getAppContext().openFileInput("avater");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+
+			if (is != null) {
+
+				Bitmap avaterBitmap = CircleAvaterCreator.createAvater(is, avaterRadius);
+
+				circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
+				circleAvater.setRadius(avaterRadius);
+				circleAvater.setAvater(avaterBitmap);
+			}
+		}
 
 		// 绘制基本内容
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {

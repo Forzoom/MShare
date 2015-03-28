@@ -54,7 +54,7 @@ import org.mshare.account.AccountFactory.Token;
 import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettings;
 import org.mshare.server.rtsp.RtspConstants;
 
 import de.kp.rtspcamera.MediaConstants;

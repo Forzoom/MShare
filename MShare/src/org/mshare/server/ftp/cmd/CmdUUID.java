@@ -3,7 +3,7 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.SessionThread;
 
 public class CmdUUID extends FtpCmd implements Runnable {

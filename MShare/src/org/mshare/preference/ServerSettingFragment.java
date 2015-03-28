@@ -1,20 +1,17 @@
-package org.mshare.main;
+package org.mshare.preference;
 
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.util.Log;
 
-import org.mshare.avater.AvaterPreference;
+import org.mshare.main.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;

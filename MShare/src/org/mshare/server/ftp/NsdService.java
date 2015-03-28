@@ -20,7 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.server.ftp;
 
 import org.mshare.main.R;
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettings;
 
 import android.annotation.TargetApi;
 import android.app.Service;

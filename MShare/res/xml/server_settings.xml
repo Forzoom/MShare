@@ -2,8 +2,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <PreferenceCategory
         android:title="共享">
-        <org.mshare.avater.AvaterPreference android:title="头像">
-        </org.mshare.avater.AvaterPreference>
+        <org.mshare.preference.AvaterPreference android:title="头像">
+        </org.mshare.preference.AvaterPreference>
         <EditTextPreference
             android:key="nickname"
             android:title="昵称"
@@ -20,5 +20,8 @@
             android:title="安全传输"
             android:summary="让文件共享更加安全，但会影响传输的速度"
             android:defaultValue="false"/>
+        <org.mshare.preference.ApPreference android:title="共享网络">
+
+        </org.mshare.preference.ApPreference>
     </PreferenceCategory>
 </PreferenceScreen>

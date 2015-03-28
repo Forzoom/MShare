@@ -34,7 +34,7 @@
         android:theme="@android:style/Theme.Holo.Light" >
         <!-- 修改服务器配置 -->
         <activity
-            android:name="org.mshare.main.ServerSettingActivity"
+            android:name="org.mshare.preference.ServerSettingActivity"
 			android:label="@string/activity_label_server_setting" >
 		</activity>
 		

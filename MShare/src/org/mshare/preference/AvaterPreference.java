@@ -1,12 +1,10 @@
-package org.mshare.avater;
+package org.mshare.preference;
 
 import android.content.Context;
 import android.content.Intent;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.util.AttributeSet;
-
-import org.mshare.main.ServerSettingFragment;
 
 public class AvaterPreference extends Preference {
 	private static final String TAG = AvaterPreference.class.getSimpleName();

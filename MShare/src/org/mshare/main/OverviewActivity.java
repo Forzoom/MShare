@@ -14,7 +14,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mshare.file.MshareFileMenu;
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettingActivity;
+import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.ServerService;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
@@ -727,19 +728,5 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		}
 	}
 
-	/* 通过反射机制调用AP开启功能 */
-//	WifiManager wm = (WifiManager)getSystemService(Service.WIFI_SERVICE);
-//	
-//	try {
-//		// 用于获得WifiConfiguration
-//		Method getWifiApConfigurationMethod = wm.getClass().getDeclaredMethod("getWifiApConfiguration");
-//		WifiConfiguration config = (WifiConfiguration)getWifiApConfigurationMethod.invoke(wm);
-//		
-//		Method setWifiApEnabledMethod = wm.getClass().getDeclaredMethod("setWifiApEnabled");
-//		setWifiApEnabledMethod.invoke(wm, config, enable);
-//		
-//	} catch (Exception e) {
-//		Toast.makeText(this, "AP无法启动", Toast.LENGTH_SHORT).show();
-//		e.printStackTrace();
-//	}
+
 }

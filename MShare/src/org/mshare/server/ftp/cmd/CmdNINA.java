@@ -1,7 +1,7 @@
 package org.mshare.server.ftp.cmd;
 
 import org.mshare.main.MShareApp;
-import org.mshare.server.ServerSettings;
+import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.SessionThread;
 
