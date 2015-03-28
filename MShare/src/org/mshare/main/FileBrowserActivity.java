@@ -427,9 +427,13 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 
 					SharedLink sharedLink = SharedLink.newSharedLink(SharedLinkSystem.SEPARATOR + file.getName(), file.getAbsolutePath());
 					// 持久化并添加内容
-					token.getSystem().persist(sharedLink);
-					token.getSystem().addSharedPath(sharedLink);
-
+					if (token.getSystem() == null) {
+						Log.e(TAG, "the system is null");
+					} else {
+						token.getSystem().persist(sharedLink);
+						token.getSystem().addSharedPath(sharedLink);
+					}
+					
 				}
 			}
         }

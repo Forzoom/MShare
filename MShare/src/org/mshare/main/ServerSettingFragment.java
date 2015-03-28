@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.Preference;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.util.Log;
 
@@ -30,7 +31,8 @@ public class ServerSettingFragment extends PreferenceFragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.server_settings);
-		AvaterPreference avaterPreference = (AvaterPreference)getPreferenceScreen().getPreference(0);
+		PreferenceCategory category = (PreferenceCategory)getPreferenceScreen().getPreference(0);
+		AvaterPreference avaterPreference = (AvaterPreference)category.getPreference(0);
 		avaterPreference.setServerSettingFragment(this);
 	}
 
