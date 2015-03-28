@@ -195,6 +195,7 @@
     
     <!-- ActionBar -->
     <string name="option_pick_up">选择</string>
+    <string name="option_confirm">确定</string>
 
     <!-- 二维码 -->
     <string name="please_scan">请扫描下面的二维码，接受文件共享</string>

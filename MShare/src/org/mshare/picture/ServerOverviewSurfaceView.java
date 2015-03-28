@@ -158,17 +158,22 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         // 绘制背景色
         switch (statusController.getServerStatus()) {
             case StatusController.STATUS_SERVER_STARTED:
+            	Log.d(TAG, "draw start color");
                 pictureBackground.setCurrentColor(startColor);
                 break;
             case StatusController.STATUS_SERVER_STOPPED:
+            	Log.d(TAG, "draw stop color");
                 pictureBackground.setCurrentColor(stopColor);
                 break;
             case StatusController.STATUS_SERVER_STARTING:
             case StatusController.STATUS_SERVER_STOPING:
+            	Log.d(TAG, "draw operate color");
                 pictureBackground.setCurrentColor(operatingColor);
                 break;
         }
 
+        Log.d(TAG, "picture background " + Integer.toHexString(pictureBackground.getCurrentColor()));
+        
         int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
         int paddingTop = 12;
         settingsButton.setX(x);
@@ -251,8 +256,11 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		// 判断当前的服务器状态
 		if (statusController.getServerStatus() == StatusController.STATUS_SERVER_STARTED) {
 			// 需要启动呼吸动画
+			serverButton.stopBreatheAnimation();
 			serverButton.startBreatheAnimation(breatheOuterRadius, System.currentTimeMillis(), DURATION_BREATHE_ANIMATION);
 		}
+		
+		holder.unlockCanvasAndPost(canvas);
 	}
 
 	@Override
@@ -273,6 +281,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		// 获得需要刷新的区域，仅仅能够在这里刷新
 		Canvas canvas = surfaceHolder.lockCanvas();
 		isLooping = false;
+		Log.d(TAG, "has " + canvasElements.size() + " element");
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
 			element.draw(canvas, canvasPaint);
@@ -326,8 +335,6 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         }
         Log.d(TAG, "start animation : " + getBreatheOuterRadius());
         serverButton.startBreatheAnimation(getBreatheOuterRadius(), startTime, DURATION_BREATHE_ANIMATION);
-        
-
     }
 
     // 预置的服务器停止动画

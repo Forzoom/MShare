@@ -176,7 +176,7 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 	private void setMenu1() {
 		this.mshareFileMenu[0] = new MshareFileMenu(this, this.linearLayout);
 		MenuNewFolder menuNewFolder = new MenuNewFolder();
-		this.mshareFileMenu[0].addButton(R.drawable.account, "新建文件夹", menuNewFolder);		
+		this.mshareFileMenu[0].addButton(R.drawable.newfolder, "新建文件夹", menuNewFolder);		
 	}
 	
 	//设置第二菜单
@@ -190,15 +190,15 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		MenuCancelOpration menuCancelOperation = new MenuCancelOpration();
 		MenuShare menuShare = new MenuShare();
 		MenuUnshare menuUnshare = new MenuUnshare();
-		this.mshareFileMenu[1].addButton(R.drawable.account, "复制", menuCopy);
-		this.mshareFileMenu[1].addButton(R.drawable.account, "剪切", menuCut);
-		this.mshareFileMenu[1].addButton(R.drawable.account, "删除", menuDelete);
-		this.mshareFileMenu[1].addButton(R.drawable.account, "撤消", menuCancelOperation);
+		this.mshareFileMenu[1].addButton(R.drawable.copy, "复制", menuCopy);
+		this.mshareFileMenu[1].addButton(R.drawable.cut, "剪切", menuCut);
+		this.mshareFileMenu[1].addButton(R.drawable.delete, "删除", menuDelete);
+		this.mshareFileMenu[1].addButton(R.drawable.cancel, "撤消", menuCancelOperation);
 		this.mshareFileMenu[1].setRightMenu(this.mshareFileMenu[3]);
 		this.mshareFileMenu[3].setLeftMenu(this.mshareFileMenu[1]);
-		this.mshareFileMenu[3].addButton(R.drawable.account, "重命名", menuRename);
-		this.mshareFileMenu[3].addButton(R.drawable.account, "共享", menuShare);
-		this.mshareFileMenu[3].addButton(R.drawable.account, "不共享", menuUnshare);
+		this.mshareFileMenu[3].addButton(R.drawable.rename, "重命名", menuRename);
+		this.mshareFileMenu[3].addButton(R.drawable.share, "共享", menuShare);
+		this.mshareFileMenu[3].addButton(R.drawable.unshare, "不共享", menuUnshare);
 		this.mshareFileMenu[1].hide();
 		this.mshareFileMenu[3].hide();
 	}
@@ -208,8 +208,8 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 		this.mshareFileMenu[2] = new MshareFileMenu(this, this.linearLayout);
 		MenuPaste menuPaste = new MenuPaste();
 		MenuCancelPaste menuCancelPaste = new MenuCancelPaste();
-		this.mshareFileMenu[2].addButton(R.drawable.account, "粘贴", menuPaste);
-		this.mshareFileMenu[2].addButton(R.drawable.account, "取消", menuCancelPaste);
+		this.mshareFileMenu[2].addButton(R.drawable.paste, "粘贴", menuPaste);
+		this.mshareFileMenu[2].addButton(R.drawable.cancel, "取消", menuCancelPaste);
 		this.mshareFileMenu[2].hide();
 	}
 	
@@ -427,9 +427,13 @@ public class FileBrowserActivity extends Activity implements FileBrowserCallback
 
 					SharedLink sharedLink = SharedLink.newSharedLink(SharedLinkSystem.SEPARATOR + file.getName(), file.getAbsolutePath());
 					// 持久化并添加内容
-					token.getSystem().persist(sharedLink);
-					token.getSystem().addSharedPath(sharedLink);
-
+					if (token.getSystem() == null) {
+						Log.e(TAG, "the system is null");
+					} else {
+						token.getSystem().persist(sharedLink);
+						token.getSystem().addSharedPath(sharedLink);
+					}
+					
 				}
 			}
         }

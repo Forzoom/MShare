@@ -2,11 +2,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <PreferenceCategory
         android:title="共享">
-        <Preference android:title="头像">
-            <intent android:action="android.intent.action.GET_CONTENT"
-                    android:mimeType="image/*"
-                />
-        </Preference>
+        <org.mshare.avater.AvaterPreference android:title="头像">
+        </org.mshare.avater.AvaterPreference>
         <EditTextPreference
             android:key="nickname"
             android:title="昵称"

@@ -101,6 +101,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
     	adminAccount.prepare();
 		adminAccount.getSystem().setCallback(this);
 		adminAccountToken = new Token(AdminUsername, AdminPassword, null);
+		adminAccountToken.setAccount(adminAccount);
 		
 		// 创建匿名账户信息
 		guestAccount = new GuestAccount(AnonymousUsername, AnonymousPassword);

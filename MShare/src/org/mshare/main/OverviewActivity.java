@@ -250,8 +250,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		final EditText editPasword= (EditText) loginForm.findViewById(R.id.editPassword);
 		editPasword.setText("abc");
 		new AlertDialog.Builder(this)
-			// 设置对话框的图标
-			.setIcon(R.drawable.app_default_icon)
 			// 设置对话框的标题
 			.setTitle("新建FTP服务器")
 			// 设置对话框显示的View对象

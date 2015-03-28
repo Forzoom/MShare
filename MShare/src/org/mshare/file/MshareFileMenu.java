@@ -89,7 +89,7 @@ public class MshareFileMenu {
 		this.anotherMenu = m;
 		this.leftMenu = true;
 		ToRight toRight = new ToRight();
-		this.addButton(R.drawable.account, toRight);
+		this.addButton(R.drawable.toright, toRight);
 	}
 	
 	//…Ë÷√◊Û≤Àµ•
@@ -97,7 +97,7 @@ public class MshareFileMenu {
 		this.anotherMenu = m;
 		this.leftMenu = false;
 		ToLeft toLeft = new ToLeft();
-		this.addButton(R.drawable.account, toLeft);
+		this.addButton(R.drawable.toleft, toLeft);
 	}
 	
 	class ToRight implements View.OnClickListener {
