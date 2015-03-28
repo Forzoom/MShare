@@ -50,6 +50,8 @@ public class CmdPASS extends FtpCmd implements Runnable {
         
         // 输入的内容可能会有错误
         if (attemptPassword != null && !attemptPassword.equals("")) {
+        	Log.d(TAG, "create username : " + sessionThread.sessionInfo.getUsername());
+        	
         	if (sessionThread.authAttempt(sessionThread.sessionInfo.getUsername(), attemptPassword) != null) {
         		Log.i(TAG, "User " + sessionThread.sessionInfo.getUsername() + " verified");
         		
