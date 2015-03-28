@@ -144,6 +144,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		isSurfaceCreated = true;
 		
 		Canvas canvas = holder.lockCanvas();
+		Log.d(TAG, "lockCanvas create");
 		canvas.drawColor(getResources().getColor(R.color.blue08));
 		int canvasWidth = canvas.getWidth(), canvasHeight = canvas.getHeight();
 
@@ -214,7 +215,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		}
 		
 		holder.unlockCanvasAndPost(canvas);
-		
+		Log.d(TAG, "unlockCanvas create");
 		// 临时用于启动呼吸效果
 	}
 
@@ -223,6 +224,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		Log.d(TAG, "surface changed");
 
 		Canvas canvas = holder.lockCanvas();
+		Log.d(TAG, "lockCanvas change");
 		int canvasWidth = canvas.getWidth();
 		int canvasHeight = canvas.getHeight();
 
@@ -268,16 +270,16 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		}
 
 		holder.unlockCanvasAndPost(canvas);
-
+		Log.d(TAG, "unlockCanvas change");
 		// TODO 当前如果就有需要的动画的话要怎么办?
 		
 //		// 判断当前的服务器状态
-//		if (statusController.getServerStatus() == StatusController.STATUS_SERVER_STARTED) {
-//			// 需要启动呼吸动画
-//			serverButton.stopBreatheAnimation();
-//			serverButton.startBreatheAnimation(breatheOuterRadius, System.currentTimeMillis(), DURATION_BREATHE_ANIMATION);
-//		}
-//		
+		if (statusController.getServerStatus() == StatusController.STATUS_SERVER_STARTED) {
+			// 需要启动呼吸动画
+			serverButton.stopBreatheAnimation();
+			serverButton.startBreatheAnimation(breatheOuterRadius, System.currentTimeMillis(), DURATION_BREATHE_ANIMATION);
+		}
+		
 	}
 
 	@Override
@@ -293,8 +295,13 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	public boolean handleMessage(Message msg) {
 		Log.d(TAG, "handleMessage");
 
+		if (!isSurfaceCreated) {
+			return false;
+		}
+		
 		// 获得需要刷新的区域，仅仅能够在这里刷新
 		Canvas canvas = surfaceHolder.lockCanvas();
+		Log.d(TAG, "lockCanvas handle " + canvas);
 		
 		boolean needLooping = false;
 		Log.d(TAG, "has " + canvasElements.size() + " element");
@@ -306,14 +313,15 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 			}
 		}
 
+		Log.d(TAG, "unlockCanvas handle " + canvas);
+		surfaceHolder.unlockCanvasAndPost(canvas);
+
 		RefreshHandler handler = RefreshHandler.getInstance();
 		handler.setRefreshLooping(needLooping);
 		if (handler != null && needLooping) {
 			Message newMessage = handler.obtainMessage();
 			handler.sendMessageDelayed(newMessage, 20);
 		}
-
-		surfaceHolder.unlockCanvasAndPost(canvas);
 
 		return false;
 	}
