@@ -93,10 +93,8 @@ public class ServerSettings {
      */
     public static int getPort() {
         final SharedPreferences sp = getSharedPreferences();
-        // TODO: port is always an number, so store this accordenly
         String portString = sp.getString(KEY_PORT, VALUE_PORT_DEFAULT);
         int port = Integer.valueOf(portString);
-        Log.v(TAG, "Using port: " + port);
         return port;
     }
     

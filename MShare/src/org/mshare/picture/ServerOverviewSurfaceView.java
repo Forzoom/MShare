@@ -2,10 +2,8 @@ package org.mshare.picture;
 
 import java.util.ArrayList;
 
-import org.mshare.main.MShareApp;
 import org.mshare.main.R;
 import org.mshare.main.StatusController;
-import org.mshare.picture.SettingsButton.AlphaAnimation;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -53,10 +51,10 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	private int transparentColor;
 	
 	// 所设置的缩小的内半径
-	private int serverInnerRadius;
+	private int bounceInnerRadius;
 	
 	// 所设置的放大的呼吸外半径
-	private int serverOuterRadius;
+	private int breatheOuterRadius;
 		
 	private StatusController statusController;
 
@@ -65,7 +63,13 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	private CircleAvater circleAvater;
 	private RingButton serverButton;
 	private SettingsButton settingsButton;
-	
+
+	public static final int DURATION_BOUNCE_ANIMATION = 500;
+	public static final int DURATION_BREATHE_ANIMATION = 3000;
+
+	public static final int DURATION_COLOR_ANIMATION = 500;
+
+
 	public ServerOverviewSurfaceView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		init();
@@ -169,10 +173,10 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         settingsButton.setPadding(12, paddingTop, 12, 12);
 
         // 圆环的参数设置不得不放在这里，因为要使用canvasWidth
-        serverInnerRadius = canvasWidth / 4 - 50;
-        serverOuterRadius = canvasWidth / 4 + 30;
-        Log.d(TAG, "server inner radius " + serverInnerRadius);
-        Log.d(TAG, "server outer radius " + serverOuterRadius);
+        bounceInnerRadius = canvasWidth / 4 - 50;
+        breatheOuterRadius = canvasWidth / 4 + 30;
+        Log.d(TAG, "server inner radius " + bounceInnerRadius);
+        Log.d(TAG, "server outer radius " + breatheOuterRadius);
         Point center = new Point(canvasWidth / 2, canvasHeight / 2);
         serverButton.setRingColor(ringColor);
         serverButton.setCenter(center);
@@ -212,8 +216,8 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		settingsButton.setPadding(12, paddingTop, 12, 12);
 
 		// 圆环的参数设置不得不放在这里，因为要使用canvasWidth
-		serverInnerRadius = canvasWidth / 4 - 50;
-		serverOuterRadius = canvasWidth / 4 + 30;
+		bounceInnerRadius = canvasWidth / 4 - 50;
+		breatheOuterRadius = canvasWidth / 4 + 30;
 		Point center = new Point(canvasWidth / 2, canvasHeight / 2);
 		serverButton.setRingColor(ringColor);
 		serverButton.setCenter(center);
@@ -232,6 +236,11 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 			canvasElement.draw(canvas, canvasPaint);
 		}
 
+		// 判断当前的服务器状态
+		if (statusController.getServerStatus() == StatusController.STATUS_SERVER_STARTED) {
+			// 需要启动呼吸动画
+			serverButton.startBreatheAnimation(breatheOuterRadius, System.currentTimeMillis(), DURATION_BREATHE_ANIMATION);
+		}
 	}
 
 	@Override
@@ -239,8 +248,6 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		Log.d(TAG, "surface destoryed");
 		isSurfaceCreated = false;
 		isLooping = false;
-		// 清空所有的elements，暂时先这样
-//		canvasElements.clear();
 	}
 
 	@Override
@@ -297,7 +304,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         long startTime = System.currentTimeMillis();
 
         pictureBackground.stopColorAnimation();
-        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStartColor(), startTime, 500);
+        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStartColor(), startTime, DURATION_COLOR_ANIMATION);
 
         // 处理呼吸动画效果
         serverButton.stopBreatheAnimation();
@@ -306,8 +313,8 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         if (breatheAnimation != null) {
             breatheAnimation.setRepeatMode(CanvasAnimation.REPEAT_MODE_INFINITE);
         }
-        Log.d(TAG, "start animation : " + getServerOuterRadius());
-        serverButton.startBreatheAnimation(getServerOuterRadius(), startTime, 3000);
+        Log.d(TAG, "start animation : " + getBreatheOuterRadius());
+        serverButton.startBreatheAnimation(getBreatheOuterRadius(), startTime, DURATION_BREATHE_ANIMATION);
         
 
     }
@@ -316,7 +323,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
     public void stopServerAniamtion() {
         // 调整背景颜色
         pictureBackground.stopColorAnimation();
-        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStopColor(), System.currentTimeMillis(), 500);
+        pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), getStopColor(), System.currentTimeMillis(), DURATION_COLOR_ANIMATION);
 
         // 调整呼吸动画
         CanvasAnimation breatheAnimation = serverButton.getBreatheAnimation();
@@ -391,20 +398,20 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		this.statusController = statusController;
 	}
 
-	public int getServerInnerRadius() {
-		return serverInnerRadius;
+	public int getBounceInnerRadius() {
+		return bounceInnerRadius;
 	}
 
-	public void setServerInnerRadius(int serverInnerRadius) {
-		this.serverInnerRadius = serverInnerRadius;
+	public void setBounceInnerRadius(int bounceInnerRadius) {
+		this.bounceInnerRadius = bounceInnerRadius;
 	}
 
-	public int getServerOuterRadius() {
-		return serverOuterRadius;
+	public int getBreatheOuterRadius() {
+		return breatheOuterRadius;
 	}
 
-	public void setServerOuterRadius(int serverOuterRadius) {
-		this.serverOuterRadius = serverOuterRadius;
+	public void setBreatheOuterRadius(int breatheOuterRadius) {
+		this.breatheOuterRadius = breatheOuterRadius;
 	}
 	
 	public CircleAvater getCircleAvater() {

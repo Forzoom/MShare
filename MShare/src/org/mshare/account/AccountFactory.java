@@ -311,7 +311,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		Context context = MShareApp.getAppContext();
 		return isAccountExists(context, username);
 	}
-	
+
+	// 返回账户对应的密码
+	private String getAccountPassword(Context context, String username) {
+		SharedPreferences sp = context.getSharedPreferences(username, Context.MODE_PRIVATE);
+		return sp.getString(Account.KEY_PASSWORD, "");
+	}
+
 	/**
 	 * 指明本地文件是否被共享
 	 * @param file 所要判断的文件
@@ -369,16 +375,13 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			Log.e(TAG, "already container account : " + username);
 			return false;
 		}
-		
+
 		Context context = MShareApp.getAppContext();
-		SharedPreferences sp = context.getSharedPreferences(username, Context.MODE_PRIVATE);
-		String password = sp.getString(Account.KEY_PASSWORD, "");
-		
-		if (password.equals("")) {
-			Log.e(TAG, "account is not exist");
+		String password = null;
+		if (!isAccountExists(context, username) && (password = getAccountPassword(context, username)).equals("")) {
 			return false;
 		}
-		
+
 		Log.d(TAG, "add new account : " + username);
 		Account newAccount = new UserAccount(username, password);
 		// 将管理员中的内容添加到新的账户中

@@ -48,7 +48,6 @@ import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TableLayout;
 import android.widget.Toast;
@@ -86,7 +85,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private ArrayList<HashMap<String, Object>> listImageItem;  
     private SimpleAdapter simpleAdapter;
     
-    private String mSdcardRootPath;
+    private String mSdcardRootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
     private Object mLock = new Object();
 	private int mSelectedPosistion = -1;
 
@@ -122,7 +121,9 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		
 		// 在第一次启动的时候使用默认配置
 		PreferenceManager.setDefaultValues(this, R.xml.server_settings, false);
-		
+
+//		PreferenceManager.
+
 		// 获得基本配置内容
 //		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 //		String nickName = sp.getString("nickname", "");
@@ -173,16 +174,13 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	    btscan = (LinearLayout) findViewById(R.id.btscan);
 	    listImageItem = new ArrayList<HashMap<String, Object>>();  
 	    
-	    mSdcardRootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
 		mCmdFactory = new CmdFactory();
 		mFTPClient = new FTPClient();
 		mThreadPool = Executors.newFixedThreadPool(MAX_THREAD_NUMBER);
       
 	    simpleAdapter = new SimpleAdapter(  
 	            this, listImageItem,  
-	            R.layout.labelicon, new String[] {  
-	                    "ItemImage", "ItemText" }, new int[] { R.id.imageview,  
-	                    R.id.textview });  
+	            R.layout.server_item, new String[] {"ItemImage", "ItemText" }, new int[] {R.id.image_view, R.id.text_view});
 	    
 	    btftp.setOnClickListener(new View.OnClickListener() {
 			
@@ -333,9 +331,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	                ImageView iv = (ImageView) view;  
 	                iv.setImageDrawable((Drawable) data);  
 	                return true;  
-	            } else  
-	                return false;  
-	        }  
+	            } else {
+					return false;
+				}
+	        }
 	    });  
 	    gridview.setAdapter(simpleAdapter);
 	    gridview.setOnItemClickListener(new OnItemClickListener(){
@@ -367,11 +366,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			Log.v(TAG, "mCmdFactory is null");
 		mThreadPool.execute(mCmdFactory.createCmdConnect());
 	}
-	
-	private void logv(String log) {
-		Log.v(TAG, log);
-	}
-	
+
 	private void toast(String hint) {
 		Toast.makeText(this, hint, Toast.LENGTH_SHORT).show();
 	}
@@ -380,10 +375,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 
 		@Override
 		public void handleMessage(Message msg) {
-			logv("mHandler --->" + msg.what);
+			Log.v(TAG, "mHandler --->" + msg.what);
 			switch (msg.what) {
 			case MSG_CMD_CONNECT_OK:
-				toast("FTP服务器连接成功");
+				toast("共享连接成功");
 				if(mDameonThread == null){
 					//启动守护进程。
 					mDameonThread = new Thread(new DameonFtpConnector());
@@ -393,7 +388,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 				buildOrUpdateDataset();
 				break;
 			case MSG_CMD_CONNECT_FAILED:
-				toast("FTP服务器连接失败，正在重新连接");
+				toast("共享连接失败，正在重新连接");
 				executeConnectRequest();
 				break;
 			default:
@@ -441,7 +436,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 				String[] welcome = mFTPClient.connect(mFTPHost, mFTPPort);
 				if (welcome != null) {
 					for (String value : welcome) {
-						logv("connect " + value);
+						Log.v(TAG, "connect " + value);
 					}
 				}
                 // 尝试登陆
@@ -460,12 +455,13 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 				errorAndRetry = true ;
 			}
 			if(errorAndRetry && mDameonRunning){
+				// 每2000毫秒重新发送
 				mHandler.sendEmptyMessageDelayed(MSG_CMD_CONNECT_FAILED, 2000);
 			}
 		}
 	}
 
-	public class CmdDisConnect extends FtpCmd {
+	public class CmdDisconnect extends FtpCmd {
 
 		@Override
 		public void run() {
@@ -486,7 +482,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		}
 
 		public FtpCmd createCmdDisConnect() {
-			return new CmdDisConnect();
+			return new CmdDisconnect();
 		}
 
 	}
@@ -503,8 +499,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		// 并没有AP cannot enable，所以对于isWifiApEnable函数，可以正确的执行,但是对于setWifiApEnabled就会报错
 		// TODO 如果启动AP失败了之后，就将其写入配置文件，表明当前设备可能并不支持开启AP
 
-		// 当前上传路径
-//		uploadPathView.setText(ServerSettings.getUpload());
 		statusController.registerReceiver();
 	}
 	
@@ -591,7 +585,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 
 	@Override
 	public void onWifiP2pStatusChange(int status) {
-		// TODO Auto-generated method stub
 		Log.d(TAG, "on wifi p2p state change");
 	}
 
@@ -659,8 +652,8 @@ public class OverviewActivity extends Activity implements StatusController.Statu
             // 启动了bounceAnimation
             RingButton serverButton = surfaceView.getServerButton();
 			serverButton.stopBounceAnimation();
-			Log.d(TAG, "the server inner radius : " + surfaceView.getServerInnerRadius());
-			serverButton.startBounceAnimation(surfaceView.getServerInnerRadius(), startTime, 500);
+			Log.d(TAG, "the server inner radius : " + surfaceView.getBounceInnerRadius());
+			serverButton.startBounceAnimation(surfaceView.getBounceInnerRadius(), startTime, ServerOverviewSurfaceView.DURATION_BOUNCE_ANIMATION);
 			
 			// 修改服务器状态、启动或关闭服务器
 			if (serverStatus == StatusController.STATUS_SERVER_STARTED) {
@@ -674,7 +667,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			// 修改背景色到执行状态
             PictureBackground pictureBackground = surfaceView.getPictureBackground();
 		    pictureBackground.stopColorAnimation();
-			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime, 500);
+			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime, ServerOverviewSurfaceView.DURATION_COLOR_ANIMATION);
 		}
 	}
 	

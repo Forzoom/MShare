@@ -18,7 +18,9 @@ import android.util.Log;
  * <p>保存用户的配置和文件树内容，当SharedLinkStorage被正确生成的时候，其中包含了所有的SharedLink</p>
  * 
  * <p>所有在其中的内容都将被持久化</p>
- * 
+ *
+ * TODO 应该有事务的功能
+ *
  * TODO 文件被保存在应用的私有空间内
  *
  * 构建持久化内容和非持久化内容之间的桥梁
@@ -179,7 +181,6 @@ public class SharedLinkStorage {
 	 * <p>添加用户文件树中的内容，仅仅用于修改内存内容</p>
 	 * TODO 考虑持久化内容修改
 	 * TODO 考虑使用Transmission事务
-	 * @param key
 	 * @param file
 	 * @return
 	 */
@@ -193,7 +194,6 @@ public class SharedLinkStorage {
 	
 	/**
 	 * 尝试获得所有的内容，这些内容都是可能在{@link SharedLinkSystem}中正在使用的SharedLink对象
-	 * TODO 需要降低内存消耗
 	 * @return
 	 */
 	public SharedLink[] getAll() {
@@ -233,6 +233,7 @@ public class SharedLinkStorage {
 	/**
 	 * 修改用户持久化内容
 	 * TODO 考虑不需要Editor，简化内容，另外考虑使用Handler来进行消息处理
+	 * 使用的editor的是为了事务考虑
 	 * @author HM
 	 *
 	 */

@@ -279,6 +279,32 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 //		});
 	}
 	*/
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// 需要对应不同的请求
+		if (resultCode == Activity.RESULT_OK) {
+			// 表明当前视频播放正常推出
+			try {
+				FTPReply reply = mFTPClient.sendCustomCommand("CRTP");
+				if (reply.getCode() == 211) {
+					// 正确完成
+					// 可以正确地使用其他的Ftp命令了
+				}
+				// 失败
+				Log.e(TAG, "executing CRTP fail");
+			} catch (FTPIllegalReplyException e) {
+				Log.e(TAG, "something wrong happen");
+				e.printStackTrace();
+			} catch (IOException e) {
+				Log.e(TAG, "something wrong happen");
+				e.printStackTrace();
+			}
+		}
+
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {

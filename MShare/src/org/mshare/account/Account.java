@@ -105,7 +105,7 @@ public abstract class Account {
     	
     	if (mSharedLinkSystem == null) {
     		Log.d(TAG, "create SharedLinkSystem!");
-    		mSharedLinkSystem = new SharedLinkSystem(this);
+    		mSharedLinkSystem = SharedLinkSystem.getInstance(this);
     	}
     	if (!mSharedLinkSystem.isPrepared()) {
     		Log.d(TAG, "make SharedLinkSystem prepared!");

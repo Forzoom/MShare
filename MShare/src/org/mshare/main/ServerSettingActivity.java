@@ -29,5 +29,5 @@ public class ServerSettingActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		return super.onOptionsItemSelected(item);
 	}
-	
+
 }

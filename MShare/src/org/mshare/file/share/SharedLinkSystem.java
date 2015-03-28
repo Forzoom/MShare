@@ -119,9 +119,8 @@ public class SharedLinkSystem {
 	 */
 	private Callback mCallback;
 	
-	// TODO 获得文件树对应的Account,如果Account是空的怎么办？要不要使用多例模式？当Account为null的时候，将无法获得一个SharedLinkSystem，或者是使用initial函数来让文件树prepare
 	// 将构造函数中的一些操作移动到prepare函数中
-	public SharedLinkSystem(Account account) {
+	private SharedLinkSystem(Account account) {
 		this.mAccount = account;
 		// 根没有被持久化，所以需要每次自行创建,根文件只有读权限
 		root = SharedLink.newFakeDirectory(SEPARATOR, Permission.PERMISSION_READ_ALL);
@@ -130,7 +129,17 @@ public class SharedLinkSystem {
 		// 设置当前的working directory为"/"
 		setWorkingDir(SEPARATOR); // root作为working directory
 	}
-	
+
+	// 并不算是真正的多例模式，只是添加了account的判断而已
+	public static SharedLinkSystem getInstance(Account account) {
+
+		if (account == null) {
+			Log.e(TAG, "the account is null!");
+			return null;
+		}
+		return new SharedLinkSystem(account);
+	}
+
 	/**
 	 * 加载账户中的SharedLink内容
 	 * 准备账户的上传文件接收路径
@@ -191,8 +200,7 @@ public class SharedLinkSystem {
 	
 	/**
 	 * 根据当前Account的类型来添加文件
-	 * @param fakePath
-	 * @param realPath
+	 * @param sharedLink
 	 * @return
 	 */
 	public boolean addSharedPath(SharedLink sharedLink) {
@@ -388,14 +396,13 @@ public class SharedLinkSystem {
 	 * 将尝试在private的部分修正持久化内容
 	 */
 	public boolean changePersist(String oldFakePath, String newFakePath, String newRealPath) {
-		Log.d(TAG, "修正持久化内容");
+		Log.d(TAG, "change persist");
 		SharedLinkStorage storage = getAccount().getStorage();
 		SharedLink sharedLink = SharedLink.newSharedLink(newFakePath, newRealPath);
 		storage.remove(oldFakePath);
 		storage.set(sharedLink);
 		Log.d(TAG, "-oldFakePath :" + oldFakePath);
 		Log.d(TAG, "+newFakePath :" + newFakePath + " newRealPath :" + newRealPath);
-		// TODO 需要修正
 		boolean changeResult = true;
 		Log.d(TAG, "=result: " + changeResult);
 		return changeResult;

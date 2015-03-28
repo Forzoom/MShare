@@ -77,7 +77,14 @@ public class PlayActivity extends Activity {
 
 		// TODO 在这里判断不大好，毕竟Activity已经启动了
 	}
-	
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		// 返回result表明应该关闭了
+		setResult(Activity.RESULT_OK);
+	}
+
 	/**
 	 * 初始化需要播放的内容
 	 * @return 返回可以播放的Uri

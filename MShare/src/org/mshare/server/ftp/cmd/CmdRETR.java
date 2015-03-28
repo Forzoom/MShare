@@ -66,11 +66,6 @@ public class CmdRETR extends FtpCmd implements Runnable {
                 break mainblock;
             }
             
-            /*
-             * else if(!sessionThread.isBinaryMode()) { myLog.l(Log.INFO,
-             * "Failed RETR in text mode"); errString =
-             * "550 Text mode RETR not supported\r\n"; break mainblock; }
-             */
             FileInputStream in = null;
             try {
             	// 使用不同的Mode有什么区别吗?对于AsciiMode不能使用加密?
@@ -82,7 +77,7 @@ public class CmdRETR extends FtpCmd implements Runnable {
                     Log.d(TAG, "RETR opened data socket");
                 } else {
                     errString = "425 Error opening socket\r\n";
-                    Log.i(TAG, "Error in initDataSocket()");
+                    Log.i(TAG, "Error in startUsingDataSocket()");
                     break mainblock;
                 }
                 sessionThread.writeString("150 Sending file\r\n");
@@ -92,8 +87,6 @@ public class CmdRETR extends FtpCmd implements Runnable {
                         in.skip(sessionThread.getOffset());
                     }
                     while ((bytesRead = in.read(buffer)) != -1) {
-                        // myLog.l(Log.DEBUG,
-                        // String.format("CmdRETR sending %d bytes", bytesRead));
                         if (sessionThread.sendViaDataSocket(buffer, bytesRead) == false) {
                             errString = "426 Data socket error\r\n";
                             Log.i(TAG, "Data socket error");

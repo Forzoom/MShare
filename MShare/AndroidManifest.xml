@@ -109,15 +109,8 @@
             android:name="org.mshare.main.BasicConnectActivity"
             android:label="@string/app_name" >
         </activity>
-        
-        <activity android:name="org.mshare.main.ServerAvaterSettingActivity"
-            android:label="头像设置">
-            <intent-filter>
-                <action android:name="org.mshare.main.ACTION_SERVER_AVATER_SETTING"/>
-            </intent-filter>
-        </activity>
 
-        <receiver 
+        <receiver
             android:name="org.mshare.server.ftp.RequestStartStopReceiver"
             >
             <intent-filter>
