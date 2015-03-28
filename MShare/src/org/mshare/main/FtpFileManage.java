@@ -646,7 +646,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		}
 
 		public FtpCmd createCmdDisConnect() {
-			return new CmdDisConnect();
+			return new CmdDisconnect();
 		}
 
 		public FtpCmd createCmdPWD() {
@@ -676,6 +676,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		public FtpCmd createCmdOpenVideo() {
 			return new CmdOpenVideo();
 		}
+		
 	}
 	public class DameonFtpConnector implements Runnable {
 
@@ -745,7 +746,49 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		}
 	}
 
-	public class CmdDisConnect extends FtpCmd {
+	public class CmdRtsp extends FtpCmd {
+
+		public FileBrowserFile file = null;
+		
+		public CmdRtsp(FileBrowserFile file) {
+			this.file = file;
+		}
+		
+		@Override
+		public void run() {
+
+			// 启动rtsp模式
+			try {
+				FTPReply reply = mFTPClient.sendCustomCommand("RTSP");
+				if (reply.getCode() == 211) {
+					// 尝试播放
+					Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
+					String host = mFTPHost;
+					String port = "5544";
+					String rtspUriString = "rtsp://" + host + ":" + port + file.getAbsolutePath();
+					Log.d(TAG, "rtspUriString :" + rtspUriString);
+					startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
+					// 需要添加ForResult的情况，不知道是否会立即返回？
+					startActivity(startPlayActivity);
+				} else {
+					// 错误的情况
+				}
+			} catch (FTPIllegalReplyException e) {
+				// 当发生错误的时候，就不能启动继续播放了
+				Log.e(TAG, "something wrong happen");
+				e.printStackTrace();
+				Toast.makeText(FtpFileManage.this, "不能播放", Toast.LENGTH_SHORT).show();
+			} catch (IOException e) {
+				Log.e(TAG, "something wrong happen");
+				e.printStackTrace();
+				Toast.makeText(FtpFileManage.this, "不能播放", Toast.LENGTH_SHORT).show();
+			}
+
+		}
+		
+	}
+	
+	public class CmdDisconnect extends FtpCmd {
 
 		@Override
 		public void run() {
@@ -1462,36 +1505,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			executeCWDRequest(fileName);
 		}else if(file.isFile()){
 			if(getMIMEType(fileName).startsWith("video")){
-				showDialog(DIALOG_LOAD);
-//				executeOpenRequest();
-
-				// 启动rtsp模式
-				try {
-					FTPReply reply = mFTPClient.sendCustomCommand("RTSP");
-					if (reply.getCode() == 211) {
-						// 尝试播放
-						Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
-						String host = mFTPHost;
-						String port = "5544";
-						String rtspUriString = "rtsp://" + host + ":" + port + "/dog.mp4";
-						Log.d(TAG, "rtspUriString :" + rtspUriString);
-						startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
-						// 需要添加ForResult的情况，不知道是否会立即返回？
-						startActivity(startPlayActivity);
-					} else {
-						// 错误的情况
-					}
-				} catch (FTPIllegalReplyException e) {
-					// 当发生错误的时候，就不能启动继续播放了
-					Log.e(TAG, "something wrong happen");
-					e.printStackTrace();
-					Toast.makeText(this, "不能播放", Toast.LENGTH_SHORT).show();
-				} catch (IOException e) {
-					Log.e(TAG, "something wrong happen");
-					e.printStackTrace();
-					Toast.makeText(this, "不能播放", Toast.LENGTH_SHORT).show();
-				}
-
+				
+				mThreadPool.execute(new CmdRtsp(file));
 			}else{
 				showDialog(DIALOG_LOAD);
 				new CmdOPEN().execute();

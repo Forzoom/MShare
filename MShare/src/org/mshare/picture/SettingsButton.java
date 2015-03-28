@@ -32,8 +32,8 @@ public class SettingsButton extends CanvasElement {
 			Log.e(TAG, "solidIconBitmap is null");
 			return false;
 		}
-		Log.d(TAG, "the click x : " + clickX + " clickY : " + clickY);
-		Log.d(TAG, "l : " + x + " r : " + (x + solidIconBitmap.getWidth()) + " t " + y + " b : " + (y + solidIconBitmap.getHeight()));
+//		Log.d(TAG, "the click x : " + clickX + " clickY : " + clickY);
+//		Log.d(TAG, "l : " + x + " r : " + (x + solidIconBitmap.getWidth()) + " t " + y + " b : " + (y + solidIconBitmap.getHeight()));
 		int leftLimit = x - paddingLeft;
 		int topLimit = y - paddingTop;
 		int rightLimit = x + solidIconBitmap.getWidth() + paddingRight;

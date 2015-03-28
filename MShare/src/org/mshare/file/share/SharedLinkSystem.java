@@ -250,17 +250,17 @@ public class SharedLinkSystem {
 		for (int i = 0, len = crumbs.length - 1; i < len; i++) {
 			fileName = crumbs[i];
 			
-			if (file.isDirectory()) {
+			if (file.isDirectory() || file.isFakeDirectory()) {
 				file = file.list().get(fileName);
 				
 				if (file == null) {
 					// 路径不存在的情况下，将判定为路径不合法
-					Log.e(TAG, "invalid path");
+					Log.e(TAG, "缺少路径");
 					return false;
 				}
 			} else {
 				// 所有持久化后添加的path都应该是正确的
-				Log.e(TAG, "invalid path");
+				Log.e(TAG, "不是文件夹路径");
 				return false;
 			}
 		}
@@ -273,6 +273,7 @@ public class SharedLinkSystem {
 			if (sharedLink.isFakeDirectory()) {
 				Log.d(TAG, "+SharedFakeDirectory -> " + file.getFakePath());
 			} else {
+				// 对应的真实文件
 				File realFile = new File(realPath);
 				if (realFile.exists()) {
 					if (realFile.isFile()) {
@@ -280,17 +281,6 @@ public class SharedLinkSystem {
 					} else if (realFile.isDirectory()) {
 						Log.d(TAG, "+SharedDirectory -> " + file.getFakePath());
 						Log.d(TAG, "try add files in SharedDirectory");
-						
-						// 共享文件夹下所有文件都添加到文件树中
-						File[] files = realFile.listFiles();
-						for (int index = 0, len = files.length; index < len; index++) {
-							File f = files[index];
-							String newFakePath = getFakePath(sharedLink.getFakePath(), f.getName());
-							String newRealPath = f.getAbsolutePath();
-							SharedLink newLink = SharedLink.newSharedLink(newFakePath, newRealPath);
-							// TODO 尝试添加,可能会出现错误
-							addSharedLink(newLink, filePermission);
-						}
 					}
 				} else {
 					Log.e(TAG, "真实文件并不存在");
@@ -302,6 +292,21 @@ public class SharedLinkSystem {
 				file.list().put(fileName, sharedLink);
 				if (mCallback != null) {
 					mCallback.onAdd();
+				}
+
+				File realFile = new File(realPath);
+				
+				if (realFile.isDirectory()) {
+					// 共享文件夹下所有文件都添加到文件树中
+					File[] files = realFile.listFiles();
+					for (int index = 0, len = files.length; index < len; index++) {
+						File f = files[index];
+						String newFakePath = getFakePath(sharedLink.getFakePath(), f.getName());
+						String newRealPath = f.getAbsolutePath();
+						SharedLink newLink = SharedLink.newSharedLink(newFakePath, newRealPath);
+						// TODO 尝试添加,可能会出现错误
+						addSharedLink(newLink, filePermission);
+					}
 				}
 				return true;
 			} else {

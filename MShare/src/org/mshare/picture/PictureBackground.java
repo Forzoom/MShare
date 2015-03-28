@@ -27,7 +27,7 @@ public class PictureBackground extends CanvasElement {
 	
 	@Override
 	public void paint(Canvas canvas, Paint paint) {
-		Log.d(TAG, "PictureBackground color paint : " + Integer.toHexString(currentColor));
+//		Log.d(TAG, "PictureBackground color paint : " + Integer.toHexString(currentColor));
 		canvas.drawColor(currentColor);
 	}
 
