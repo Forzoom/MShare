@@ -1,5 +1,8 @@
 package org.mshare.picture;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.mshare.main.R;
@@ -184,7 +187,16 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 
 		int avaterRadius = canvasWidth / 4;
 		Bitmap avaterBitmap = CircleAvaterCreator.createAvater(R.drawable.avater_1, avaterRadius);
-		
+
+		// 当出现问题的时候，该怎么办？使用默认的头像？
+		try {
+			avaterBitmap = BitmapFactory.decodeStream(getContext().openFileInput("avater"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		circleAvater.setCenter(new Point(canvasWidth / 2, canvasHeight / 2));
 		circleAvater.setRadius(avaterRadius);
 		circleAvater.setAvater(avaterBitmap);
@@ -270,8 +282,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		}
 
 		if (isLooping) {
-			Message message = refreshHandler.obtainMessage();
-			refreshHandler.sendMessageDelayed(message, 20);
+			startLooping();
 		}
 
 		surfaceHolder.unlockCanvasAndPost(canvas);
@@ -440,12 +451,16 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 			
 			// TODO 修改成函数
 			if (!isLooping) {
-				Message message = refreshHandler.obtainMessage();				
-				message.sendToTarget();
+				startLooping();
 			}
 			
 			return super.onDown(e);
 		}
+	}
+
+	public void startLooping() {
+		Message message = refreshHandler.obtainMessage();
+		message.sendToTarget();
 	}
 
 }

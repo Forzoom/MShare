@@ -67,6 +67,8 @@ public class CircleAvaterCreator {
 		return result;
 	}
 
+
+
     /**
      * 获得一个正方形图片
      * @param source

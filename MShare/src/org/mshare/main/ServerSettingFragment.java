@@ -54,6 +54,7 @@ public class ServerSettingFragment extends PreferenceFragment {
 				// TODO 保存的类型要紧吗？.png?
 				fos = getActivity().openFileOutput("avater", Context.MODE_PRIVATE);
 
+				// 额外的保存图片，用于debug
 				extraFos = new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "avater");
 
 				// 将所有的内容都写入到
