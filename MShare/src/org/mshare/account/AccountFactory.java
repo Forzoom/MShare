@@ -150,6 +150,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 			
 			// 判断账户信息是否正确
 			Account account = allAccounts.get(username);
+			Log.d(TAG, "AccountFactory getToken : " + username);
 			if (account != null && authAttempt(account, username, password)) {
 				Token token = new Token(username, password, owner);
 				token.setAccount(account);
@@ -175,6 +176,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
      */
     private boolean authAttempt(Account account, String username, String password) {
     	String correctUsername = account.getUsername(), correctPassword = account.getPassword();
+    	Log.d(TAG, "AccountFactory authAttempt : " + username + " " + !account.isGuest() + " " + password + " cor " + correctUsername + " " + correctPassword);
 		if (username != null && !account.isGuest() && password != null && password.equals(correctPassword)) {
 			Log.d(TAG, "User logged in");
 			return true;
@@ -378,12 +380,16 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		}
 
 		Context context = MShareApp.getAppContext();
-		String password = null;
-		if (!isAccountExists(context, username) && (password = getAccountPassword(context, username)).equals("")) {
+		if (!isAccountExists(context, username)) {
 			return false;
 		}
 
-		Log.d(TAG, "add new account : " + username);
+		String password = getAccountPassword(context, username);
+		if (password == null || password.equals("")) {
+			return false;
+		}
+		
+		Log.d(TAG, "add new account : " + username + " password : " + password);
 		Account newAccount = new UserAccount(username, password);
 		// 将管理员中的内容添加到新的账户中
 		newAccount.prepare(adminAccount.getStorage(), PERMISSION_ADMIN);
