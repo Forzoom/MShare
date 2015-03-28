@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Bitmap.Config;
+import android.util.Log;
 
 import java.io.InputStream;
 
@@ -69,17 +70,9 @@ public class CircleAvaterCreator {
 	}
 
 	private static Bitmap getSampleBitmap(InputStream stream, int radius) {
-		Resources res = MShareApp.getAppContext().getResources();
-		// 使用decode创建
-		BitmapFactory.Options opt = new BitmapFactory.Options();
-		opt.inJustDecodeBounds = true;
-		BitmapFactory.decodeStream(stream, null, opt);
-		int resWidth = opt.outWidth, resHeight = opt.outHeight;
-		int shortWidth = resWidth < resHeight ? resWidth : resHeight;
-
-		opt.inJustDecodeBounds = false;
-		opt.inSampleSize = (shortWidth / (radius * 2));
-		Bitmap sampleBitmap = BitmapFactory.decodeStream(stream, null, opt);
+		Log.d(TAG, "the input stream " + stream);
+		Bitmap sampleBitmap = BitmapFactory.decodeStream(stream);
+		Log.d(TAG, "the sample Bitmap " + sampleBitmap);
 		return sampleBitmap;
 	}
 

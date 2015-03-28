@@ -525,19 +525,26 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	@Override
 	public void onServerStatusChange(int status) {
 		Log.d(TAG, "onServerStatus");
+		
+		if (surfaceView.isSurfaceCreated()) {
+
+			// 可以将operating的颜色变化放在这里
+			if (status == StatusController.STATUS_SERVER_STARTED) {
+	            // 使用启动动画
+	            surfaceView.startServerAnimation();
+
+			} else if (status == StatusController.STATUS_SERVER_STOPPED) {
+	            // 使用停止动画
+	            surfaceView.stopServerAniamtion();
+			}	
+		}
+		
 		// 可以将operating的颜色变化放在这里
 		if (status == StatusController.STATUS_SERVER_STARTED) {
-            // 使用启动动画
-            surfaceView.startServerAnimation();
-
             // 菜单动画
             menuInStop.hideAnimation();
             menuInStart.showAnimation();
 		} else if (status == StatusController.STATUS_SERVER_STOPPED) {
-            // 使用停止动画
-			//
-            surfaceView.stopServerAniamtion();
-
             // 处理菜单动画
             menuInStart.hideAnimation();
             menuInStop.showAnimation();

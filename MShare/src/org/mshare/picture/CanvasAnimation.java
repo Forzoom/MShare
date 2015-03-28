@@ -67,13 +67,15 @@ public abstract class CanvasAnimation {
 			onStart();
 
 			RefreshHandler handler = RefreshHandler.getInstance();
-			if (handler != null && handler.isLooping) {
+			if (handler != null && !(handler.isRefreshLooping())) {
 
-				Message msg = RefreshHandler.getInstance().obtainMessage();
-				RefreshHandler.getInstance().sendMessageDelayed(msg, 20);
+				Log.d(TAG, "try to start animation");
+				
 				handler.setRefreshLooping(true);
+				
+				Message msg = handler.obtainMessage();
+				handler.sendMessageDelayed(msg, 20);
 			}
-
 		} else {
 			// ∏√‘ı√¥∞Ï?
 			Log.e(TAG, "already start, cannot start again, maybe use stop first?");
