@@ -147,6 +147,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 	private MshareFileMenu mshareFileMenu2;
 	private MshareFileMenu mshareFileMenu3;
 	
+	private int connQuestTime;
+	
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		this.context = this;
@@ -159,6 +161,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		setMenu1();
 		setMenu2();
 		setMenu3();
+		connQuestTime = 0;
 
 		//原来的远程文件浏览
 //		setContentView(R.layout.activity_main);
@@ -468,6 +471,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			switch (msg.what) {
 			case MSG_CMD_CONNECT_OK:
 //				toast("FTP服务器连接成功");
+				connQuestTime = 0;
 				if(mDameonThread == null){
 					//启动守护进程。
 					mDameonThread = new Thread(new DameonFtpConnector());
@@ -485,8 +489,14 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				executeLISTRequest();
 				break;
 			case MSG_CMD_CONNECT_FAILED:
-				toast("FTP服务器连接失败，正在重新连接");
-				executeConnectRequest();
+				connQuestTime++;
+				if(connQuestTime < 4){
+					toast("共享连接失败，正在重新连接");
+					executeConnectRequest();
+				}else if(connQuestTime > 3){
+					connQuestTime = 0;
+					toast("共享连接已取消");
+				}
 				break;
 			case MSG_CMD_LIST_OK:
 //				toast("请求数据成功。");
@@ -1619,7 +1629,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			public void onClick(View arg0) {
 				FileBrowserFile[] files = null;
 				files = remoteBrowser.getMultiSelectedFiles();
-				if (files.length < 2 && files.length > 1) {
+				if (files.length < 2 && files.length > 0) {
 					if(files[0].canWrite())
 						showDialog(DIALOG_RENAME);
 					else if(!files[0].canWrite())
