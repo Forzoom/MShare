@@ -66,6 +66,8 @@ public class ServerSettingFragment extends PreferenceFragment {
 					extraFos.write(buf);
 				}
 
+				ServerSettings.setAvaterPicked(true);
+
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -87,6 +89,7 @@ public class ServerSettingFragment extends PreferenceFragment {
 					e.printStackTrace();
 				}
 			}
+			
 		}
 		super.onActivityResult(requestCode, resultCode, data);
 	}

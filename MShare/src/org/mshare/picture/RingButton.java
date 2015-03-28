@@ -16,6 +16,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 	
 	private int innerRadius;
 	private int outerRadius;
+	private int savedOuterRadius;
 	private Point center;
 	private int ringColor;
     // 内缩动画效果
@@ -82,17 +83,17 @@ public class RingButton extends CanvasElement implements Parcelable {
      * @param endOuterRadius
      * @param startTime
      */
-	public void startBreatheAnimation(int targetOuterRadius, long startTime, int duration) {
+	public void startBreatheAnimation(int endOuterRadius, long startTime, int duration) {
 		if (breatheAnimation == null) {
 			Log.e(TAG, "breathe animation is null, create one now");
             breatheAnimation = new BreatheAnimation();
 			addAnimation(breatheAnimation);
 		}
 
-		breatheAnimation.setStartOuterRadius(outerRadius);
-		breatheAnimation.setEndOuterRadius(targetOuterRadius);
+		breatheAnimation.setStartOuterRadius(savedOuterRadius);
+		breatheAnimation.setEndOuterRadius(endOuterRadius);
         breatheAnimation.setDuration(duration);
-		Log.d(TAG, "breathe outer radius : " + targetOuterRadius + " startTime : " + startTime);
+		Log.d(TAG, "breathe outer radius : " + endOuterRadius + " startTime : " + startTime);
 		breatheAnimation.start(startTime);
 	}
 
@@ -251,7 +252,7 @@ public class RingButton extends CanvasElement implements Parcelable {
      */
 	public void setRadius(int innerRadius, int outerRadius) {
         this.innerRadius = innerRadius;
-        this.outerRadius = outerRadius;
+        this.savedOuterRadius = this.outerRadius = outerRadius;
         int ringWidth = outerRadius - innerRadius;
 	}
 
