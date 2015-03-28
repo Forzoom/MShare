@@ -1,5 +1,6 @@
 package org.mshare.picture;
 
+import android.os.Message;
 import android.util.Log;
 import android.view.animation.Interpolator;
 
@@ -64,9 +65,18 @@ public abstract class CanvasAnimation {
 			status = STATUS_RUNNING;
 			setStartTime(startTime);
 			onStart();
+
+			RefreshHandler handler = RefreshHandler.getInstance();
+			if (handler != null && handler.isLooping) {
+
+				Message msg = RefreshHandler.getInstance().obtainMessage();
+				RefreshHandler.getInstance().sendMessageDelayed(msg, 20);
+				handler.setRefreshLooping(true);
+			}
+
 		} else {
 			// 该怎么办?
-			Log.e(TAG, "already start");
+			Log.e(TAG, "already start, cannot start again, maybe use stop first?");
 		}
 	}
 	// 对应start()

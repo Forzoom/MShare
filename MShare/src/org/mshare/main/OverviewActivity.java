@@ -533,12 +533,10 @@ public class OverviewActivity extends Activity implements StatusController.Statu
             // 菜单动画
             menuInStop.hideAnimation();
             menuInStart.showAnimation();
-			surfaceView.startLooping();
 		} else if (status == StatusController.STATUS_SERVER_STOPPED) {
             // 使用停止动画
 			//
             surfaceView.stopServerAniamtion();
-			surfaceView.startLooping();
 
             // 处理菜单动画
             menuInStart.hideAnimation();
@@ -669,7 +667,6 @@ public class OverviewActivity extends Activity implements StatusController.Statu
             PictureBackground pictureBackground = surfaceView.getPictureBackground();
 		    pictureBackground.stopColorAnimation();
 			pictureBackground.startColorAnimation(pictureBackground.getCurrentColor(), surfaceView.getOperatingColor(), startTime, ServerOverviewSurfaceView.DURATION_COLOR_ANIMATION);
-			surfaceView.startLooping();
 		}
 	}
 	

@@ -43,12 +43,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	
 	// 统一画笔
 	private Paint canvasPaint = new Paint();
-	// 当前是否在循环绘制
-	private boolean isLooping = false;
-	
-	// 刷新SurfaceView所用的Handler
-	private RefreshHandler refreshHandler;
-	
+
 	// 背景颜色
     private int ringColor;
 	private int stopColor;
@@ -99,7 +94,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		
 		// 设置GestureDetector和refreshHandler
 		gestureDetector = new GestureDetector(getContext(), new GestureListener());
-		refreshHandler = new RefreshHandler(Looper.myLooper(), this);
+		RefreshHandler.init(Looper.myLooper(), this);
 		
 		// 设置画笔
 		canvasPaint.setAntiAlias(true);
@@ -287,38 +282,38 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		Log.d(TAG, "surface destoryed");
 		isSurfaceCreated = false;
-		isLooping = false;
+		RefreshHandler.getInstance().setRefreshLooping(false);
 	}
+
 
 	@Override
 	public boolean handleMessage(Message msg) {
 		Log.d(TAG, "handleMessage");
 
-		if (!isSurfaceCreated) {
-			return false;
-		}
-		
 		// 获得需要刷新的区域，仅仅能够在这里刷新
 		Canvas canvas = surfaceHolder.lockCanvas();
-		isLooping = false;
+		boolean needLooping = false;
 		Log.d(TAG, "has " + canvasElements.size() + " element");
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
 			element.draw(canvas, canvasPaint);
 			if (element.hasAnimation()) {
-				isLooping = true;
+				needLooping = true;
 			}
 		}
 
-		if (isLooping) {
-			startLooping();
+		RefreshHandler handler = RefreshHandler.getInstance();
+		if (needLooping && handler != null && handler.isRefreshLooping()) {
+			Message newMessage = handler.obtainMessage();
+			handler.sendMessageDelayed(newMessage, 20);
 		}
 
 		surfaceHolder.unlockCanvasAndPost(canvas);
 
 		return false;
 	}
-	
+
+
 	//判断surface是否创建
 	public boolean isSurfaceCreated() {
 		return isSurfaceCreated;
@@ -475,19 +470,9 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 				CanvasElement element = canvasElements.get(index);
 				element.click(x, y);
 			}
-			
-			// TODO 修改成函数
-			if (!isLooping) {
-				startLooping();
-			}
-			
+
 			return super.onDown(e);
 		}
-	}
-
-	public void startLooping() {
-		Message message = refreshHandler.obtainMessage();
-		message.sendToTarget();
 	}
 
 }
