@@ -155,7 +155,7 @@ public abstract class FtpCmd implements Runnable {
 
 	// 分发到具体的cmd集合之中，在这些集合中进行寻找
 	// 用于内部分发命令，根据用户的不同权限
-	private static boolean findAndExecuteCommand(SessionThread session, Class<? extends FtpCmd> verb, String inputString, Class<?>[] commands) {
+	public static boolean findAndExecuteCommand(SessionThread session, Class<? extends FtpCmd> verb, String inputString, Class<?>[] commands) {
 		
 		for (int i = 0; i < commands.length; i++) {
 			if (verb.equals(commands[i])) {
@@ -223,4 +223,60 @@ public abstract class FtpCmd implements Runnable {
         return false;
     }
 
+    /**
+     * 判断所接受到的内容是否是FTP的命令
+     * @return
+     */
+    public static boolean isAndExecuteFtpCmd(SessionThread session, String inputString, Class<?> targetClass) {
+        String[] strings = inputString.split(" ");
+        // 不能识别
+        if (strings == null || strings.length < 1) {
+            Log.d(TAG, "No strings parsed");
+            return false;
+        }
+        // 对应的Cmd的名称
+        String verb = strings[0];
+        if (verb.length() < 1) {
+            Log.i(TAG, "Invalid command verb");
+            return false;
+        }
+		verb = verb.trim();
+		verb = verb.toUpperCase();
+		
+		Class<? extends FtpCmd> verbClass = null;
+		for (int i = 0; i < cmdClasses.length; i++) {
+			if (cmdClasses[i].getName().equals(verb)) {
+				verbClass = cmdClasses[i].getCommand();
+				Log.d(TAG, "find verb " + verbClass);
+			}
+		}
+        // 可是没有办法对应
+        if (targetClass.equals(verbClass)) {
+            Log.d(TAG, "is equal class");
+         // 对应的构造函数
+			Constructor<? extends FtpCmd> constructor = null;
+			// 对应的Cmd对象
+			FtpCmd cmdInstance = null;
+			// 创建Cmd对象
+			try {
+				cmdInstance = constructor.newInstance(new Object[] { session, inputString });
+			} catch (Exception e) {
+				Log.e(TAG, "Instance creation error on FtpCmd");
+				return false;
+			}
+			// 创建cmd对象失败的时候
+			if (cmdInstance == null) {
+				// If we couldn't find a matching command,
+				Log.d(TAG, "Ignoring unrecognized FTP verb: " + verb);
+				session.writeString(SessionThread.unrecognizedCmdMsg);
+				return false;
+			}
+
+			// 创建cmd对象成功,并且直接执行
+			cmdInstance.run();
+			return true;
+        }
+        return false;
+    }
+    
 }

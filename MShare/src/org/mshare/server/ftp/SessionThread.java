@@ -37,6 +37,7 @@ import org.mshare.account.AccountFactory.Verifier;
 
 import android.util.Log;
 
+import org.mshare.server.ftp.cmd.CmdCRTP;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.cmd.RtspError;
 
@@ -315,14 +316,16 @@ public class SessionThread extends Thread {
 					if (isRtspEnabled()) {
 						// 应该能够接受关闭rtsp的命令
 
-
 						// 接受rtsp命令
 						if (RtspCmd.isRtspCmd(line)) {
 							RtspCmd.dispatchCmd(this, line);
+						} else if (FtpCmd.isAndExecuteFtpCmd(this, line, CmdCRTP.class)) {
+							Log.d(TAG, "close rtp mode");
+						} else {
+							// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
+							writeString(new RtspError(this, line, getCseq()).toString());
 						}
 
-						// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
-						writeString(new RtspError(this, line, getCseq()).toString());
 					} else {
 						// 只能接受ftp命令
 						if (FtpCmd.isFtpCmd(line)) {

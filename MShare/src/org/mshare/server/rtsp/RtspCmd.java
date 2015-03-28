@@ -201,6 +201,7 @@ public abstract class RtspCmd implements Runnable {
         // 可是没有办法对应
         for (int i = 0; i < cmdClasses.length; i++) {
             if (cmdClasses[i].getName().equals(verb)) {
+            	Log.d(TAG, "find rtsp command");
                 return true;
             }
         }
