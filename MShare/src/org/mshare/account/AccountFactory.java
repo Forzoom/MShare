@@ -148,6 +148,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 				}
 			}
 			
+			Log.d(TAG, "the username " + username);
 			// 判断账户信息是否正确
 			Account account = allAccounts.get(username);
 			if (account != null && authAttempt(account, username, password)) {
