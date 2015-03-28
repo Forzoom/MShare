@@ -113,6 +113,8 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	private static final int MSG_CMD_CONNECT_OK = MENU_OPTIONS_BASE + 1;
 	private static final int MSG_CMD_CONNECT_FAILED = MENU_OPTIONS_BASE + 2;
 	
+	private int connQuestTime = 0;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d(TAG, "onCreate");
@@ -177,6 +179,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 		mCmdFactory = new CmdFactory();
 		mFTPClient = new FTPClient();
 		mThreadPool = Executors.newFixedThreadPool(MAX_THREAD_NUMBER);
+		connQuestTime = 0;
       
 	    simpleAdapter = new SimpleAdapter(  
 	            this, listImageItem,  
@@ -377,6 +380,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			switch (msg.what) {
 			case MSG_CMD_CONNECT_OK:
 				toast("共享连接成功");
+				connQuestTime = 0;
 				if(mDameonThread == null){
 					//启动守护进程。
 					mDameonThread = new Thread(new DameonFtpConnector());
@@ -386,8 +390,14 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 				buildOrUpdateDataset();
 				break;
 			case MSG_CMD_CONNECT_FAILED:
-				toast("共享连接失败，正在重新连接");
-				executeConnectRequest();
+				connQuestTime++;
+				if(connQuestTime < 4){
+					toast("共享连接失败，正在重新连接");
+					executeConnectRequest();
+				}else if(connQuestTime > 3){
+					connQuestTime = 0;
+					toast("共享连接已取消");
+				}
 				break;
 			default:
 				break;

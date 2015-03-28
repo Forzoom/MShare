@@ -489,7 +489,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				executeConnectRequest();
 				break;
 			case MSG_CMD_LIST_OK:
-				toast("请求数据成功。");
+//				toast("请求数据成功。");
 				if(msg.obj != null){
 					FTPFile[] ftpFiles = (FTPFile[]) msg.obj;
 					Log.d(TAG, "start refresh views");
@@ -501,35 +501,35 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				toast("请求数据失败。");
 				break;
 			case MSG_CMD_CWD_OK:
-				toast("请求数据成功。");
+//				toast("请求数据成功。");
 				executeLISTRequest();
 				break;
 			case MSG_CMD_CWD_FAILED:
 				toast("请求数据失败。");
 				break;
 			case MSG_CMD_CDU_OK:
-				toast("请求数据成功。");
+//				toast("请求数据成功。");
 				executeLISTRequest();
 				break;
 			case MSG_CMD_CDU_FAILED:
 				toast("请求数据失败。");
 				break;
 			case MSG_CMD_DELE_OK:
-				toast("请求数据成功。");
+//				toast("请求数据成功。");
 				executeLISTRequest();
 				break;
 			case MSG_CMD_DELE_FAILED:
 				toast("请求数据失败。");
 				break;
 			case MSG_CMD_RENAME_OK:
-				toast("请求数据成功。");
+//				toast("请求数据成功。");
 				executeLISTRequest();
 				break;
 			case MSG_CMD_RENAME_FAILED:
 				toast("请求数据失败。");
 				break;
 			case MSG_CMD_OPEN_OK:
-				toast("请求数据成功。");
+//				toast("请求数据成功。");
 				break;
 			case MSG_CMD_OPEN_FAILED:
 				toast("请求数据失败。");
