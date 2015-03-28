@@ -43,15 +43,12 @@ public class QRCodeConnectActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.qrcode);
 		
-		ActionBar actionBar = getActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
-		
 		// TODO 当没有检测到content的时候，该怎么办
 		// 获得通过Intent发送的内容
 		Intent intent = getIntent();
 		ConnectInfo connectInfo = (ConnectInfo)intent.getParcelableExtra(EXTRA_CONTENT);
 		
-		// 选择所显示的二维码的宽和高s
+		// 选择所显示的二维码的宽和高
 		WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
 		Display display = manager.getDefaultDisplay();
 		Point displaySize = new Point();

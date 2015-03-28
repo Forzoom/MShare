@@ -3,7 +3,31 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
+    <RelativeLayout 
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/basic_connect_container">
+        
+        <ImageView 
+            android:id="@+id/basic_connect_background"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/wifi"/>
+        <TextView
+            android:id="@+id/basic_connect_hint" 
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/basic_connect_background"
+            android:text="输入对应的IP地址、端口、账户和密码，接受文件共享"
+            android:textColor="#ffaaaaaa"
+            android:gravity="center"
+           	android:layout_centerHorizontal="true"/>
+    </RelativeLayout>
+    
     <LinearLayout
+        android:id="@+id/basic_connect_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -11,77 +35,85 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
+            android:orientation="horizontal"
+            android:background="@drawable/server_overview_item_background"
+            >
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:src="@drawable/account"/>
+                android:background="@color/blue08"
+                android:src="@drawable/account_white"/>
             <TextView
                 android:id="@+id/basic_connect_host"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:textSize="20sp"
-                android:text="account"
+                android:textSize="18sp"
+                android:paddingLeft="20dp"
                 />
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:background="@drawable/server_overview_item_background">
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:src="@drawable/account"/>
+                android:background="@color/blue08"
+                android:src="@drawable/account_white"/>
             <TextView
                 android:id="@+id/basic_connect_port"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:textSize="20sp"
-                android:text="account"
+                android:textSize="18sp"
+                android:paddingLeft="20dp"
                 />
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:background="@drawable/server_overview_item_background">
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:src="@drawable/account"/>
+                android:background="@color/blue08"
+                android:src="@drawable/account_white"/>
             <TextView
                 android:id="@+id/basic_connect_username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:textSize="20sp"
-                android:text="account"
+                android:textSize="18sp"
+                android:paddingLeft="20dp"
                 />
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:background="@drawable/server_overview_item_background">
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:src="@drawable/account"/>
+                android:background="@color/blue08"
+                android:src="@drawable/account_white"/>
             <TextView
                 android:id="@+id/basic_connect_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:textSize="20sp"
-                android:text="account"
+                android:textSize="18sp"
+                android:paddingLeft="20dp"
                 />
         </LinearLayout>
 

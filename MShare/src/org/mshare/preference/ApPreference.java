@@ -45,7 +45,7 @@ public class ApPreference extends Preference {
 
 		// 判断当前的AP是否启动
 		// 先使用intent来测试是否能够启动
-		Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+		Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
 		context.startActivity(intent);
 
 		// 尝试使用反射来启动AP

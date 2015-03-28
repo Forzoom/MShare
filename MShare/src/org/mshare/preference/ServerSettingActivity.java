@@ -19,17 +19,4 @@ public class ServerSettingActivity extends Activity {
 		getFragmentManager().beginTransaction().replace(android.R.id.content, new ServerSettingFragment()).commit();
 	}
 	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// 添加确定按钮
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.ftp_server_setting, menu);
-		return true;
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		return super.onOptionsItemSelected(item);
-	}
-
 }

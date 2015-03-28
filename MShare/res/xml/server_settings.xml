@@ -20,7 +20,8 @@
             android:title="安全传输"
             android:summary="让文件共享更加安全，但会影响传输的速度"
             android:defaultValue="false"/>
-        <org.mshare.preference.ApPreference android:title="共享网络">
+        <org.mshare.preference.ApPreference android:title="共享网络"
+            android:summary="打开便携式热点以便他人接受分享">
 
         </org.mshare.preference.ApPreference>
     </PreferenceCategory>
