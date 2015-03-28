@@ -436,6 +436,7 @@ public class SessionThread extends Thread {
     		Log.e(TAG, "verifier is null");
 			return null;
     	}
+    	Log.d(TAG, "SessionThread auth : " + username);
         if ((newToken = verifier.auth(username, password, this)) != null) {
         	setToken(newToken);
             Log.i(TAG, "Authentication complete");
