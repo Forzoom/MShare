@@ -56,6 +56,7 @@ public class RtspThread extends Thread {
 
 	private AbstractPacketizer videoPacketizer;
 
+	BufferedWriter bw;
     
     public RtspThread(Socket socket, VideoEncoder encoder, SessionThread sessionThread) {
     	
@@ -75,14 +76,15 @@ public class RtspThread extends Thread {
 			// this RTP socket is registered as RTP receiver to also
 			// receive the streaming video of this device
     		
+			BufferedReader rtspBr = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			bw = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 
     		// this is an endless loop, that is terminated an
     		// with interrupt sent to the respective thread
     		while (true) {
 
-    			BufferedReader rtspBr = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-    			
     			// 应该能够接受关闭rtsp的命令
+    			Log.d(TAG, "try receive request");
 				String line = RtspParser.readRequest(rtspBr);
 				Log.i(TAG, "Received line from client in rtsp mode: " + line);
 				// 接受rtsp命令
@@ -98,6 +100,7 @@ public class RtspThread extends Thread {
     			try {
     				sleep(20);
     			} catch (InterruptedException e) {
+    				Log.e(TAG, "stop");
     				break;
     			}
     			
@@ -110,9 +113,15 @@ public class RtspThread extends Thread {
     }
     
     public void writeString(String str) {
+    	if (bw == null) {
+    		Log.e(TAG, "bw is null");
+    		return;
+    	}
+    	
         try {
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+        	Log.d(TAG, "write string : " + str);
 			bw.write(str);
+			bw.flush();
 		} catch (IOException e) {	
 			e.printStackTrace();
 		}

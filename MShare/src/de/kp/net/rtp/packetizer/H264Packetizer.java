@@ -6,6 +6,8 @@ import java.net.SocketException;
 
 import de.kp.net.rtp.RtpPacket;
 import de.kp.net.rtp.RtpSender;
+import de.kp.net.rtp.RtpSocket;
+
 import org.mshare.server.rtsp.RtspConstants;
 
 import android.os.SystemClock;
@@ -28,9 +30,12 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 	protected final int rtpHeaderLength = 12; // Rtp header length
 	private String TAG = "H264Packetizer";
 
-	public H264Packetizer(InputStream fis) throws SocketException {
+	private RtpSocket rtpSocket;
+	
+	public H264Packetizer(InputStream fis, RtpSocket rtpSocket) throws SocketException {
 		this.fis = fis;
-		this.rtpSender = RtpSender.getInstance();
+		this.rtpSocket = rtpSocket;
+		
 	}
 
 	public void run() {
@@ -102,7 +107,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 						rtpPacket.setSequenceNumber(seqn++);
 						rtpPacket.setPayloadLength(nalUnitLength);
 					
-						rtpSender.send(rtpPacket);
+						rtpSocket.send(rtpPacket);
 
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
@@ -153,7 +158,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 							rtpPacket.setSequenceNumber(seqn++);
 							rtpPacket.setPayloadLength(len + 2);
 
-							rtpSender.send(rtpPacket);
+							rtpSocket.send(rtpPacket);
 							
 						} catch (IOException e) {
 							// TODO Auto-generated catch block

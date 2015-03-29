@@ -2,6 +2,8 @@ package org.mshare.server.rtsp.cmd;
 
 import android.util.Log;
 
+import org.mshare.preference.ServerSettings;
+import org.mshare.server.ftp.ServerService;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspParser;
@@ -40,7 +42,7 @@ public class CmdSETUP extends RtspCmd {
 
 		body += "Session: " + session_id + CRLF + "Transport: " + transportProtocol + ";" + sessionType + ";";
 		if (interleaved==null) {
-			body += "source=" + RtspConstants.SERVER_IP + ";" + getPortPart();
+			body += "source=" + ServerService.getLocalInetAddress().getHostAddress().toString() + ":" + "8080" + ";" + getPortPart();
 		
 		} else {
 			body += getInterleavedPart();
@@ -94,7 +96,7 @@ public class CmdSETUP extends RtspCmd {
 				// TODO 设置什么
 				// 在原有 的内容中还有setup ＝ true的内容，让RtspServer中的ServerThread跳过第一段循环
 				int[] interleaved = RtspParser.getInterleavedSetup(input);
-				if(interleaved != null){
+				if (interleaved != null) {
 					setInterleaved(interleaved);
 				}
 
@@ -106,7 +108,6 @@ public class CmdSETUP extends RtspCmd {
 				// 准备RtpSender，将RtpSocket注册到其中后，通过RtpSender来发送数据？
 
 				// 发送正确的数据
-				// TODO 不知道放在这里是不是正确
 				rtspThread.writeString(toString());
 			} catch (Exception e) {
 				Log.e(TAG, "something wrong happen in SETUP command!");
@@ -114,8 +115,6 @@ public class CmdSETUP extends RtspCmd {
 				rtspThread.writeString(errString);
 			}
 		}
-
-		rtspThread.writeString(toString());
 
 		Log.d(TAG, "rtsp SETUP finished!");
 	}

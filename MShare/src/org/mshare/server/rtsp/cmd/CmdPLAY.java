@@ -80,9 +80,9 @@ public class CmdPLAY extends RtspCmd {
 
 					// 播放数据内容
 					if (MediaConstants.H264_CODEC == true) {
-						rtspThread.setVideoPacketizer(new H264Packetizer(rtspThread.getVideoInputStream()));
+						rtspThread.setVideoPacketizer(new H264Packetizer(rtspThread.getVideoInputStream(), rtspThread.getRtpSocket()));
 					} else {
-						rtspThread.setVideoPacketizer(new H263Packetizer(rtspThread.getVideoInputStream()));
+						rtspThread.setVideoPacketizer(new H263Packetizer(rtspThread.getVideoInputStream(), rtspThread.getRtpSocket()));
 					}
 
 				} catch (SocketException e) {

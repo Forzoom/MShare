@@ -15,6 +15,7 @@ import org.mshare.file.browser.FileBrowserFile;
 import org.mshare.file.browser.MShareFileBrowser;
 import org.mshare.live.PlayActivity;
 import org.mshare.main.UploadFileChooserAdapter.FileInfo;
+import org.mshare.preference.ServerSettings;
 
 import de.kp.net.rtsp.client.RtspControl;
 import it.sauronsoftware.ftp4j.FTPClient;
@@ -764,7 +765,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 					// 尝试播放
 					Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
 					String host = mFTPHost;
-					String port = "2121";
+					String port = String.valueOf(ServerSettings.getRtspPort());
 					String rtspUriString = "rtsp://" + host + ":" + port + File.separator + file.getName();
 					Log.d(TAG, "rtspUriString :" + rtspUriString);
 					startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
@@ -979,10 +980,10 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
                   }else{  
                       Log.i(TAG, "TS流停止发送数据");  
                   }
-                }} catch (Exception e) {  
+                }} catch (Exception e) {
                     Log.e(TAG, "出现异常",e);  
                 } finally {  
-                    if (out != null) {  
+                    if (out != null) {
                         try {  
                             out.close();  
                             progressDialog.dismiss();
@@ -990,9 +991,7 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
                             //  
                             Log.e(TAG, "出现异常1",e);  
                         }  
-                    }  
-  
-//				mHandler.sendEmptyMessage(MSG_CMD_CDU_OK);
+                    }
 			} 
 		}
 	}
@@ -1520,7 +1519,6 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 			executeCWDRequest(fileName);
 		}else if(file.isFile()){
 			if(getMIMEType(fileName).startsWith("video")){
-				
 				mThreadPool.execute(new CmdRtsp(file));
 			}else{
 				showDialog(DIALOG_LOAD);

@@ -72,8 +72,8 @@ public class RtspConstants {
     public static final int CLIENT_VIDEO_PORT = 4000;
 
 //	public static String SERVER_IP = "spexhd2:8080";
-    public static int SERVER_PORT = 8080;
-    public static String SERVER_IP = getLocalIpAddress() + ":" + SERVER_PORT;
+//    public static int SERVER_PORT = 8080;
+//    public static String SERVER_IP = getLocalIpAddress() + ":" + SERVER_PORT;
     		
 	public static String SERVER_NAME    = "KuP RTSP Server";
     public static String SERVER_VERSION = "0.1";

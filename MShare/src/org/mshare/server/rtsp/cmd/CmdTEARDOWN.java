@@ -7,8 +7,6 @@ import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspParser;
 import org.mshare.server.rtsp.RtspThread;
 
-import de.kp.net.rtp.RtpSender;
-
 /**
  * 客户端发起关闭请求:
 	TEARDOWN rtsp://192.168.20.136:5000/xxx666 RTSP/1.0

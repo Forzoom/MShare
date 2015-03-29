@@ -8,8 +8,6 @@ import java.util.Vector;
  * RTP packets via RTP to a set of registered
  * consumers.
  * 
- * 发送RTP数据包给所有注册的用户
- * 
  * @author Stefan Krusche (krusche@dr-kruscheundpartner.de)
  *
  */

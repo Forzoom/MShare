@@ -307,7 +307,7 @@ public class ServerService extends Service implements Runnable {
             // 创建rtsp服务器
             if (rtspListener == null) {
             	try {
-            		rtspListener = new RtspListener(ServerSettings.getRtspPort(), RtspConstants.VideoEncoder.H264_ENCODER, sessionController);
+            		rtspListener = new RtspListener(ServerSettings.getRtspPort(), RtspConstants.VideoEncoder.H263_ENCODER, sessionController);
                 	rtspListener.start();
             	} catch (IOException e) {
             		Log.e(TAG, "create rtsp server fail");

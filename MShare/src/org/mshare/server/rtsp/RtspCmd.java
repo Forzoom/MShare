@@ -128,24 +128,15 @@ public abstract class RtspCmd implements Runnable {
         newSessionId = bool;
     }
 
-    public static void dispatchCmd(RtspThread session, String inputString) {
+    public static void dispatchCmd(RtspThread rtspThread, String inputString) {
         // 分割
         String[] strings = inputString.split(" ");
         String cmd = RtspParser.getCmd(strings).trim().toUpperCase(Locale.US);
 
-        // 判断当前能否使用Cmd
-//        Token token = sessionThread.getToken();
-//
-//        // 判断当前的Token是否可用
-//        if (token == null || !token.isValid()) {
-//            Log.e(TAG, "unauthorized! cannot use rtsp command");
-//            return;
-//        }
-
         RtspCmd cmdInstance = null;
         // 获得消息序号
         try {
-            session.setCseq(RtspParser.getCseq(inputString));
+            rtspThread.setCseq(RtspParser.getCseq(inputString));
         } catch (Exception e) {
             Log.e(TAG, "cannot get the rtsp cseq, stop handling rtsp command");
             e.printStackTrace();
@@ -153,8 +144,8 @@ public abstract class RtspCmd implements Runnable {
         }
 
         // 获得ContentBase
-        if (session.getContentBase().isEmpty()) {
-            session.setContentBase(RtspParser.getContentBase(inputString));
+        if (rtspThread.getContentBase().isEmpty()) {
+            rtspThread.setContentBase(RtspParser.getContentBase(inputString));
         }
 
         // 生成对应的对象，这个时候已经不再需要判断了
@@ -163,13 +154,13 @@ public abstract class RtspCmd implements Runnable {
             if (cmdClasses[i].getName().equals(cmd)) {
                 Constructor<? extends RtspCmd> constructor;
                 try {
-                    constructor = cmdClasses[i].getCommand().getConstructor(new Class[] { SessionThread.class, String.class, int.class });
+                    constructor = cmdClasses[i].getCommand().getConstructor(new Class[] { RtspThread.class, String.class, int.class });
                 } catch (NoSuchMethodException e) {
                     Log.e(TAG, "RtspCmd subclass lacks expected " + "constructor ");
                     return;
                 }
                 try {
-                    cmdInstance = constructor.newInstance(new Object[] {session, inputString, session.getCseq()});
+                    cmdInstance = constructor.newInstance(new Object[] {rtspThread, inputString, rtspThread.getCseq()});
                 } catch (Exception e) {
                     Log.e(TAG, "Instance creation error on RtspCmd");
                     return;
