@@ -90,7 +90,7 @@ public class CmdSETUP extends RtspCmd {
 				// 会话类型
 				setSessionType(RtspParser.getSessionType(input));
 				// 客户端IP
-				setClientIP(rtspThread.getClientAddress().getHostAddress());
+				setClientIP(rtspThread.getSessionThread().getClientAddress().getHostAddress());
 				// TODO 设置什么
 				// 在原有 的内容中还有setup ＝ true的内容，让RtspServer中的ServerThread跳过第一段循环
 				int[] interleaved = RtspParser.getInterleavedSetup(input);
@@ -102,7 +102,7 @@ public class CmdSETUP extends RtspCmd {
 				rtspThread.setRtspState(RtspConstants.READY);
 
 				// TODO 准备dataSocket,需要了解是否正确
-				rtspThread.setRtpSocket(new RtpSocket(sessionThread.getClientAddress(), clientPort));
+				rtspThread.setRtpSocket(new RtpSocket(rtspThread.getSessionThread().getClientAddress(), clientPort));
 				// 准备RtpSender，将RtpSocket注册到其中后，通过RtpSender来发送数据？
 
 				// 发送正确的数据

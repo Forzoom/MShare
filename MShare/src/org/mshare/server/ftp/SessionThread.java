@@ -81,14 +81,6 @@ public class SessionThread extends Thread {
 
 	private boolean isRtspEnabled = false;
 
-	// rtsp传输数据所使用的
-	private RtpSocket rtpSocket;
-
-	// 从存储上读取
-	private FileInputStream videoInputStream;
-
-	private AbstractPacketizer videoPacketizer;
-
     // 远程客户端IP地址 TODO 可以将其纪录下来
     private InetAddress clientAddress;
 
@@ -472,33 +464,6 @@ public class SessionThread extends Thread {
     public void setClientAddress(InetAddress clientAddress) {
         this.clientAddress = clientAddress;
     }
-
-	
-	// 暂时放在这里来使用
-
-	public RtpSocket getRtpSocket() {
-		return rtpSocket;
-	}
-
-	public void setRtpSocket(RtpSocket rtpSocket) {
-		this.rtpSocket = rtpSocket;
-	}
-
-	public FileInputStream getVideoInputStream() {
-		return videoInputStream;
-	}
-
-	public void setVideoInputStream(FileInputStream videoInputStream) {
-		this.videoInputStream = videoInputStream;
-	}
-
-	public AbstractPacketizer getVideoPacketizer() {
-		return videoPacketizer;
-	}
-
-	public void setVideoPacketizer(AbstractPacketizer videoPacketizer) {
-		this.videoPacketizer = videoPacketizer;
-	}
 
 	public void startUsingRtsp() {
 		Log.d(TAG, "try start using Rtsp");

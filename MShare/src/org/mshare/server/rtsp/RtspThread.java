@@ -2,8 +2,11 @@ package org.mshare.server.rtsp;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
@@ -18,6 +21,7 @@ import org.mshare.server.rtsp.cmd.RtspError;
 import android.util.Log;
 
 import de.kp.net.rtp.RtpSocket;
+import de.kp.net.rtp.packetizer.AbstractPacketizer;
 
 public class RtspThread extends Thread {
 	private String TAG = RtspThread.class.getSimpleName();
@@ -46,7 +50,13 @@ public class RtspThread extends Thread {
     private int rtspState;
     // 客户端端口
     private int clientPort;
-	
+
+	// 从存储上读取
+	private FileInputStream videoInputStream;
+
+	private AbstractPacketizer videoPacketizer;
+
+    
     public RtspThread(Socket socket, VideoEncoder encoder, SessionThread sessionThread) {
     	
     	this.clientSocket = socket;
@@ -100,23 +110,12 @@ public class RtspThread extends Thread {
     }
     
     public void writeString(String str) {
-        ServerService.writeMonitor(false, str);
-        byte[] strBytes;
-        strBytes = str.getBytes();
-        writeBytes(strBytes);
-    }
-    
-    public void writeBytes(byte[] bytes) {
         try {
-            BufferedOutputStream out = new BufferedOutputStream(cmdSocket.getOutputStream(), Defaults.dataChunkSize);
-            out.write(bytes);
-            out.flush();
-            localDataSocket.reportTraffic(bytes.length);
-        } catch (IOException e) {
-            Log.i(TAG, "Exception writing socket");
-            closeSocket();
-            return;
-        }
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+			bw.write(str);
+		} catch (IOException e) {	
+			e.printStackTrace();
+		}
     }
     
     public int getCseq() {
@@ -149,6 +148,36 @@ public class RtspThread extends Thread {
 
 	public void setRtspState(int rtspState) {
 		this.rtspState = rtspState;
+	}
+
+	public SessionThread getSessionThread() {
+		return this.sessionThread;
+	}
+
+	// 暂时放在这里来使用
+
+	public RtpSocket getRtpSocket() {
+		return rtpSocket;
+	}
+
+	public void setRtpSocket(RtpSocket rtpSocket) {
+		this.rtpSocket = rtpSocket;
+	}
+
+	public FileInputStream getVideoInputStream() {
+		return videoInputStream;
+	}
+
+	public void setVideoInputStream(FileInputStream videoInputStream) {
+		this.videoInputStream = videoInputStream;
+	}
+
+	public AbstractPacketizer getVideoPacketizer() {
+		return videoPacketizer;
+	}
+
+	public void setVideoPacketizer(AbstractPacketizer videoPacketizer) {
+		this.videoPacketizer = videoPacketizer;
 	}
 
 }

@@ -288,6 +288,7 @@ public class SharedLinkSystem {
 			
 			if (sharedLink != null) {
 				file.list().put(fileName, sharedLink);
+				sharedLink.setPermission(filePermission);
 				if (mCallback != null) {
 					mCallback.onAdd();
 				}

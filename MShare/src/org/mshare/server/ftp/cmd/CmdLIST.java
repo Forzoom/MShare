@@ -76,8 +76,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
             }
             // 列表的结果
             String listing;
-            // 当前是一个共享的文件夹 
-            // TODO 需要了解共享文件夹中是否可以有其他的文件
+            // 共享文件夹
             if (fileToList.isDirectory() || fileToList.isFakeDirectory()) {
             	StringBuilder response = new StringBuilder();
                 errString = listDirectory(response, fileToList);

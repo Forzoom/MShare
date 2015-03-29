@@ -152,9 +152,8 @@ public class CmdDESCRIBE extends RtspCmd {
 
 			// 当前文件名已经准备好了
 			Log.d(TAG, "try to get the file : " + fileName);
-			// TODO 需要保证所对应的是相对路径，以反斜杠开头？
 
-			Token token = sessionThread.getToken();
+			Token token = rtspThread.getSessionThread().getToken();
 			if (token == null || !token.isValid()) {
 				Log.e(TAG, "maybe has not authorized!");
 				rtspThread.writeString(errString);
@@ -185,7 +184,7 @@ public class CmdDESCRIBE extends RtspCmd {
 			}
 
 			// TODO 暂时将内容写在这里
-			sessionThread.writeString(toString());
+			rtspThread.writeString(toString());
 		}
 
         Log.d(TAG, "rtsp DESCRIBE finished");
