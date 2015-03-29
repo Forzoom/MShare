@@ -717,7 +717,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 			if (ServerService.isRunning()) {
 				String host = ServerService.getLocalInetAddress().toString().substring(1);
 				Log.d(TAG, "special log: " + host);
-				String port = String.valueOf(ServerSettings.getPort());
+				String port = String.valueOf(ServerSettings.getFtpPort());
 				String username = ServerSettings.getUsername();
 				String password = ServerSettings.getPassword();
 				

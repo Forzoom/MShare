@@ -123,7 +123,7 @@ public class SessionController {
      * @param index
      * @return
      */
-    protected SessionThread getSessionThread(int index) {
+    public SessionThread getSessionThread(int index) {
     	return sessionThreads.get(index);
     }
     

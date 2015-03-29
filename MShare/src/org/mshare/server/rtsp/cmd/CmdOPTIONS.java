@@ -4,6 +4,7 @@ import android.util.Log;
 
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
+import org.mshare.server.rtsp.RtspThread;
 
 /**
  * 目的是得到服务器提供的可用方法:
@@ -20,8 +21,8 @@ import org.mshare.server.rtsp.RtspCmd;
 public class CmdOPTIONS extends RtspCmd {
     private static final String TAG = CmdOPTIONS.class.getSimpleName();
 
-    public CmdOPTIONS(SessionThread sessionThread, int cseq) {
-        super(sessionThread, cseq);
+    public CmdOPTIONS(RtspThread rtspThread, int cseq) {
+        super(rtspThread, cseq);
     }
     
     protected void generateBody() {
@@ -31,7 +32,7 @@ public class CmdOPTIONS extends RtspCmd {
     @Override
     public void run() {
         Log.d(TAG, "rtsp OPTIONS executing");
-        sessionThread.writeString(toString());
+        rtspThread.writeString(toString());
         Log.d(TAG, "rtsp OPTIONS finished");
     }
 }

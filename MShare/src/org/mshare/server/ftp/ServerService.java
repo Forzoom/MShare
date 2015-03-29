@@ -56,7 +56,9 @@ import org.mshare.main.MShareUtil;
 
 import org.mshare.preference.ServerSettings;
 import org.mshare.server.rtsp.RtspConstants;
+import org.mshare.server.rtsp.RtspListener;
 
+import de.kp.net.rtsp.client.transport.TCPTransport;
 import de.kp.rtspcamera.MediaConstants;
 
 /**
@@ -96,7 +98,8 @@ public class ServerService extends Service implements Runnable {
     /**
      * TODO 为什么名字叫这个?
      */
-    private TcpListener wifiListener = null;
+    private FtpListener wifiListener;
+    private RtspListener rtspListener;
     
     // wifi和wake锁
     private WakeLock wakeLock;
@@ -238,7 +241,7 @@ public class ServerService extends Service implements Runnable {
         // 允许出于TIME_WAIT状态的Socket连接下一个内容
         listenSocket.setReuseAddress(true);
         // 将其绑定到特定的端口号上
-        listenSocket.bind(new InetSocketAddress(ServerSettings.getPort()));
+        listenSocket.bind(new InetSocketAddress(ServerSettings.getFtpPort()));
     }
 
     /**
@@ -298,8 +301,19 @@ public class ServerService extends Service implements Runnable {
                 // Either our wifi listener hasn't been created yet, or has crashed,
                 // so spawn it
             	// 创建并启动线程
-                wifiListener = new TcpListener(listenSocket, this, sessionController);
+                wifiListener = new FtpListener(listenSocket, this, sessionController);
                 wifiListener.start();
+            }
+            // 创建rtsp服务器
+            if (rtspListener == null) {
+            	try {
+            		rtspListener = new RtspListener(ServerSettings.getRtspPort(), RtspConstants.VideoEncoder.H264_ENCODER, sessionController);
+                	rtspListener.start();
+            	} catch (IOException e) {
+            		Log.e(TAG, "create rtsp server fail");
+            		e.printStackTrace();
+            	}
+            	
             }
             try {
                 // TODO: think about using ServerSocket, and just closing

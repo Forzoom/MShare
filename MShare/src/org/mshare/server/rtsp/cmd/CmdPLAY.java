@@ -6,6 +6,7 @@ import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspConstants;
 import org.mshare.server.rtsp.RtspParser;
+import org.mshare.server.rtsp.RtspThread;
 
 import java.net.SocketException;
 
@@ -39,8 +40,8 @@ public class CmdPLAY extends RtspCmd {
 
 	private String input;
 
-    public CmdPLAY(SessionThread sessionThread, String input, int cseq) {
-        super(sessionThread, cseq);
+    public CmdPLAY(RtspThread rtspThread, String input, int cseq) {
+        super(rtspThread, cseq);
 		this.input = input;
     }
 
@@ -59,7 +60,7 @@ public class CmdPLAY extends RtspCmd {
     @Override
     public void run() {
         Log.d(TAG, "rtsp PLAY executing ");
-		String errString = new RtspError(sessionThread, input, cseq).toString();
+		String errString = new RtspError(rtspThread, input, cseq).toString();
 
 		mainblock : {
 
@@ -68,32 +69,32 @@ public class CmdPLAY extends RtspCmd {
 				setRange(range);
 			}
 
-			if (sessionThread.getRtspState() == RtspConstants.READY) {
+			if (rtspThread.getRtspState() == RtspConstants.READY) {
 
 				// make sure that the respective client socket is ready to send RTP packets
-				sessionThread.getRtpSocket().suspend(false);
+				rtspThread.getRtpSocket().suspend(false);
 
-				sessionThread.setRtspState(RtspConstants.PLAYING);
+				rtspThread.setRtspState(RtspConstants.PLAYING);
 
 				try {
 
 					// 播放数据内容
 					if (MediaConstants.H264_CODEC == true) {
-						sessionThread.setVideoPacketizer(new H264Packetizer(sessionThread.getVideoInputStream()));
+						rtspThread.setVideoPacketizer(new H264Packetizer(sessionThread.getVideoInputStream()));
 					} else {
-						sessionThread.setVideoPacketizer(new H263Packetizer(sessionThread.getVideoInputStream()));
+						rtspThread.setVideoPacketizer(new H263Packetizer(sessionThread.getVideoInputStream()));
 					}
 
 				} catch (SocketException e) {
 					Log.e(TAG, "the socket exception? so the play is stop!");
 					e.printStackTrace();
-					sessionThread.writeString(errString);
+					rtspThread.writeString(errString);
 					break mainblock;
 				}
 
 				// TODO 暂时将要发送的cmd写在这里
-				sessionThread.writeString(toString());
-				sessionThread.getVideoPacketizer().startStreaming();
+				rtspThread.writeString(toString());
+				rtspThread.getVideoPacketizer().startStreaming();
 			}
 		}
 

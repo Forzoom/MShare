@@ -103,7 +103,7 @@ public class NsdService extends Service {
         final NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(FTP_SERVICE_TYPE);
-        serviceInfo.setPort(ServerSettings.getPort());
+        serviceInfo.setPort(ServerSettings.getFtpPort());
 
         new Thread(new Runnable() {
             @Override

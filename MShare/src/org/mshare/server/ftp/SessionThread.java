@@ -89,16 +89,6 @@ public class SessionThread extends Thread {
 
 	private AbstractPacketizer videoPacketizer;
 
-	private BufferedReader rtspBr;
-	
-    /* 关于rtsp的内容 */
-    // RTSP消息的序列号
-    private int cseq = 0;
-    private String contentBase = "";
-	// 对应rtsp服务器的状态
-    private int rtspState;
-    // 客户端端口
-    private int clientPort;
     // 远程客户端IP地址 TODO 可以将其纪录下来
     private InetAddress clientAddress;
 
@@ -312,34 +302,15 @@ public class SessionThread extends Thread {
             BufferedReader ftpBr = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream()), 8192);
             
             while (true) {
-                String line;
-                Log.d(TAG, "rtsp enabled ? " + isRtspEnabled() + " rtspbr " + rtspBr);
-				if (isRtspEnabled() && rtspBr != null) {
-					// 应该能够接受关闭rtsp的命令
-					line = RtspParser.readRequest(rtspBr);
-					Log.i(TAG, "Received line from client in rtsp mode: " + line);
-					// 接受rtsp命令
-					if (RtspCmd.isRtspCmd(line)) {
-						RtspCmd.dispatchCmd(this, line);
-					} else if (FtpCmd.isAndExecuteFtpCmd(this, line, CmdCRTP.class)) {
-						Log.d(TAG, "close rtp mode");
-					} else {
-						// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
-						writeString(new RtspError(this, line, getCseq()).toString());
-					}
-
-				} else { // ftp only
-					
-					line = RtspParser.readRequest(ftpBr);
-					Log.i(TAG, "Received line from client in ftp mode: " + line);
-					ServerService.writeMonitor(true, line);
-					
-					if (FtpCmd.isFtpCmd(line)) {
-						FtpCmd.dispatchCommand(this, line);
-					} else {
-						// 失败的时候，返回ftp错误
-						writeString(unrecognizedCmdMsg);
-					}
+				String line = ftpBr.readLine();
+				Log.i(TAG, "Received line from client in ftp mode: " + line);
+				ServerService.writeMonitor(true, line);
+				
+				if (FtpCmd.isFtpCmd(line)) {
+					FtpCmd.dispatchCommand(this, line);
+				} else {
+					// 失败的时候，返回ftp错误
+					writeString(unrecognizedCmdMsg);
 				}
             }
         } catch (IOException e) {
@@ -386,10 +357,6 @@ public class SessionThread extends Thread {
         }
     }
 
-    /**
-     * 
-     * @param str
-     */
     public void writeString(String str) {
         ServerService.writeMonitor(false, str);
         byte[] strBytes;
@@ -497,29 +464,6 @@ public class SessionThread extends Thread {
     	this.token = token;
     }
 
-    public int getCseq() {
-        return cseq;
-    }
-
-    public void setCseq(int cseq) {
-        this.cseq = cseq;
-    }
-
-    public String getContentBase() {
-        return contentBase;
-    }
-
-    public void setContentBase(String contentBase) {
-        this.contentBase = contentBase;
-    }
-
-    public int getClientPort() {
-        return clientPort;
-    }
-
-    public void setClientPort(int clientPort) {
-        this.clientPort = clientPort;
-    }
 
     public InetAddress getClientAddress() {
         return clientAddress;
@@ -529,14 +473,7 @@ public class SessionThread extends Thread {
         this.clientAddress = clientAddress;
     }
 
-	public int getRtspState() {
-		return rtspState;
-	}
-
-	public void setRtspState(int rtspState) {
-		this.rtspState = rtspState;
-	}
-
+	
 	// 暂时放在这里来使用
 
 	public RtpSocket getRtpSocket() {
@@ -580,12 +517,5 @@ public class SessionThread extends Thread {
 	// 设置对应的rtsp内容
 	public void setRtspSocket(Socket rtspSocket) {
 		this.rtspSocket = rtspSocket;
-		try {
-			Log.d(TAG, "create rtsp buffer reader");
-			rtspBr = new BufferedReader(new InputStreamReader(rtspSocket.getInputStream()), 8192);
-		} catch (Exception e) {
-			Log.e(TAG, "create rtsp buffer reader fail");
-			e.printStackTrace();
-		}
 	}
 }

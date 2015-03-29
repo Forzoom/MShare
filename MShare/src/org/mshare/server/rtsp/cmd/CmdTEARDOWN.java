@@ -5,6 +5,7 @@ import android.util.Log;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspParser;
+import org.mshare.server.rtsp.RtspThread;
 
 import de.kp.net.rtp.RtpSender;
 
@@ -30,8 +31,8 @@ public class CmdTEARDOWN extends RtspCmd {
 
 	private String input;
 
-    public CmdTEARDOWN(SessionThread sessionThread, String input, int cseq) {
-        super(sessionThread, cseq);
+    public CmdTEARDOWN(RtspThread rtspThread, String input, int cseq) {
+        super(rtspThread, cseq);
 		this.input = input;
     }
 
@@ -47,7 +48,7 @@ public class CmdTEARDOWN extends RtspCmd {
     @Override
     public void run() {
         Log.d(TAG, "rtsp TEARDOWN executing!");
-        sessionThread.writeString(toString());
+        rtspThread.writeString(toString());
 
 		// TODO 关于RtpSender中的内容还需要了解
 		// 我们好像并没有将rtpSocket将入到RtpSender中
@@ -58,9 +59,9 @@ public class CmdTEARDOWN extends RtspCmd {
 //		this.clientSocket.close();
 
 		// close the associated RTP socket for sending RTP packets
-		sessionThread.getRtpSocket().close();
+        rtspThread.getRtpSocket().close();
 
-		sessionThread.getVideoPacketizer().stopStreaming();
+        rtspThread.getVideoPacketizer().stopStreaming();
 
 		Log.d(TAG, "rtsp TEARDOWN finished");
     }

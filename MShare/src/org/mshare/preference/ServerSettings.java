@@ -43,8 +43,11 @@ public class ServerSettings {
     public static final String VALUE_PASSWORD_DEFAULT = "password";
     
     // 端口：默认21
-    public static final String KEY_PORT = "port";
-    public static final String VALUE_PORT_DEFAULT = "2121";
+    public static final String KEY_FTP_PORT = "ftp_port";
+    public static final String VALUE_FTP_PORT_DEFAULT = "2121";
+    
+    public static final String KEY_RTSP_PORT = "rtsp_port";
+    public static final String VALUE_RTSP_PORT_DEFAULT = "5454"; 
     
     // 允许匿名
     public static final String KEY_ALLOW_ANONYMOUS = "allow_anonymous";
@@ -91,9 +94,16 @@ public class ServerSettings {
      * 默认使用2121作为端口？
      * @return
      */
-    public static int getPort() {
+    public static int getFtpPort() {
         final SharedPreferences sp = getSharedPreferences();
-        String portString = sp.getString(KEY_PORT, VALUE_PORT_DEFAULT);
+        String portString = sp.getString(KEY_FTP_PORT, VALUE_FTP_PORT_DEFAULT);
+        int port = Integer.valueOf(portString);
+        return port;
+    }
+    
+    public static int getRtspPort() {
+        final SharedPreferences sp = getSharedPreferences();
+        String portString = sp.getString(KEY_RTSP_PORT, VALUE_RTSP_PORT_DEFAULT);
         int port = Integer.valueOf(portString);
         return port;
     }
@@ -166,13 +176,20 @@ public class ServerSettings {
      * 设置端口
      * @param port
      */
-    public static void setPort(String port) {
+    public static void setFtpPort(String port) {
     	final SharedPreferences sp = getSharedPreferences();
     	SharedPreferences.Editor editor = sp.edit();
-    	editor.putString(KEY_PORT, port);
+    	editor.putString(KEY_FTP_PORT, port);
     	editor.commit();
     }
 
+    public static void setRtspPort(String port) {
+    	final SharedPreferences sp = getSharedPreferences();
+    	SharedPreferences.Editor editor = sp.edit();
+    	editor.putString(KEY_RTSP_PORT, port);
+    	editor.commit();
+    }
+    
     public static void setUpload(String uploadPath) {
     	final SharedPreferences sp = getSharedPreferences();
     	SharedPreferences.Editor editor = sp.edit();

@@ -8,6 +8,7 @@ import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspConstants;
 import org.mshare.server.rtsp.RtspParser;
+import org.mshare.server.rtsp.RtspThread;
 import org.mshare.account.AccountFactory.Token;
 
 import java.io.File;
@@ -106,16 +107,13 @@ public class CmdDESCRIBE extends RtspCmd {
     private static final String TAG = CmdDESCRIBE.class.getSimpleName();
 
     protected String rtpSession  = "";
-
     private String fileName;
-
     // 指定encoder
 	private VideoEncoder encoder = RtspConstants.VideoEncoder.H264_ENCODER;
-
 	private String input;
 
-    public CmdDESCRIBE(SessionThread sessionThread, String input, int cseq) {
-        super(sessionThread, cseq);
+    public CmdDESCRIBE(RtspThread rtspThread, String input, int cseq) {
+        super(rtspThread, cseq);
 		this.input = input;
     }
 
@@ -131,7 +129,7 @@ public class CmdDESCRIBE extends RtspCmd {
             e.printStackTrace();
         }
         
-        body += "Content-base: " + sessionThread.getContentBase() + CRLF
+        body += "Content-base: " + rtspThread.getContentBase() + CRLF
         + "Content-Type: application/sdp" + CRLF 
         + "Content-Length: "+ sdpContent.length() + sdpContent;
 
@@ -146,7 +144,7 @@ public class CmdDESCRIBE extends RtspCmd {
         Log.d(TAG, "rtsp DESCRIBE executing");
 
 		// 创建一个空白内容对象表示错误
-		String errString = new RtspError(sessionThread, input, cseq).toString();
+		String errString = new RtspError(rtspThread, input, cseq).toString();
 
 		mainblock : {
 			// 解析文件名
@@ -159,7 +157,7 @@ public class CmdDESCRIBE extends RtspCmd {
 			Token token = sessionThread.getToken();
 			if (token == null || !token.isValid()) {
 				Log.e(TAG, "maybe has not authorized!");
-				sessionThread.writeString(errString);
+				rtspThread.writeString(errString);
 				break mainblock;
 			}
 
@@ -167,22 +165,22 @@ public class CmdDESCRIBE extends RtspCmd {
 			SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
 			if (sharedLink == null) {
 				Log.e(TAG, "something wrong is happen, the file is null!");
-				sessionThread.writeString(errString);
+				rtspThread.writeString(errString);
 				break mainblock;
 			} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
 				Log.e(TAG, "the file is a directory!");
-				sessionThread.writeString(errString);
+				rtspThread.writeString(errString);
 				break mainblock;
 			}
 
 			// 获得文件流
 			File file = sharedLink.getRealFile();
 			try {
-				sessionThread.setVideoInputStream(new FileInputStream(file));
+				rtspThread.setVideoInputStream(new FileInputStream(file));
 			} catch (FileNotFoundException e) {
 				Log.e(TAG, "the file is not found");
 				e.printStackTrace();
-				sessionThread.writeString(errString);
+				rtspThread.writeString(errString);
 				break mainblock;
 			}
 

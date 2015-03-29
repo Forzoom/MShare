@@ -84,7 +84,7 @@ public class RtspConstants {
 	public static final String DIR_MULTIMEDIA = "../";
 	
 	// tags for logging
-	public static String SERVER_TAG = "RtspServer";
+	public static String SERVER_TAG = "RtspListener";
 
 	
     public static String getLocalIpAddress() {

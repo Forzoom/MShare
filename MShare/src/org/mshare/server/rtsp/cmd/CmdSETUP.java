@@ -5,6 +5,7 @@ import android.util.Log;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspParser;
+import org.mshare.server.rtsp.RtspThread;
 
 import java.util.Random;
 
@@ -28,8 +29,8 @@ public class CmdSETUP extends RtspCmd {
 
 	private String input;
 
-	public CmdSETUP(SessionThread sessionThread, String input, int cseq) {
-		super(sessionThread, cseq);
+	public CmdSETUP(RtspThread rtspThread, String input, int cseq) {
+		super(rtspThread, cseq);
 		this.input = input;
 	}
 
@@ -76,12 +77,12 @@ public class CmdSETUP extends RtspCmd {
 	@Override
 	public void run() {
 		Log.d(TAG, "rtsp SETUP executing!");
-		String errString = new RtspError(sessionThread, input, cseq).toString();
+		String errString = new RtspError(rtspThread, input, cseq).toString();
 
 		mainblock : {
 			try {
 				int clientPort = RtspParser.getClientPort(input);
-				sessionThread.setClientPort(clientPort);
+				rtspThread.setClientPort(clientPort);
 				// 客户端端口
 				setClientPort(clientPort);
 				// 传输协议
@@ -89,7 +90,7 @@ public class CmdSETUP extends RtspCmd {
 				// 会话类型
 				setSessionType(RtspParser.getSessionType(input));
 				// 客户端IP
-				setClientIP(sessionThread.getClientAddress().getHostAddress());
+				setClientIP(rtspThread.getClientAddress().getHostAddress());
 				// TODO 设置什么
 				// 在原有 的内容中还有setup ＝ true的内容，让RtspServer中的ServerThread跳过第一段循环
 				int[] interleaved = RtspParser.getInterleavedSetup(input);
@@ -98,23 +99,23 @@ public class CmdSETUP extends RtspCmd {
 				}
 
 				// 接下来是一些配置？
-				sessionThread.setRtspState(RtspConstants.READY);
+				rtspThread.setRtspState(RtspConstants.READY);
 
 				// TODO 准备dataSocket,需要了解是否正确
-				sessionThread.setRtpSocket(new RtpSocket(sessionThread.getClientAddress(), clientPort));
+				rtspThread.setRtpSocket(new RtpSocket(sessionThread.getClientAddress(), clientPort));
 				// 准备RtpSender，将RtpSocket注册到其中后，通过RtpSender来发送数据？
 
 				// 发送正确的数据
 				// TODO 不知道放在这里是不是正确
-				sessionThread.writeString(toString());
+				rtspThread.writeString(toString());
 			} catch (Exception e) {
 				Log.e(TAG, "something wrong happen in SETUP command!");
 				e.printStackTrace();
-				sessionThread.writeString(errString);
+				rtspThread.writeString(errString);
 			}
 		}
 
-		sessionThread.writeString(toString());
+		rtspThread.writeString(toString());
 
 		Log.d(TAG, "rtsp SETUP finished!");
 	}

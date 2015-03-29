@@ -5,12 +5,13 @@ import android.util.Log;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspConstants;
+import org.mshare.server.rtsp.RtspThread;
 
 public class CmdPAUSE extends RtspCmd {
     private static final String TAG = CmdPAUSE.class.getSimpleName();
 
-    public CmdPAUSE(SessionThread sessionThread, String input, int cseq) {
-        super(sessionThread, cseq);
+    public CmdPAUSE(RtspThread rtspThread, String input, int cseq) {
+        super(rtspThread, cseq);
     }
 
     protected void generateBody() {
@@ -19,11 +20,11 @@ public class CmdPAUSE extends RtspCmd {
     @Override
     public void run() {
         Log.d(TAG, "rtsp PAUSE executing!");
-		sessionThread.writeString(toString());
+        rtspThread.writeString(toString());
 
-		if (sessionThread.getRtspState() == RtspConstants.PLAYING) {
+		if (rtspThread.getRtspState() == RtspConstants.PLAYING) {
 			// suspend RTP socket from sending video packets
-			sessionThread.getRtpSocket().suspend(true);
+			rtspThread.getRtpSocket().suspend(true);
 		}
 
 		Log.d(TAG, "rtsp PAUSE finished!");

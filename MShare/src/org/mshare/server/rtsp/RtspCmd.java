@@ -20,15 +20,12 @@ public abstract class RtspCmd implements Runnable {
 
 	// toString中所返回的内容
     protected String response="";
-       
     protected int cseq = 0;
-       
    	protected static int session_id = -1;       
    	protected boolean newSessionId = true;
 	// TODO body不知道是什么呢？
 	protected String body = "";
-
-    protected SessionThread sessionThread;
+    protected RtspThread rtspThread;
 
     /**
      * CR = <US-ASCII CR, carriage return (13)>
@@ -52,8 +49,8 @@ public abstract class RtspCmd implements Runnable {
     @Override
     public void run() {}
 
-    public RtspCmd(SessionThread sessionThread, int cseq) {
-        this.sessionThread = sessionThread;
+    public RtspCmd(RtspThread rtspThread, int cseq) {
+        this.rtspThread = rtspThread;
         this.cseq = cseq;
     }
        
@@ -131,19 +128,19 @@ public abstract class RtspCmd implements Runnable {
         newSessionId = bool;
     }
 
-    public static void dispatchCmd(SessionThread session, String inputString) {
+    public static void dispatchCmd(RtspThread session, String inputString) {
         // 分割
         String[] strings = inputString.split(" ");
         String cmd = RtspParser.getCmd(strings).trim().toUpperCase(Locale.US);
 
         // 判断当前能否使用Cmd
-        Token token = session.getToken();
-
-        // 判断当前的Token是否可用
-        if (token == null || !token.isValid()) {
-            Log.e(TAG, "unauthorized! cannot use rtsp command");
-            return;
-        }
+//        Token token = sessionThread.getToken();
+//
+//        // 判断当前的Token是否可用
+//        if (token == null || !token.isValid()) {
+//            Log.e(TAG, "unauthorized! cannot use rtsp command");
+//            return;
+//        }
 
         RtspCmd cmdInstance = null;
         // 获得消息序号
