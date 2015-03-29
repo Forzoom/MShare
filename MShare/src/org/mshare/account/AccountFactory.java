@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.mshare.file.share.SharedLink;
+import org.mshare.file.share.SharedLinkStorage;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.preference.ServerSettings;
@@ -376,7 +377,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	 */
 	private boolean loadAccount(String username) {
 		if (allAccounts.containsKey(username)) {
-			Log.e(TAG, "already container account : " + username);
+			Log.e(TAG, "already contain account : " + username);
 			return false;
 		}
 
@@ -393,7 +394,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		Log.d(TAG, "add new account : " + username + " password : " + password);
 		Account newAccount = new UserAccount(username, password);
 		// 将管理员中的内容添加到新的账户中
-		newAccount.prepare(adminAccount.getStorage(), PERMISSION_ADMIN);
+		newAccount.prepare(SharedLinkStorage.cloneAndGetAll(adminAccount.getStorage()), PERMISSION_ADMIN);
 		allAccounts.put(username, newAccount);
 		return true;
 	}

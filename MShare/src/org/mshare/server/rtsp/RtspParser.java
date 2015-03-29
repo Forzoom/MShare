@@ -24,38 +24,39 @@ public class RtspParser {
      * @return
      * @throws IOException
      */
-    public static String readRequest(BufferedReader rtspBufferedReader) throws IOException {
 
-        // 使用bf.readLine()就可以完成的功能
-
-    	String request = new String();
-
+    public static String readRequest(BufferedReader br) throws IOException {
+    	StringBuilder builder = new StringBuilder();
     	boolean endFound = false;
-    	int c;
+    	boolean hasAppend = false;
+    	int i;
+    	char c;
 
-    	while ((c = rtspBufferedReader.read()) != -1) {
-
-    		request += (char) c;
+    	// read并不能阻塞线程
+    	
+    	while ((i = br.read()) != -1) {
+    		c = (char)i;
+    		builder.append(c);
+    		hasAppend = true;
     		if (c == '\n') {
-
     			if (endFound) {
     				break;
-
     			} else {
     				endFound = true;
     			}
-
+    		} else if (c == '\r') {
+    			endFound = true;
     		} else {
-    			if (c != '\r') {
-    				endFound = false;
-    			}
-
+    			endFound = false;
     		}
-
     	}
-
-    	return request;
-
+    	
+    	if (hasAppend) {
+    		Log.d(TAG, "result : " + builder.toString());
+        	return builder.toString();
+    	} else {
+    		return null;
+    	}
     }
 
     // 用于获得当前的cmd，但是每次都需要使用split来分割内容又浪费性能

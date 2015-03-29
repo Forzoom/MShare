@@ -35,8 +35,6 @@ import android.util.Log;
  * 
  * TODO 需要将配置属性和文件树内容区分？将配置内容移动到这里面,配置内容本来就不应该在Account中处理
  * 
- * 
- * 
  * @author HM
  *
  */
@@ -91,6 +89,7 @@ public class SharedLinkStorage {
 				count++;
 			}
 		}
+		
 		Log.d(TAG, "load " + count + " SharedLink in storage");
 	}
 	
