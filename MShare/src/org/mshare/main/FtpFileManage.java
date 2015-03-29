@@ -1046,6 +1046,10 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 
 	public class CmdDownLoad extends AsyncTask<Void, Integer, Boolean> {
 
+		public static final int ERRNO_NO_PERMISSION = 2;
+		
+		private int errno = -1;
+		
 		public CmdDownLoad() {
 
 		}
@@ -1060,15 +1064,16 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 				for(int i=0; i<files.length; i++){
 					String localPath = getParentRootPath() + File.separator
 							+ files[i].getName();
-					if(files[i].canRead())
+					if(files[i].canRead()) {
 						mFTPClient.download(
-							files[i].getName(),
-							new File(localPath),
-							new DownloadFTPDataTransferListener(((FTPFile) files[i]).getSize()));
-					else
-						toast("没有下载权限！");
+								files[i].getName(),
+								new File(localPath),
+								new DownloadFTPDataTransferListener(((FTPFile) files[i]).getSize()));
+					} else {
+						errno = ERRNO_NO_PERMISSION;
+						return false;
+					}
 				}
-				
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				return false;
@@ -1082,7 +1087,17 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 		}
 
 		protected void onPostExecute(Boolean result) {
-			toast(result ? "下载成功，文件保存至/MShareDownload" : "下载失败");
+			String failInfo = "";
+			switch (errno) {
+			case ERRNO_NO_PERMISSION:
+				failInfo = "没有下载权限";
+				break;
+			default:
+				failInfo = "下载失败";
+				break;
+			}
+			
+			toast(result ? "下载成功，文件保存至/MShareDownload" : failInfo);
 			progressDialog.dismiss();
 			mshareFileMenu2.hideAnimation();
 			mshareFileMenu1.showAnimation();

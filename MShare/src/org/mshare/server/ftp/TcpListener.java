@@ -61,7 +61,7 @@ public class TcpListener extends Thread {
                 int sessionCount = sessionController.getCount();
                 for (int i = 0; i < sessionCount; i++) {
                 	
-                	String currentIp = sessionController.getSessionThread(i).getLocalAddress().toString();
+                	String currentIp = sessionController.getSessionThread(i).getClientAddress().toString();
                 	String targetIp = clientSocket.getInetAddress().toString();
                 	Log.d(TAG, "targetIp : " + targetIp + " currentIp : " + currentIp);
                 	if (currentIp.equals(targetIp)) {

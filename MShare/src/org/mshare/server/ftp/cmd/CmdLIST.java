@@ -96,6 +96,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
             	errString = "500 internal server error\r\n";
             	break mainblock;
             }
+            Log.d(TAG, "the listing : " + listing);
             errString = sendListing(listing);
             if (errString != null) {
                 break mainblock;

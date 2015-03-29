@@ -437,6 +437,7 @@ public class OverviewActivity extends Activity implements StatusController.Statu
 	}
 
 	public class CmdConnect extends FtpCmd {
+		
 		@Override
 		public void run() {
 			boolean errorAndRetry = false ;  //根据不同的异常类型，是否重新捕获

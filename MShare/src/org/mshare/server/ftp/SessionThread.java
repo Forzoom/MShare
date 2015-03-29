@@ -89,6 +89,8 @@ public class SessionThread extends Thread {
 
 	private AbstractPacketizer videoPacketizer;
 
+	private BufferedReader rtspBr;
+	
     /* 关于rtsp的内容 */
     // RTSP消息的序列号
     private int cseq = 0;
@@ -293,6 +295,7 @@ public class SessionThread extends Thread {
     }
 
     protected InetAddress getLocalAddress() {
+    	
         return cmdSocket.getLocalAddress();
     }
 
@@ -307,14 +310,13 @@ public class SessionThread extends Thread {
         try {
             // use 8k buffer
             BufferedReader ftpBr = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream()), 8192);
-            BufferedReader rtspBr = new BufferedReader(new InputStreamReader(rtspSocket.getInputStream()), 8192);
             
             while (true) {
                 String line;
 
-				if (isRtspEnabled()) {
+				if (isRtspEnabled() && rtspBr != null) {
 					// 应该能够接受关闭rtsp的命令
-					line = RtspParser.readRequest(ftpBr);
+					line = RtspParser.readRequest(rtspBr);
 					Log.i(TAG, "Received line from client in rtsp mode: " + line);
 					// 接受rtsp命令
 					if (RtspCmd.isRtspCmd(line)) {
@@ -578,5 +580,10 @@ public class SessionThread extends Thread {
 	// 设置对应的rtsp内容
 	public void setRtspSocket(Socket rtspSocket) {
 		this.rtspSocket = rtspSocket;
+		try {
+			rtspBr = new BufferedReader(new InputStreamReader(rtspSocket.getInputStream()), 8192);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
