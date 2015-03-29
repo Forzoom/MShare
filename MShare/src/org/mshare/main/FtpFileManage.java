@@ -764,8 +764,8 @@ public class FtpFileManage extends Activity implements FileBrowserCallback{
 					// 尝试播放
 					Intent startPlayActivity = new Intent(FtpFileManage.this, PlayActivity.class);
 					String host = mFTPHost;
-					String port = "5544";
-					String rtspUriString = "rtsp://" + host + ":" + port + file.getAbsolutePath();
+					String port = "2121";
+					String rtspUriString = "rtsp://" + host + ":" + port + File.separator + file.getName();
 					Log.d(TAG, "rtspUriString :" + rtspUriString);
 					startPlayActivity.putExtra(PlayActivity.EXTRA_RTSP_URI, rtspUriString);
 					// 需要添加ForResult的情况，不知道是否会立即返回？

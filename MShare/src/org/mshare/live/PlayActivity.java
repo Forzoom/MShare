@@ -69,6 +69,7 @@ public class PlayActivity extends Activity {
 
         Intent intent = getIntent();
         String uriStr = intent.getStringExtra(EXTRA_RTSP_URI);
+        Log.d(TAG, "the file uri : " + uriStr);
         Uri uri = Uri.parse(uriStr);
 
 		this.mVideoView = (VideoView) findViewById(R.id.video_view);

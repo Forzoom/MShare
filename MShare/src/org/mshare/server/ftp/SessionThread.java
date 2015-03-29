@@ -315,18 +315,21 @@ public class SessionThread extends Thread {
 					// 在这里需要判断当前rtsp是否开启了
 					if (isRtspEnabled()) {
 						// 应该能够接受关闭rtsp的命令
-
+						Log.d(TAG, "rtsp is enabled");
 						// 接受rtsp命令
 						if (RtspCmd.isRtspCmd(line)) {
+							Log.d(TAG, "dispatch rtsp command");
 							RtspCmd.dispatchCmd(this, line);
 						} else if (FtpCmd.isAndExecuteFtpCmd(this, line, CmdCRTP.class)) {
 							Log.d(TAG, "close rtp mode");
 						} else {
+							Log.e(TAG, "fail using rtsp");
 							// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
 							writeString(new RtspError(this, line, getCseq()).toString());
 						}
 
 					} else {
+						Log.d(TAG, "rtsp is not enabled");
 						// 只能接受ftp命令
 						if (FtpCmd.isFtpCmd(line)) {
 							FtpCmd.dispatchCommand(this, line);

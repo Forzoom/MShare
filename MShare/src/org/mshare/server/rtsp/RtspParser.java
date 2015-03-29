@@ -2,6 +2,7 @@ package org.mshare.server.rtsp;
 
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
@@ -23,39 +24,39 @@ public class RtspParser {
      * @return
      * @throws IOException
      */
-//    public static String readRequest(BufferedReader rtspBufferedReader) throws IOException {
-//
-//        // 使用bf.readLine()就可以完成的功能
-//
-//    	String request = new String();
-//
-//    	boolean endFound = false;
-//    	int c;
-//
-//    	while ((c = rtspBufferedReader.read()) != -1) {
-//
-//    		request += (char) c;
-//    		if (c == '\n') {
-//
-//    			if (endFound) {
-//    				break;
-//
-//    			} else {
-//    				endFound = true;
-//    			}
-//
-//    		} else {
-//    			if (c != '\r') {
-//    				endFound = false;
-//    			}
-//
-//    		}
-//
-//    	}
-//
-//    	return request;
-//
-//    }
+    public static String readRequest(BufferedReader rtspBufferedReader) throws IOException {
+
+        // 使用bf.readLine()就可以完成的功能
+
+    	String request = new String();
+
+    	boolean endFound = false;
+    	int c;
+
+    	while ((c = rtspBufferedReader.read()) != -1) {
+
+    		request += (char) c;
+    		if (c == '\n') {
+
+    			if (endFound) {
+    				break;
+
+    			} else {
+    				endFound = true;
+    			}
+
+    		} else {
+    			if (c != '\r') {
+    				endFound = false;
+    			}
+
+    		}
+
+    	}
+
+    	return request;
+
+    }
 
     // 用于获得当前的cmd，但是每次都需要使用split来分割内容又浪费性能
     public static String getCmd(String[] strings) {
