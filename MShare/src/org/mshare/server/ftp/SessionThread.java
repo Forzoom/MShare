@@ -313,7 +313,7 @@ public class SessionThread extends Thread {
             
             while (true) {
                 String line;
-
+                Log.d(TAG, "rtsp enabled ? " + isRtspEnabled() + " rtspbr " + rtspBr);
 				if (isRtspEnabled() && rtspBr != null) {
 					// 应该能够接受关闭rtsp的命令
 					line = RtspParser.readRequest(rtspBr);
@@ -581,8 +581,10 @@ public class SessionThread extends Thread {
 	public void setRtspSocket(Socket rtspSocket) {
 		this.rtspSocket = rtspSocket;
 		try {
+			Log.d(TAG, "create rtsp buffer reader");
 			rtspBr = new BufferedReader(new InputStreamReader(rtspSocket.getInputStream()), 8192);
 		} catch (Exception e) {
+			Log.e(TAG, "create rtsp buffer reader fail");
 			e.printStackTrace();
 		}
 	}
