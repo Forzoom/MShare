@@ -61,13 +61,14 @@ public class TcpListener extends Thread {
                 int sessionCount = sessionController.getCount();
                 for (int i = 0; i < sessionCount; i++) {
                 	
-                	String currentIp = sessionController.getSessionThread(i).getClientAddress().toString();
+                	SessionThread sessionThread = sessionController.getSessionThread(i);
+                	String currentIp = sessionThread.getClientAddress().toString();
                 	String targetIp = clientSocket.getInetAddress().toString();
                 	Log.d(TAG, "targetIp : " + targetIp + " currentIp : " + currentIp);
-                	if (currentIp.equals(targetIp)) {
+                	if (currentIp.equals(targetIp) && sessionThread.isRtspEnabled()) {
                     	Log.d(TAG, "find target session");
                     	findTargetSession = true;
-                    	sessionController.getSessionThread(i).setRtspSocket(clientSocket);
+                    	sessionThread.setRtspSocket(clientSocket);
                     }
                 }
                 
