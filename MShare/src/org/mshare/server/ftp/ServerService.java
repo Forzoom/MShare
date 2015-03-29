@@ -298,7 +298,7 @@ public class ServerService extends Service implements Runnable {
                 // Either our wifi listener hasn't been created yet, or has crashed,
                 // so spawn it
             	// 创建并启动线程
-                wifiListener = new TcpListener(listenSocket, this);
+                wifiListener = new TcpListener(listenSocket, this, sessionController);
                 wifiListener.start();
             }
             try {

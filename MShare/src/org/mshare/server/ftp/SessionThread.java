@@ -110,6 +110,8 @@ public class SessionThread extends Thread {
     // 需要保证verifier能够被正常的初始化?
     public Verifier verifier;
 
+    public Socket rtspSocket;
+    
 	// ftp命令无法识别时的返回
 	public static String unrecognizedCmdMsg = "502 Command not recognized\r\n";
 
@@ -304,44 +306,38 @@ public class SessionThread extends Thread {
         // Main loop: read an incoming line and process it
         try {
             // use 8k buffer
-            BufferedReader in = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream()), 8192);
-
+            BufferedReader ftpBr = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream()), 8192);
+            BufferedReader rtspBr = new BufferedReader(new InputStreamReader(rtspSocket.getInputStream()), 8192);
+            
             while (true) {
                 String line;
-                line = RtspParser.readRequest(in);
-                if (line != null) {
-                    ServerService.writeMonitor(true, line);
-                    Log.i(TAG, "Received line from client: " + line);
-                    // 全部使用rtsp的Read是否可以？
-                    
-                    // 直接在这里调用就好了
-					// 在这里需要判断当前rtsp是否开启了
-					if (isRtspEnabled()) {
-						// 应该能够接受关闭rtsp的命令
-
-						// 接受rtsp命令
-						if (RtspCmd.isRtspCmd(line)) {
-							RtspCmd.dispatchCmd(this, line);
-						} else if (FtpCmd.isAndExecuteFtpCmd(this, line, CmdCRTP.class)) {
-							Log.d(TAG, "close rtp mode");
-						} else {
-							// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
-							writeString(new RtspError(this, line, getCseq()).toString());
-						}
-
+				if (isRtspEnabled()) {
+					// 应该能够接受关闭rtsp的命令
+					line = RtspParser.readRequest(ftpBr);
+					Log.i(TAG, "Received line from client in rtsp mode: " + line);
+					// 接受rtsp命令
+					if (RtspCmd.isRtspCmd(line)) {
+						RtspCmd.dispatchCmd(this, line);
+					} else if (FtpCmd.isAndExecuteFtpCmd(this, line, CmdCRTP.class)) {
+						Log.d(TAG, "close rtp mode");
 					} else {
-						// 只能接受ftp命令
-						if (FtpCmd.isFtpCmd(line)) {
-							FtpCmd.dispatchCommand(this, line);
-						} else {
-							// 失败的时候，返回ftp错误
-							writeString(unrecognizedCmdMsg);
-						}
+						// 失败的时候，只能返回rtsp错误,rtsp的错误应该如何返回？,暂时先这样返回
+						writeString(new RtspError(this, line, getCseq()).toString());
 					}
-                } else {
-                    Log.i(TAG, "readLine gave null, loop again");
-                    // 原本这里是退出的，但是现在改为再次循环，应该没有问题把，线程应该怎么样退出呢？
-                }
+
+				} else { // ftp only
+					
+					line = RtspParser.readRequest(ftpBr);
+					Log.i(TAG, "Received line from client in ftp mode: " + line);
+					ServerService.writeMonitor(true, line);
+					
+					if (FtpCmd.isFtpCmd(line)) {
+						FtpCmd.dispatchCommand(this, line);
+					} else {
+						// 失败的时候，返回ftp错误
+						writeString(unrecognizedCmdMsg);
+					}
+				}
             }
         } catch (IOException e) {
             Log.i(TAG, "Connection was dropped");
@@ -576,5 +572,10 @@ public class SessionThread extends Thread {
 
 	public boolean isRtspEnabled() {
 		return isRtspEnabled;
+	}
+	
+	// 设置对应的rtsp内容
+	public void setRtspSocket(Socket rtspSocket) {
+		this.rtspSocket = rtspSocket;
 	}
 }
