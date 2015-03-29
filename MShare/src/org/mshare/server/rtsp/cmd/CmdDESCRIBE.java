@@ -6,6 +6,7 @@ import android.util.Log;
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.rtsp.RtspCmd;
+import org.mshare.server.rtsp.RtspConstants;
 import org.mshare.server.rtsp.RtspParser;
 import org.mshare.account.AccountFactory.Token;
 
@@ -105,11 +106,11 @@ public class CmdDESCRIBE extends RtspCmd {
     private static final String TAG = CmdDESCRIBE.class.getSimpleName();
 
     protected String rtpSession  = "";
-    protected String contentBase = "";
 
     private String fileName;
 
-	private VideoEncoder encoder;
+    // 指定encoder
+	private VideoEncoder encoder = RtspConstants.VideoEncoder.H264_ENCODER;
 
 	private String input;
 
@@ -130,18 +131,10 @@ public class CmdDESCRIBE extends RtspCmd {
             e.printStackTrace();
         }
         
-        body += "Content-base: "+contentBase + CRLF
-        + "Content-Type: application/sdp"+ CRLF 
+        body += "Content-base: " + sessionThread.getContentBase() + CRLF
+        + "Content-Type: application/sdp" + CRLF 
         + "Content-Length: "+ sdpContent.length() + sdpContent;
 
-    }
-
-    public String getContentBase() {
-        return contentBase;
-    }
-
-    public void setContentBase(String contentBase) {
-        this.contentBase = contentBase;
     }
 
     public void setVideoEncoder(VideoEncoder encoder) {
@@ -159,40 +152,31 @@ public class CmdDESCRIBE extends RtspCmd {
 			// 解析文件名
 			fileName = RtspParser.getFileName(input);
 
-			// set video encoding
-			// TODO 这个东西并没有被正确设置
-			setVideoEncoder(encoder);
-
-			// finally set content base
-			// TODO 没有被正确设置
-			setContentBase(contentBase);
-
 			// 当前文件名已经准备好了
 			Log.d(TAG, "try to get the file : " + fileName);
 			// TODO 需要保证所对应的是相对路径，以反斜杠开头？
 
-//			Token token = sessionThread.getToken();
-//			if (token == null || !token.isValid()) {
-//				Log.e(TAG, "maybe has not authorized!");
-//				sessionThread.writeString(errString);
-//				break mainblock;
-//			}
-//
-//			// 获得对应文件对象
-//			SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
-//			if (sharedLink == null) {
-//				Log.e(TAG, "something wrong is happen, the file is null!");
-//				sessionThread.writeString(errString);
-//				break mainblock;
-//			} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
-//				Log.e(TAG, "the file is not a file!");
-//				sessionThread.writeString(errString);
-//				break mainblock;
-//			}
-//
-//			// 获得文件流
-//			File file = sharedLink.getRealFile();
-			File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dog.mp4");
+			Token token = sessionThread.getToken();
+			if (token == null || !token.isValid()) {
+				Log.e(TAG, "maybe has not authorized!");
+				sessionThread.writeString(errString);
+				break mainblock;
+			}
+
+			// 获得对应文件对象
+			SharedLink sharedLink = token.getSystem().getSharedLink(fileName);
+			if (sharedLink == null) {
+				Log.e(TAG, "something wrong is happen, the file is null!");
+				sessionThread.writeString(errString);
+				break mainblock;
+			} else if (sharedLink.isDirectory() || sharedLink.isFakeDirectory()) {
+				Log.e(TAG, "the file is a directory!");
+				sessionThread.writeString(errString);
+				break mainblock;
+			}
+
+			// 获得文件流
+			File file = sharedLink.getRealFile();
 			try {
 				sessionThread.setVideoInputStream(new FileInputStream(file));
 			} catch (FileNotFoundException e) {

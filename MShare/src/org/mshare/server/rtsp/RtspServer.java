@@ -66,15 +66,13 @@ public class RtspServer implements Runnable {
 	    	
 			try {
                 Log.d(TAG, "");
-				Socket  clientSocket = this.serverSocket.accept();
+				Socket clientSocket = this.serverSocket.accept();
 		    	serverThreads.add(new ServerThread(clientSocket, this.encoder));
 
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-	    
 	    }
-		
 	}
 
 	// 客户线程

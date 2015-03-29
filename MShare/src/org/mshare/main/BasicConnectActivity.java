@@ -24,7 +24,7 @@ public class BasicConnectActivity extends Activity {
 
 		// 完成基本信息显示
 		hostView = (TextView)findViewById(R.id.basic_connect_host);
-		hostView.setText(ServerService.getLocalInetAddress().getHostAddress().toString().substring(1));
+		hostView.setText(ServerService.getLocalInetAddress().getHostAddress().toString());
 		portView = (TextView)findViewById(R.id.basic_connect_port);
 		portView.setText(ServerSettings.getPort() + "");
 		usernameView = (TextView)findViewById(R.id.basic_connect_username);

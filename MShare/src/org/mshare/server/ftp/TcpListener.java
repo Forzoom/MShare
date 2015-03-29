@@ -29,10 +29,13 @@ public class TcpListener extends Thread {
 
     ServerSocket listenSocket;
     ServerService ftpServerService;
-
-    public TcpListener(ServerSocket listenSocket, ServerService ftpServerService) {
+    
+    private SessionController sessionController;
+    
+    public TcpListener(ServerSocket listenSocket, ServerService ftpServerService, SessionController sessionController) {
         this.listenSocket = listenSocket;
         this.ftpServerService = ftpServerService;
+        this.sessionController= sessionController; 
     }
 
     public void quit() {
@@ -52,12 +55,30 @@ public class TcpListener extends Thread {
         try {
             while (true) {
                 Socket clientSocket = listenSocket.accept();
-                Log.i(TAG, "New connection, spawned thread");
-                SessionThread newSession = new SessionThread(clientSocket,
-                        new LocalDataSocket());
-                newSession.start();
-                // register应该放在哪里呢？
-                ftpServerService.registerSessionThread(newSession);
+                
+                boolean findTargetSession = false;
+                
+                int sessionCount = sessionController.getCount();
+                for (int i = 0; i < sessionCount; i++) {
+                	
+                	String currentIp = sessionController.getSessionThread(i).getLocalAddress().toString();
+                	String targetIp = clientSocket.getInetAddress().toString();
+                	Log.d(TAG, "targetIp : " + targetIp + " currentIp : " + currentIp);
+                	if (currentIp.equals(targetIp)) {
+                    	Log.d(TAG, "find target session");
+                    	findTargetSession = true;
+                    	sessionController.getSessionThread(i).setRtspSocket(clientSocket);
+                    }
+                }
+                
+                if (!findTargetSession) {
+                	Log.i(TAG, "New connection, spawned thread");
+                	SessionThread newSession = new SessionThread(clientSocket,
+                            new LocalDataSocket());
+                    newSession.start();
+                    // register应该放在哪里呢？
+                    ftpServerService.registerSessionThread(newSession);
+                }
             }
         } catch (Exception e) {
             Log.d(TAG, "Exception in TcpListener");

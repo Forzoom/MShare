@@ -20,6 +20,7 @@ public class CmdRTSP extends FtpCmd {
 		Log.d(TAG, "executing RTSP");
 
 		sessionThread.startUsingRtsp();
+		Log.d(TAG, "is rtsp enabled " + sessionThread.isRtspEnabled());
 		sessionThread.writeString("211 \r\n");
 
 		// ³¢ÊÔÆô¶¯rtspÄ£Ê½
