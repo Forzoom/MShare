@@ -46,6 +46,7 @@ public class AdminAccount extends Account {
 			SharedLink sharedLink = all[i];
 			// file被多次引用，需要保证不会造成内存泄漏
 			// AdminAccount所对应的realFile应该都是存在的
+			// 因为不会是FakeDirectory
 			File file = sharedLink.getRealFile();
 			HashMap<String, File> dir = contentForShared.get(file.getParent());
 			if (dir == null) { // 当对应的文件夹内容已经存在

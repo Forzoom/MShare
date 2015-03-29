@@ -149,13 +149,13 @@ public class SharedLinkSystem {
 			Log.d(TAG, "SharedLinkSystem already prepared");
 			return;
 		}
-		if (getAccount() != null) {
-			// 加载数据
-			load(getAccount().getStorage(), SharedLinkSystem.FILE_PERMISSION_USER);
-		}
 		// TODO prepareUpload在这调用不好
 		prepareUpload();
 		prepared = true;
+		if (getAccount() != null) {
+			// 加载数据
+			load(getAccount().getStorage().getAll(), SharedLinkSystem.FILE_PERMISSION_USER);
+		}
 	}
 	
 	/**
@@ -163,20 +163,19 @@ public class SharedLinkSystem {
 	 * @param storage 将添加的Storage
 	 * @param filePermission 添加的文件的权限 {@link #FILE_PERMISSION_ADMIN}, {@link #FILE_PERMISSION_USER}
 	 */
-	public void load(SharedLinkStorage storage, int filePermission) {
-		Log.d(TAG, "start load");
-		SharedLink[] all = storage.getAll();
+	public void load(SharedLink[] data, int filePermission) {
+		Log.d(TAG, "load data");
 		int count = 0;
 		
-		for (int index = 0; index < all.length; index++) {
-			SharedLink sharedLink = all[index];
+		for (int index = 0; index < data.length; index++) {
+			SharedLink sharedLink = data[index];
 			if (addSharedLink(sharedLink, filePermission)) {
-				Log.d(TAG, "+content:fakePath:" + sharedLink.getFakePath() + " realPath:" + sharedLink.getRealPath());
+				Log.d(TAG, "+load:fakePath:" + sharedLink.getFakePath() + " realPath:" + sharedLink.getRealPath());
 				count++;
 			}
 		}
 		
-		Log.d(TAG, "end load, add " + count + " SharedLink object");
+		Log.d(TAG, "load end, add " + count + " SharedLink object");
 	}
 	
 	/**
@@ -189,11 +188,10 @@ public class SharedLinkSystem {
 		File uploadDir = new File(uploadPath);
 		if (!uploadDir.exists()) {
 			Log.e(TAG, "接收上传文件的文件夹不存在");
-			// TODO 同样需要保证uploadDir是我们自己创建的"文件夹"
 			if (uploadDir.mkdir()) {
-				Log.d(TAG, "创建上传文件夹成功");
+				Log.d(TAG, "create upload directory success");
 			} else {
-				Log.e(TAG, "创建上传文件夹失败");
+				Log.e(TAG, "create upload directory fail");
 			}
 		}
 	}

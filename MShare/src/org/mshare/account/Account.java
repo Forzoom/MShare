@@ -21,6 +21,7 @@ package org.mshare.account;
 
 import java.io.File;
 
+import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkStorage;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
@@ -45,6 +46,7 @@ import android.util.Log;
  * TODO 考虑管理员账户中的不一样
  * TODO 考虑将notify直接分出来调用，但是notifier不应该在SharedLinkSystem中被调用了，或者将Notifier改为静态函数
  * 在Account中设置addSharedPath和persist并不合适
+ * 
  * 可能要将system中的内容移动到Account中,尝试一下，如果全部都放在Account中，会导致耦合度高
  * 
  * 需要调用{@link #prepare()}才能让文件树生成
@@ -78,7 +80,6 @@ public abstract class Account {
     public Account(String username, String password) {
     	this.mUserName = username != null ? username : "";
     	this.mPassword = password;
-    	// TODO 调用USER的时候文件树就生成了，改为调用
     }
     
     /**
@@ -88,10 +89,10 @@ public abstract class Account {
      * @param storage storage中的内容都将被添加到文件树中
      * @param filePermission 所添加的SharedLink所拥有的权限
      */
-    public void prepare(SharedLinkStorage storage, int filePermission) {
+    public void prepare(SharedLink[] data, int filePermission) {
     	prepare();
     	// TODO 文件权限不对
-    	getSystem().load(storage, filePermission);
+    	getSystem().load(data, filePermission);
     }
     
     /**

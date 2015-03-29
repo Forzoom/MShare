@@ -66,6 +66,8 @@ public abstract class SharedLink {
 	
 	/**
 	 * 不判断fakePath和realPath是否有用
+	 * 
+	 * 创建新的对象
 	 * @param fakePath
 	 * @param realPath
 	 * @return
@@ -238,7 +240,7 @@ public abstract class SharedLink {
 	 * @return 返回对应的真实文件，不保证文件的正确性，当SharedLink是{@link SharedFakeDirectory}时，将返回null
 	 */
 	public File getRealFile() {
-		if (isFile() || isFakeDirectory()) {
+		if (isFile() || isDirectory()) {
 			if (realFile == null || !realFile.getAbsoluteFile().equals(realPath)) {
 				realFile = new File(realPath);
 			}

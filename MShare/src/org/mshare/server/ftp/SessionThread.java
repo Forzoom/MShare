@@ -39,6 +39,7 @@ import android.util.Log;
 
 import org.mshare.server.ftp.cmd.CmdCRTP;
 import org.mshare.server.rtsp.RtspCmd;
+import org.mshare.server.rtsp.RtspParser;
 import org.mshare.server.rtsp.cmd.RtspError;
 
 import de.kp.net.rtp.RtpSocket;
@@ -307,10 +308,12 @@ public class SessionThread extends Thread {
 
             while (true) {
                 String line;
-                line = in.readLine(); // will accept \r\n or \n for terminator
+                line = RtspParser.readRequest(in);
                 if (line != null) {
                     ServerService.writeMonitor(true, line);
                     Log.i(TAG, "Received line from client: " + line);
+                    // 全部使用rtsp的Read是否可以？
+                    
                     // 直接在这里调用就好了
 					// 在这里需要判断当前rtsp是否开启了
 					if (isRtspEnabled()) {
@@ -336,8 +339,8 @@ public class SessionThread extends Thread {
 						}
 					}
                 } else {
-                    Log.i(TAG, "readLine gave null, quitting");
-                    break;
+                    Log.i(TAG, "readLine gave null, loop again");
+                    // 原本这里是退出的，但是现在改为再次循环，应该没有问题把，线程应该怎么样退出呢？
                 }
             }
         } catch (IOException e) {
