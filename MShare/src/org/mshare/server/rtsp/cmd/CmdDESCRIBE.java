@@ -184,7 +184,8 @@ public class CmdDESCRIBE extends RtspCmd {
 			}
 
 			// TODO 暂时将内容写在这里
-			rtspThread.writeString(toString());
+			String response = toString();
+			rtspThread.writeString(response);
 		}
 
         Log.d(TAG, "rtsp DESCRIBE finished");

@@ -27,6 +27,8 @@ import java.net.DatagramPacket;
 import java.net.SocketException;
 import java.io.IOException;
 
+import android.util.Log;
+
 
 /**
  * RtpSocket implements a RTP socket for receiving and sending RTP packets.
@@ -35,6 +37,7 @@ import java.io.IOException;
  * receive RtpPackets.
  */
 public class RtpSocket {
+	private static final String TAG = RtpSocket.class.getSimpleName();
 
 	/** UDP socket */
 	DatagramSocket socket;
@@ -56,6 +59,8 @@ public class RtpSocket {
 	/** Creates a new RTP socket (sender and receiver) 
 	 * @throws SocketException */
 	public RtpSocket(InetAddress remoteAddress, int remotePort) throws SocketException {
+		
+		Log.d(TAG, "rtsp client address : " + remoteAddress.getHostAddress().toString() + " remote port " + remotePort);
 		
 		this.socket = new DatagramSocket();
 		this.socket.connect(remoteAddress, remotePort);

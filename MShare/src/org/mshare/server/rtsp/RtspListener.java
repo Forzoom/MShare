@@ -8,7 +8,6 @@ import java.util.Vector;
 
 import android.util.Log;
 
-import de.kp.net.rtp.RtpSender;
 import de.kp.net.rtp.RtpSocket;
 import de.kp.net.rtp.packetizer.AbstractPacketizer;
 import de.kp.net.rtp.packetizer.H263Packetizer;

@@ -21,7 +21,7 @@ import org.mshare.server.rtsp.RtspThread;
 public class CmdOPTIONS extends RtspCmd {
     private static final String TAG = CmdOPTIONS.class.getSimpleName();
 
-    public CmdOPTIONS(RtspThread rtspThread, int cseq) {
+    public CmdOPTIONS(RtspThread rtspThread, String input, int cseq) {
         super(rtspThread, cseq);
     }
     

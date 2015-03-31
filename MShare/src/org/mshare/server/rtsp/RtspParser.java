@@ -6,6 +6,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
+import org.mshare.preference.ServerSettings;
+import org.mshare.server.ftp.ServerService;
+
 /**
  * This class provides a parser for incoming RTSP
  * messages and splits them into appropriate parts.
@@ -30,29 +33,55 @@ public class RtspParser {
     	boolean endFound = false;
     	boolean hasAppend = false;
     	int i;
+    	String str;
     	char c;
 
-    	// read并不能阻塞线程
+//    	while ((i = br.read()) != -1) {
+//    		c = (char)i;
+//    		builder.append(c);
+//    		hasAppend = true;
+//    		if (c == '\n') {
+//    			Log.d(TAG, "find \\n");
+//    			if (endFound) {
+//    				break;
+//    			} else {
+//    				endFound = true;
+//    			}
+//    		} else if (c == '\r') {
+//    			Log.d(TAG, "find \\r");
+//    			endFound = true;
+//    		} else {
+//    			endFound = false;
+//    		}
+//    	}
     	
-    	while ((i = br.read()) != -1) {
-    		c = (char)i;
-    		builder.append(c);
+//    	while ((i = br.read()) != -1) {
+//    		c = (char)i;
+//    		builder.append(c);
+//    		Log.d(TAG, "c : " + c);
+//    		hasAppend = true;
+//    		if (c == '\n') {
+//    			if (endFound) {
+//    				break;
+//    			} else {
+//    				endFound = true;
+//    			}
+//    		} else {
+//    			if (c != '\r') {
+//    				endFound = false;
+//    			}
+//    		}
+//    	}
+
+    	str = br.readLine();
+    	while (str != null && !str.isEmpty()) {
+    		str += "\r\n";
+    		builder.append(str);
     		hasAppend = true;
-    		if (c == '\n') {
-    			if (endFound) {
-    				break;
-    			} else {
-    				endFound = true;
-    			}
-    		} else if (c == '\r') {
-    			endFound = true;
-    		} else {
-    			endFound = false;
-    		}
+    		str = br.readLine();
     	}
     	
     	if (hasAppend) {
-    		Log.d(TAG, "result : " + builder.toString());
         	return builder.toString();
     	} else {
     		return null;
@@ -120,6 +149,7 @@ public class RtspParser {
             interleaved[1] = Integer.parseInt(parts[1]);
         }
 
+        Log.d(TAG, "interleaved : " + interleaved);
         return interleaved;
 
     }
@@ -132,9 +162,16 @@ public class RtspParser {
                 
     	String lineInput = getLineInput(request, " ", "rtsp");
 
+    	String ip = ServerService.getLocalInetAddress().toString();
+    	ip = ip.charAt(0) == '/' ? ip.substring(1) : ip;
+    	
     	// 在IP中已经包含了PORT
-    	String[] parts = lineInput.split("rtsp://" + RtspConstants.SERVER_IP);
+    	String splitRegex = "rtsp://" + ip + ":" + ServerSettings.getRtspPort();
+    	String[] parts = lineInput.split(splitRegex);
+    	Log.d(TAG, "split regex : " + splitRegex);
     	// 就是一个相对路径
+    	Log.d(TAG, "split result : " + parts[0]);
+    	
         String fileName = parts[1];
     	Log.d(TAG, "getFileName : " + fileName);
         return fileName;
@@ -164,7 +201,7 @@ public class RtspParser {
 			}
 		}
 
-		Log.d(TAG, "simple log getLineInput : " + ret);
+		Log.d(TAG, "simple log getLineInput : " + ret + " prefix : " + prefix);
 
         return (match == true) ? ret : null;
     }
@@ -188,7 +225,10 @@ public class RtspParser {
         parts[2] = parts[2].substring(12);
             
         String[] ports = parts[2].split("-");
-        return Integer.parseInt(ports[0]);
+        int port = Integer.parseInt(ports[0]);
+        Log.d(TAG, "client port : " + port);
+        
+        return port;
     
     }
  
@@ -208,8 +248,9 @@ public class RtspParser {
         String[] parts = lineInput.split(";");
         parts[0] = parts[0].substring(11);
         
-        return parts[0];
-    
+        String tp = parts[0];
+        Log.d(TAG, "tp : " + tp);
+        return tp;
     }
 
     /**
@@ -253,7 +294,10 @@ public class RtspParser {
     	if (lineInput == null) throw new Exception();
         
     	String[] parts = lineInput.split(";");
-        return parts[1].trim();
+    	
+    	String sessionType = parts[1].trim();
+    	
+        return sessionType;
     
     }
         

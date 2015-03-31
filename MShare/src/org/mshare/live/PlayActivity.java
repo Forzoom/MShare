@@ -73,6 +73,7 @@ public class PlayActivity extends Activity {
         Uri uri = Uri.parse(uriStr);
 
 		this.mVideoView = (VideoView) findViewById(R.id.video_view);
+		init();
         this.mVideoView.setVideoURI(uri);
         this.mVideoView.start();
 

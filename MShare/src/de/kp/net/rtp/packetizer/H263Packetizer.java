@@ -8,6 +8,8 @@ import android.os.SystemClock;
 import android.util.Log;
 import de.kp.net.rtp.RtpPacket;
 import de.kp.net.rtp.RtpSender;
+import de.kp.net.rtp.RtpSocket;
+
 import org.mshare.server.rtsp.RtspConstants;
 
 public class H263Packetizer extends AbstractPacketizer implements Runnable {
@@ -17,11 +19,14 @@ public class H263Packetizer extends AbstractPacketizer implements Runnable {
 	private boolean videoQualityHigh = true;
 	// private int fps;
 	
+	private RtpSocket rtpSocket;
+	
 	private boolean change;
 	
-	public H263Packetizer(InputStream fis) throws SocketException {
+	public H263Packetizer(InputStream fis, RtpSocket rtpSocket) throws SocketException {
 		this.fis = fis;
-		this.rtpSender = RtpSender.getInstance(); 
+		this.rtpSocket = rtpSocket;
+		
 	}
 	
 	public void run() {
@@ -109,7 +114,8 @@ public class H263Packetizer extends AbstractPacketizer implements Runnable {
 				
 				try {
 					
-					rtpSender.send(rtpPacket);
+					rtpSocket.send(rtpPacket);
+					Log.d(TAG, "try send data");
 					len += number - num;
 
 				} catch (IOException e) {
@@ -161,7 +167,7 @@ public class H263Packetizer extends AbstractPacketizer implements Runnable {
 			}
 		}
 
-		rtpSender.stop();
+//		rtpSocket.stop();
 
 		try {
 			while (fis.read(buffer, 0, frame_size) > 0)
