@@ -48,7 +48,7 @@ public class CmdUSER extends FtpCmd implements Runnable {
         }
         
         // 在SessionThread中处理
-        sessionThread.sessionInfo.setUsername(username);
+        sessionThread.getSessionInfo().setUsername(username);
         sessionThread.authFails = 0;
         // TODO 没有办法判定username不存在，那么不是没用了吗
 //        if (username == null) {

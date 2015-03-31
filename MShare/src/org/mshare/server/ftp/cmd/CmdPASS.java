@@ -22,6 +22,7 @@ package org.mshare.server.ftp.cmd;
 import org.mshare.account.AccountFactory.Token;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
+import org.mshare.server.ftp.SessionInfo;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.ftp.Util;
 
@@ -42,7 +43,9 @@ public class CmdPASS extends FtpCmd implements Runnable {
         Log.d(TAG, "Executing PASS");
         String attemptPassword = FtpParser.getParameter(input); // silent
         
-        if (sessionThread.sessionInfo.getUsername() == null) {
+        SessionInfo sessionInfo = sessionThread.getSessionInfo();
+        
+        if (sessionInfo.getUsername() == null) {
         	Log.e(TAG, "send USER first!");
         	sessionThread.writeString("503 Must send USER first\r\n");
         	return;
@@ -50,10 +53,10 @@ public class CmdPASS extends FtpCmd implements Runnable {
         
         // 输入的内容可能会有错误
         if (attemptPassword != null && !attemptPassword.equals("")) {
-        	Log.d(TAG, "create username : " + sessionThread.sessionInfo.getUsername());
+        	Log.d(TAG, "create username : " + sessionInfo.getUsername());
         	
-        	if (sessionThread.authAttempt(sessionThread.sessionInfo.getUsername(), attemptPassword) != null) {
-        		Log.i(TAG, "User " + sessionThread.sessionInfo.getUsername() + " verified");
+        	if (sessionThread.authAttempt(sessionInfo.getUsername(), attemptPassword) != null) {
+        		Log.i(TAG, "User " + sessionInfo.getUsername() + " verified");
         		
         		Token token = sessionThread.getToken();
         		if (token.isGuest()) {

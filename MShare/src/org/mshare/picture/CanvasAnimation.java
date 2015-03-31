@@ -42,7 +42,7 @@ public abstract class CanvasAnimation {
 		}
 		if (interpolator != null) {
 			ratio = interpolator.getInterpolation(ratio);
-			Log.d(TAG, "calc ratio : " + ratio);
+//			Log.d(TAG, "calc ratio : " + ratio);
 		}
 		doAnimation(ratio);
 	}
@@ -61,7 +61,7 @@ public abstract class CanvasAnimation {
 	// 使用指定的startTime
 	public void start(long startTime) {
 		if (status == STATUS_STOP) {
-			Log.d(TAG, "set animation status and start");
+//			Log.d(TAG, "set animation status and start");
 			status = STATUS_RUNNING;
 			setStartTime(startTime);
 			onStart();
@@ -69,7 +69,7 @@ public abstract class CanvasAnimation {
 			RefreshHandler handler = RefreshHandler.getInstance();
 			if (handler != null && !(handler.isRefreshLooping())) {
 
-				Log.d(TAG, "try to start animation");
+//				Log.d(TAG, "try to start animation");
 				
 				handler.setRefreshLooping(true);
 				
@@ -91,7 +91,7 @@ public abstract class CanvasAnimation {
 	
 	// stop在CanvasElement中被remove后才调用，以保证stop调用的时候，Animation不再属于任何人
 	public void stop() {
-		Log.d(TAG, "animation stop");
+//		Log.d(TAG, "animation stop");
 		status = STATUS_STOP;
 		onStop();
 	}

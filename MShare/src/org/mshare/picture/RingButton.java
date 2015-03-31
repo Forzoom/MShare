@@ -168,7 +168,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		
 		@Override
 		public void doAnimation(float ratio) {
-			Log.d(TAG, "origin outer radius " + startOuterRadius + " target outer radius :" + endOuterRadius + " ratio : " + ratio);
+//			Log.d(TAG, "origin outer radius " + startOuterRadius + " target outer radius :" + endOuterRadius + " ratio : " + ratio);
 			outerRadius = startOuterRadius + (int)((endOuterRadius - startOuterRadius) * ratio);
 		}
 
@@ -210,7 +210,7 @@ public class RingButton extends CanvasElement implements Parcelable {
 		
 		@Override
 		public void doAnimation(float ratio) {
-			Log.d(TAG, "bounce animation ratio : " + ratio);
+//			Log.d(TAG, "bounce animation ratio : " + ratio);
 			innerRadius = originInnerRadius + (int)((targetInnerRadius - originInnerRadius) * ratio);
 		}
 

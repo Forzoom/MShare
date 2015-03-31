@@ -200,6 +200,10 @@ public abstract class FtpCmd implements Runnable {
      * @return
      */
     public static boolean isFtpCmd(String inputString) {
+    	if (inputString == null) {
+    		Log.e(TAG, "the input string is null");
+    		return false;
+    	}
         String[] strings = inputString.split(" ");
         // 不能识别
         if (strings == null || strings.length < 1) {

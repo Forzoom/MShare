@@ -31,6 +31,7 @@ import android.util.Log;
 
 /**
  * TODO 使用HASH值作为SP的键
+ * 
  * 管理员账户中的文件树是有必要存在的，用以判断持久化内容是否正确
  * 当管理员账户的内容持久化的时候，需要向所有的文件树中添加内容，需要这样做
  * 原本打算存在一个存放所有Account是否存在的信息，是否有必要有这样的信息呢？
@@ -57,7 +58,7 @@ import android.util.Log;
 public abstract class Account {
 	private static final String TAG = Account.class.getSimpleName();
 	
-	// 当前账户的用户名和密码
+	// 用户名和密码
     private String mUserName = null;
     private String mPassword = null;
     

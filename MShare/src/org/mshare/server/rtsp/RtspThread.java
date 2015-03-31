@@ -1,6 +1,5 @@
 package org.mshare.server.rtsp;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
@@ -10,9 +9,6 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
-import org.mshare.server.ftp.Defaults;
-import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.ServerService;
 import org.mshare.server.ftp.SessionThread;
 import org.mshare.server.ftp.cmd.CmdCRTP;
 import org.mshare.server.rtsp.RtspConstants.VideoEncoder;
@@ -26,24 +22,15 @@ import de.kp.net.rtp.packetizer.AbstractPacketizer;
 public class RtspThread extends Thread {
 	private String TAG = RtspThread.class.getSimpleName();
 
-	/*
-	 * input and output stream buffer for TCP connection;
-	 * UDP response are sent through DatagramSocket
-
-	 * This datagram socket is used to send UDP
-	 * packets to the clientIPAddress
-	 * 用于发送数据的UDP
-	 */
 	private RtpSocket rtpSocket;
 	// 用于连接和控制的TCP,在最开就被初始化
 	private final Socket clientSocket;
 	// 编码器，在最开始的时候被初始化
 	private VideoEncoder encoder;
-
+	// 
 	private SessionThread sessionThread;
-	
-	/* 关于rtsp的内容 */
-    // RTSP消息的序列号
+
+    // 消息序号
     private int cseq = 0;
     private String contentBase = "";
 	// 对应rtsp服务器的状态

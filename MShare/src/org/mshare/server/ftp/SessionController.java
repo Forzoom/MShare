@@ -8,8 +8,6 @@ import org.mshare.account.AccountFactory.Verifier;
 import android.util.Log;
 
 /**
- * FsService必须要掌控所有的Session
- * 
  * 原本在FsService中的sessionThreads中的Session需要在SessionController中存在并处理，所以Notifier也需要在SessionController中进行处理
  * 所有Session的控制器
  * 
@@ -74,7 +72,7 @@ public class SessionController {
             Log.d(TAG, "bind Verifier");
             sessionThreads.add(newSession);
             if (sessionCallback != null) {
-            	sessionCallback.onRegister(newSession.sessionInfo);
+            	sessionCallback.onRegister(newSession.getSessionInfo());
             }
         }
         Log.d(TAG, "Registered session thread");
@@ -104,7 +102,7 @@ public class SessionController {
     public SessionInfo[] getAllSessionInfo() {
     	SessionInfo[] result = new SessionInfo[getCount()];
     	for (int i = 0, len = getCount(); i < len; i++) {
-    		result[i] = sessionThreads.get(i).sessionInfo;
+    		result[i] = sessionThreads.get(i).getSessionInfo();
     	}
     	return result;
     }
@@ -115,7 +113,7 @@ public class SessionController {
      * @return
      */
     public SessionInfo getSessionInfo(int index) {
-    	return sessionThreads.get(index).sessionInfo;
+    	return sessionThreads.get(index).getSessionInfo();
     }
     
     /**

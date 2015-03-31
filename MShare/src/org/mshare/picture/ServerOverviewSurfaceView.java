@@ -144,7 +144,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		isSurfaceCreated = true;
 		
 		Canvas canvas = holder.lockCanvas();
-		Log.d(TAG, "lockCanvas create");
+//		Log.d(TAG, "lockCanvas create");
 		canvas.drawColor(getResources().getColor(R.color.blue08));
 		int canvasWidth = canvas.getWidth(), canvasHeight = canvas.getHeight();
 
@@ -214,13 +214,13 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		}
 		
 		holder.unlockCanvasAndPost(canvas);
-		Log.d(TAG, "unlockCanvas create");
+//		Log.d(TAG, "unlockCanvas create");
 		// 临时用于启动呼吸效果
 	}
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-		Log.d(TAG, "surface changed");
+//		Log.d(TAG, "surface changed");
 
 		Canvas canvas = holder.lockCanvas();
 		Log.d(TAG, "lockCanvas change");
@@ -269,7 +269,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		}
 
 		holder.unlockCanvasAndPost(canvas);
-		Log.d(TAG, "unlockCanvas change");
+//		Log.d(TAG, "unlockCanvas change");
 		// TODO 当前如果就有需要的动画的话要怎么办?
 		
 //		// 判断当前的服务器状态
@@ -292,7 +292,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 
 	@Override
 	public boolean handleMessage(Message msg) {
-		Log.d(TAG, "handleMessage");
+//		Log.d(TAG, "handleMessage");
 
 		if (!isSurfaceCreated) {
 			return false;
@@ -300,10 +300,10 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 		
 		// 获得需要刷新的区域，仅仅能够在这里刷新
 		Canvas canvas = surfaceHolder.lockCanvas();
-		Log.d(TAG, "lockCanvas handle " + canvas);
+//		Log.d(TAG, "lockCanvas handle " + canvas);
 		
 		boolean needLooping = false;
-		Log.d(TAG, "has " + canvasElements.size() + " element");
+//		Log.d(TAG, "has " + canvasElements.size() + " element");
 		for (int i = 0, len = canvasElements.size(); i < len; i++) {
 			CanvasElement element = canvasElements.get(i);
 			element.draw(canvas, canvasPaint);
@@ -312,7 +312,7 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
 			}
 		}
 
-		Log.d(TAG, "unlockCanvas handle " + canvas);
+//		Log.d(TAG, "unlockCanvas handle " + canvas);
 		surfaceHolder.unlockCanvasAndPost(canvas);
 
 		RefreshHandler handler = RefreshHandler.getInstance();

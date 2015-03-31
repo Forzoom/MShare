@@ -185,7 +185,7 @@ public abstract class SharedLink {
 	public abstract boolean isFakeDirectory();
 	
 	/**
-	 * override该函数应该调用super.canRead
+	 * 复写该函数应该调用super.canRead
 	 * 检测在SharedLinkSystem中，当前账户是否有权限读取该SharedLink的内容
 	 * TODO 所有的文件树中的文件都应该能够被读取，不能够被读取的内容，不应该出现在应用中
 	 * @return
@@ -208,7 +208,15 @@ public abstract class SharedLink {
 	public abstract boolean renameTo(SharedLink newPath);
 	
 	public SharedLinkSystem getSystem() {
+		if (mSystem == null) {
+			Log.e(TAG, "has not bind to a system");
+		}
 		return mSystem;
+	}
+	
+	//  判断当前是否绑定到一个对应的System
+	public boolean isBindToSystem() {
+		return mSystem != null;
 	}
 	
 	public HashMap<String, SharedLink> list() {
@@ -310,7 +318,6 @@ public abstract class SharedLink {
 	
 	/**
 	 * 用于获得ls中所对应的文件权限表示
-	 * TODO 需要更加优雅高效的方法
 	 * @return 获得Ls字符串中的权限部分
 	 */
 	public String getLsPermission() {

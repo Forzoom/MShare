@@ -59,9 +59,10 @@ public class SessionThread extends Thread {
     protected boolean pasvMode = false;
     protected boolean binaryMode = false;
     private Token token;
-    // 保存SessionInfo,暂时设置为public
-    public SessionInfo sessionInfo;
-    /**
+    // 
+    private SessionInfo sessionInfo;
+
+	/**
      * 数据传送所使用的Socket
      */
     protected Socket dataSocket = null;
@@ -91,7 +92,7 @@ public class SessionThread extends Thread {
     public int authFails = 0;
     public static int MAX_AUTH_FAILS = 3;
 
-    // 需要保证verifier能够被正常的初始化?
+    // TODO 保证verifier不是null
     public Verifier verifier;
 
     public Socket rtspSocket;
@@ -296,13 +297,18 @@ public class SessionThread extends Thread {
             while (true) {
 				String line = ftpBr.readLine();
 				Log.i(TAG, "Received line from client in ftp mode: " + line);
-				ServerService.writeMonitor(true, line);
-				
-				if (FtpCmd.isFtpCmd(line)) {
-					FtpCmd.dispatchCommand(this, line);
+				if (line != null) {
+					ServerService.writeMonitor(true, line);
+					
+					if (FtpCmd.isFtpCmd(line)) {
+						FtpCmd.dispatchCommand(this, line);
+					} else {
+						// 失败的时候，返回ftp错误
+						writeString(unrecognizedCmdMsg);
+					}
 				} else {
-					// 失败的时候，返回ftp错误
-					writeString(unrecognizedCmdMsg);
+					Log.e(TAG, "read line is null, quit looping");
+					break;
 				}
             }
         } catch (IOException e) {
@@ -483,4 +489,13 @@ public class SessionThread extends Thread {
 	public void setRtspSocket(Socket rtspSocket) {
 		this.rtspSocket = rtspSocket;
 	}
+	
+	public SessionInfo getSessionInfo() {
+		return sessionInfo;
+	}
+
+	public void setSessionInfo(SessionInfo sessionInfo) {
+		this.sessionInfo = sessionInfo;
+	}
+
 }

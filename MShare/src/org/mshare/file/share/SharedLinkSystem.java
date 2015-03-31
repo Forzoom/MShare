@@ -207,7 +207,7 @@ public class SharedLinkSystem {
 	}
 	
 	/**
-	 * 为SharedFileSystem添加新的内容，可以是文件或者文件夹
+	 * 为SharedLinkSystem添加新的内容，可以是文件或者文件夹
 	 * 当realPath为{@link #REAL_PATH_FAKE_DIRECTORY}时，将其作为SharedFakeDirectory添加
 	 * 如果添加的是一个共享文件夹，那么就要将共享文件夹下的所有内容递归加入文件树
 	 * TODO ?当遇到无法添加到文件树中的Path的时候，也会将其持久化内容删除
@@ -223,7 +223,7 @@ public class SharedLinkSystem {
 	 */
 	public boolean addSharedLink(SharedLink sharedLink, int filePermission) {
 		if (!prepared) {
-			Log.e(TAG, "invoke prepare first!");
+			Log.e(TAG, "invoke prepare() first!");
 			return false;
 		}
 		if (sharedLink == null) {
@@ -236,7 +236,7 @@ public class SharedLinkSystem {
 		String[] crumbs = split(fakePath);
 		// 检测fakePath是否有效
 		if (!isFakePathLegal(fakePath) || crumbs.length == 0) {
-			Log.e(TAG, "invalid fakePath");
+			Log.e(TAG, "illegal fakePath");
 			return false;
 		}
 		
@@ -278,7 +278,6 @@ public class SharedLinkSystem {
 						Log.d(TAG, "+SharedFile -> " + file.getFakePath());
 					} else if (realFile.isDirectory()) {
 						Log.d(TAG, "+SharedDirectory -> " + file.getFakePath());
-						Log.d(TAG, "try add files in SharedDirectory");
 					}
 				} else {
 					Log.e(TAG, "真实文件并不存在");
@@ -286,16 +285,21 @@ public class SharedLinkSystem {
 				}
 			}
 			
+			// 将文件添加到其父文件中
 			if (sharedLink != null) {
 				file.list().put(fileName, sharedLink);
 				sharedLink.setPermission(filePermission);
+				if (!sharedLink.isBindToSystem()) {
+					sharedLink.bindSystem(this);
+				}
 				if (mCallback != null) {
 					mCallback.onAdd();
 				}
 
+				// 真实文件
 				File realFile = new File(realPath);
-				
 				if (realFile.isDirectory()) {
+					Log.d(TAG, "try add sub files in SharedDirectory");
 					// 共享文件夹下所有文件都添加到文件树中
 					File[] files = realFile.listFiles();
 					for (int index = 0, len = files.length; index < len; index++) {
