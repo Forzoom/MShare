@@ -19,7 +19,7 @@ public class SessionController {
 
 	private static final String TAG = SessionController.class.getSimpleName();
 	// 保存的所有Session
-	private ArrayList<SessionThread> sessionThreads = new ArrayList<SessionThread>();
+	private ArrayList<FtpSessionThread> sessionThreads = new ArrayList<FtpSessionThread>();
 	// 用于验证用户身份信息，所有注册在SessionController中的SessionThread都将使用该验证器
 	private Verifier verifier;
 	
@@ -33,7 +33,7 @@ public class SessionController {
 	/**
      * 注册会话线程
      */
-    public void registerSessionThread(SessionThread newSession) {
+    public void registerSessionThread(FtpSessionThread newSession) {
         // Before adding the new session thread, clean up any finished session
         // threads that are present in the list.
 
@@ -42,8 +42,8 @@ public class SessionController {
         // later from the sessionThreads list.
         synchronized (this) {
         	// 获得所有"失效"的连接线程？调用join让其能够正确退出
-            List<SessionThread> toBeRemoved = new ArrayList<SessionThread>();
-            for (SessionThread sessionThread : sessionThreads) {
+            List<FtpSessionThread> toBeRemoved = new ArrayList<FtpSessionThread>();
+            for (FtpSessionThread sessionThread : sessionThreads) {
                 if (!sessionThread.isAlive()) {
                     Log.d(TAG, "Cleaning up finished session...");
                     try {
@@ -60,7 +60,7 @@ public class SessionController {
             }
             
             // 所有失效线程都调用了join，所以现在可以将其移出
-            for (SessionThread removeThread : toBeRemoved) {
+            for (FtpSessionThread removeThread : toBeRemoved) {
                 sessionThreads.remove(removeThread);
             }
 
@@ -84,7 +84,7 @@ public class SessionController {
     public void terminateAllSessions() {
         Log.i(TAG, "Terminating " + sessionThreads.size() + " session thread(s)");
         synchronized (this) {
-            for (SessionThread sessionThread : sessionThreads) {
+            for (FtpSessionThread sessionThread : sessionThreads) {
                 if (sessionThread != null) {
                     sessionThread.closeDataSocket();
                     sessionThread.closeSocket();
@@ -121,7 +121,7 @@ public class SessionController {
      * @param index
      * @return
      */
-    public SessionThread getSessionThread(int index) {
+    public FtpSessionThread getSessionThread(int index) {
     	return sessionThreads.get(index);
     }
     

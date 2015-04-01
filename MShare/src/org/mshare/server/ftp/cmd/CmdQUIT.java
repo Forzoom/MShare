@@ -21,12 +21,12 @@ package org.mshare.server.ftp.cmd;
 
 import android.util.Log;
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdQUIT extends FtpCmd implements Runnable {
     private static final String TAG = CmdQUIT.class.getSimpleName();
 
-    public CmdQUIT(SessionThread sessionThread, String input) {
+    public CmdQUIT(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

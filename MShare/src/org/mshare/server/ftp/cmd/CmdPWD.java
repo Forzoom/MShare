@@ -21,13 +21,13 @@ package org.mshare.server.ftp.cmd;
 
 import android.util.Log;
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 // 经过了修改
 public class CmdPWD extends FtpCmd implements Runnable {
     private static final String TAG = CmdPWD.class.getSimpleName();
 
-    public CmdPWD(SessionThread sessionThread, String input) {
+    public CmdPWD(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

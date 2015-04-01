@@ -3,7 +3,7 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 /**
  * Created by huangming on 15/3/28.
@@ -11,7 +11,7 @@ import org.mshare.server.ftp.SessionThread;
 public class CmdAVAT extends FtpCmd {
 	private static final String TAG = CmdAVAT.class.getSimpleName();
 
-	public CmdAVAT(SessionThread sessionThread, String input) {
+	public CmdAVAT(FtpSessionThread sessionThread, String input) {
 		super(sessionThread);
 	}
 

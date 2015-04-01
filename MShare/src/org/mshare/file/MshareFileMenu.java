@@ -29,19 +29,21 @@ public class MshareFileMenu {
 	
 	public void addButton(int src, String str, View.OnClickListener listener) { //添加一个新按钮
 		View view = LayoutInflater.from(this.context).inflate(R.layout.menu_button, null);
-		
+		// 对应的文本
 		TextView textView = (TextView)view.findViewById(R.id.menu_text);
 		textView.setText(str);
-		
+		// 对应的图标
 		ImageView imageView = (ImageView)view.findViewById(R.id.menu_image);
 		imageView.setImageResource(src);
-		
+		// LayoutParams
 		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 		lp.weight = 1;
-		
+		// 设置权重
 		this.linearLayout.setWeightSum(this.linearLayout.getWeightSum()+1);
 		this.linearLayout.addView(view, lp);
+		// 设置监听器
 		view.setOnClickListener(listener);
+		view.setBackgroundResource(R.drawable.menu_background);
 	}
 	
 	/**
@@ -61,6 +63,7 @@ public class MshareFileMenu {
 		this.linearLayout.setWeightSum(this.linearLayout.getWeightSum() + 1);
 		this.linearLayout.addView(menuItem, lp);
 		menuItem.setOnClickListener(listener);
+		menuItem.setBackgroundResource(R.drawable.menu_background);
 	}
 	
 	public void removeButton() { //删除所有按钮（貌似没用到）

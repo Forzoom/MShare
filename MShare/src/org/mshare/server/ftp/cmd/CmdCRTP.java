@@ -3,7 +3,7 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 /**
  * 关闭服务器当前的rtsp模式
@@ -12,7 +12,7 @@ import org.mshare.server.ftp.SessionThread;
 public class CmdCRTP extends FtpCmd {
 	private static final String TAG = CmdCRTP.class.getSimpleName();
 
-	public CmdCRTP(SessionThread sessionThread, String input) {
+	public CmdCRTP(FtpSessionThread sessionThread, String input) {
 		super(sessionThread);
 	}
 

@@ -22,12 +22,12 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdFEAT extends FtpCmd implements Runnable {
     private static final String TAG = CmdFEAT.class.getSimpleName();
 
-    public CmdFEAT(SessionThread sessionThread, String input) {
+    public CmdFEAT(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

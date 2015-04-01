@@ -170,11 +170,11 @@ public class ServerOverviewSurfaceView extends SurfaceView implements SurfaceHol
         
         Log.d(TAG, "picture background " + Integer.toHexString(pictureBackground.getCurrentColor()));
         
-        int x = canvasWidth - settingsButton.getBitmap().getWidth() - 12;
-        int paddingTop = 12;
+        int padding = 24;
+        int x = canvasWidth - settingsButton.getBitmap().getWidth() - padding;
         settingsButton.setX(x);
-        settingsButton.setY(paddingTop);
-        settingsButton.setPadding(12, paddingTop, 12, 12);
+        settingsButton.setY(padding);
+        settingsButton.setPadding(padding);
         addElement(settingsButton);
 
 		// 如何判断当前已经有头像了呢？

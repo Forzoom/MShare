@@ -11,7 +11,7 @@ import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.file.share.SharedLinkSystem.Permission;
 import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.SessionNotifier;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 import org.mshare.main.MShareApp;
 
 import android.content.Context;
@@ -132,7 +132,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
      * @param password
      * @return 返回null表示请求失败，可能是所请求的账户不存在，或者是请求时的密码错误
      */
-	private Token getToken(String username, String password, SessionThread owner) {
+	private Token getToken(String username, String password, FtpSessionThread owner) {
 		Context context = MShareApp.getAppContext();
 		// 检测allAccounts和accountSp中的内容，只有当两者都不存在的时候才判定不存在
 		if (allAccounts.get(username) == null && !isAccountExists(context, username)) {
@@ -469,7 +469,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		 * @param owner 增加了耦合度？
 		 * @return 失败时返回null
 		 */
-		public Token auth(String username, String password, SessionThread owner) {
+		public Token auth(String username, String password, FtpSessionThread owner) {
 			return AccountFactory.this.getToken(username, password, owner);
 		}
 	}
@@ -490,7 +490,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 	public class Token {
 		private String username;
 		private String password;
-		private SessionThread owner;
+		private FtpSessionThread owner;
 		private Account account;
 		
 		// 不能被随意创建
@@ -501,7 +501,7 @@ public class AccountFactory implements SharedLinkSystem.Callback {
 		 * @param password
 		 * @param owner 用于表明当前是哪个Session拥有的Token，不能被其他Session所拥有和调用，暂时是这样，但耦合度
 		 */
-		private Token(String username, String password, SessionThread owner) {
+		private Token(String username, String password, FtpSessionThread owner) {
 			this.username = username;
 			this.password = password;
 			this.owner = owner;

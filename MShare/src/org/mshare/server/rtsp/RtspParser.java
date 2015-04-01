@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 
 import org.mshare.preference.ServerSettings;
-import org.mshare.server.ftp.ServerService;
+import org.mshare.server.ServerService;
 
 /**
  * This class provides a parser for incoming RTSP

@@ -14,7 +14,7 @@ import de.kp.net.rtp.packetizer.H263Packetizer;
 import de.kp.net.rtp.packetizer.H264Packetizer;
 
 import org.mshare.server.ftp.SessionController;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 import org.mshare.server.rtsp.RtspConstants.VideoEncoder;
 
 import de.kp.rtspcamera.MediaConstants;
@@ -32,8 +32,8 @@ import de.kp.rtspcamera.MediaConstants;
 public class RtspListener extends Thread {
     private static final String TAG = RtspListener.class.getSimpleName();
 
-	// serverSocket
-	private ServerSocket serverSocket;
+	// listenSocket
+	private ServerSocket listenSocket;
 	
 	// 判断服务器是否启动了
 	private boolean stopped = false;
@@ -45,10 +45,9 @@ public class RtspListener extends Thread {
 	private SessionController sessionController;
 	
 	public RtspListener(int port, VideoEncoder encoder, SessionController sessionController) throws IOException {		
-	
-//		this.serverThreads = new Vector<Thread>();
+
 		this.encoder = encoder;
-	    this.serverSocket = new ServerSocket(port);
+	    this.listenSocket = new ServerSocket(port);
 	    this.sessionController = sessionController;
 	}
 
@@ -63,17 +62,21 @@ public class RtspListener extends Thread {
             
 			try {
                 Log.d(TAG, "receive new client");
-				clientSocket = this.serverSocket.accept();
+				clientSocket = this.listenSocket.accept();
 
+				// 当前的Session个数
                 int sessionCount = sessionController.getCount();
                 for (int i = 0; i < sessionCount; i++) {
                 	
-                	SessionThread sessionThread = sessionController.getSessionThread(i);
-                	String currentIp = sessionThread.getClientAddress().toString();
+                	FtpSessionThread sessionThread = sessionController.getSessionThread(i);
+                	// client对应的IP地址
+                	String clientIp = sessionThread.getClientAddress().toString();
+                	// 所需要的IP地址
                 	String targetIp = clientSocket.getInetAddress().toString();
-                	Log.d(TAG, "targetIp : " + targetIp + " currentIp : " + currentIp);
-                	if (currentIp.equals(targetIp) && sessionThread.isRtspEnabled()) {
-                    	Log.d(TAG, "find target session");
+                	Log.d(TAG, "targetIp : " + targetIp + " clientIp : " + clientIp);
+                	// 找到需要对应的FtpSession
+                	if (clientIp.equals(targetIp) && sessionThread.isRtspEnabled()) {
+                    	Log.d(TAG, "find target session， join the rtsp thread into it!");
                     	findTargetSession = true;
                     	
                     	RtspThread rtspThread = new RtspThread(clientSocket, this.encoder, sessionThread);
@@ -95,4 +98,15 @@ public class RtspListener extends Thread {
 	    }
 	}
 
+	// 尝试退出RtspListener
+	public void quit() {
+		Log.d(TAG, "try quit RtspListener");
+		try {
+            listenSocket.close();
+            Log.v(TAG, "quit RtspListener succeed!");
+        } catch (Exception e) {
+            Log.d(TAG, "Exception closing RtspListener listenSocket");
+        }
+	}
+	
 }

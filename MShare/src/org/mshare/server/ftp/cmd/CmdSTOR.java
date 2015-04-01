@@ -20,12 +20,12 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.server.ftp.cmd;
 
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdSTOR extends CmdAbstractStore implements Runnable {
     protected String input;
 
-    public CmdSTOR(SessionThread sessionThread, String input) {
+    public CmdSTOR(FtpSessionThread sessionThread, String input) {
         super(sessionThread, CmdSTOR.class.toString());
         this.input = input;
     }

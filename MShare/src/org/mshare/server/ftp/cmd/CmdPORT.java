@@ -24,7 +24,7 @@ import java.net.UnknownHostException;
 
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -33,7 +33,7 @@ public class CmdPORT extends FtpCmd implements Runnable {
 
     String input;
 
-    public CmdPORT(SessionThread sessionThread, String input) {
+    public CmdPORT(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }

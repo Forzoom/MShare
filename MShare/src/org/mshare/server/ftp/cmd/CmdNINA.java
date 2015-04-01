@@ -3,7 +3,7 @@ package org.mshare.server.ftp.cmd;
 import org.mshare.main.MShareApp;
 import org.mshare.preference.ServerSettings;
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
@@ -12,7 +12,7 @@ import android.util.Log;
 public class CmdNINA extends FtpCmd {
 	private static final String TAG = CmdNINA.class.getSimpleName();
 	
-	public CmdNINA(SessionThread sessionThread) {
+	public CmdNINA(FtpSessionThread sessionThread) {
 		super(sessionThread);
 	}
 

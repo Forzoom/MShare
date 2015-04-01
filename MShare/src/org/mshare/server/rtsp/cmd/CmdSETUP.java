@@ -3,8 +3,8 @@ package org.mshare.server.rtsp.cmd;
 import android.util.Log;
 
 import org.mshare.preference.ServerSettings;
-import org.mshare.server.ftp.ServerService;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ServerService;
+import org.mshare.server.ftp.FtpSessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspParser;
 import org.mshare.server.rtsp.RtspThread;

@@ -4,14 +4,14 @@ import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.preference.ServerSettings;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdUUID extends FtpCmd implements Runnable {
 	private static final String TAG = CmdUUID.class.getSimpleName();
 	
 	protected String input;
 	
-	public CmdUUID(SessionThread sessionThread, String input) {
+	public CmdUUID(FtpSessionThread sessionThread, String input) {
 		super(sessionThread);
 		this.input = input;
 	}

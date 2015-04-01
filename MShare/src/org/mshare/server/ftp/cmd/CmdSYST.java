@@ -20,7 +20,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.server.ftp.cmd;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -31,7 +31,7 @@ public class CmdSYST extends FtpCmd implements Runnable {
     // http://cr.yp.to/ftp/syst.html
     public static final String response = "215 UNIX Type: L8\r\n";
 
-    public CmdSYST(SessionThread sessionThread, String input) {
+    public CmdSYST(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

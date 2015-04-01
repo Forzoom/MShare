@@ -21,6 +21,7 @@ package org.mshare.server.ftp;
 
 import org.mshare.main.R;
 import org.mshare.preference.ServerSettings;
+import org.mshare.server.ServerService;
 
 import android.annotation.TargetApi;
 import android.app.Service;

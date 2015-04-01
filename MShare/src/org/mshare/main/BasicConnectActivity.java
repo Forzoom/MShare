@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.widget.TextView;
 
 import org.mshare.preference.ServerSettings;
-import org.mshare.server.ftp.ServerService;
+import org.mshare.server.ServerService;
 
 /**
  * Created by huangming on 15/3/26.

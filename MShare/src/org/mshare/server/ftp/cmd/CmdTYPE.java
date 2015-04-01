@@ -23,14 +23,14 @@ import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdTYPE extends FtpCmd implements Runnable {
     private static final String TAG = CmdTYPE.class.getSimpleName();
 
     String input;
 
-    public CmdTYPE(SessionThread sessionThread, String input) {
+    public CmdTYPE(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }

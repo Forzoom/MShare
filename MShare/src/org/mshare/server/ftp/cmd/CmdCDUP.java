@@ -24,7 +24,7 @@ import java.io.IOException;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 /**
@@ -36,7 +36,7 @@ public class CmdCDUP extends FtpCmd implements Runnable {
     private static final String TAG = CmdCDUP.class.getSimpleName();
     protected String input;
 
-    public CmdCDUP(SessionThread sessionThread, String input) {
+    public CmdCDUP(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

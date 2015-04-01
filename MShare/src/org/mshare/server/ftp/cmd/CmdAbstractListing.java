@@ -44,7 +44,7 @@ public abstract class CmdAbstractListing extends FtpCmd {
     // TODO: .class.getSimpleName() from abstract class?
     private static String TAG = "CmdAbstractListing";
 
-    public CmdAbstractListing(SessionThread sessionThread, String input) {
+    public CmdAbstractListing(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

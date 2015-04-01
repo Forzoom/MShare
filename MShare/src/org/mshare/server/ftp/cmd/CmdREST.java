@@ -20,14 +20,14 @@ package org.mshare.server.ftp.cmd;
 import android.util.Log;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdREST extends FtpCmd implements Runnable {
     private static final String TAG = CmdREST.class.getSimpleName();
 
     protected String input;
 
-    public CmdREST(SessionThread sessionThread, String input) {
+    public CmdREST(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package org.mshare.server.ftp;
+package org.mshare.server;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +55,11 @@ import org.mshare.main.MShareApp;
 import org.mshare.main.MShareUtil;
 
 import org.mshare.preference.ServerSettings;
+import org.mshare.server.ftp.FtpListener;
+import org.mshare.server.ftp.SessionController;
+import org.mshare.server.ftp.SessionNotifier;
+import org.mshare.server.ftp.FtpSessionThread;
+import org.mshare.server.ftp.Util;
 import org.mshare.server.rtsp.RtspConstants;
 import org.mshare.server.rtsp.RtspListener;
 
@@ -72,19 +77,19 @@ import de.kp.rtspcamera.MediaConstants;
 public class ServerService extends Service implements Runnable {
     private static final String TAG = ServerService.class.getSimpleName();
 
-    // Service will (global) broadcast when server start/stop
     // 当FTP服务器启动或者停止的时候，会广播
     public static final String ACTION_STARTED = "org.mshare.ftp.server.FTPSERVER_STARTED";
     public static final String ACTION_STOPPED = "org.mshare.ftp.server.FTPSERVER_STOPPED";
     public static final String ACTION_FAILEDTOSTART = "org.mshare.ftp.server.FTPSERVER_FAILEDTOSTART";
 
-    // RequestStartStopReceiver listens for these actions to start/stop this server
     // 有一个Receiver的存在用于监听下面的内容，用于启动和停止服务器
 	public static final String ACTION_START_FTPSERVER = "org.mshare.ftp.server.ACTION_START_FTPSERVER";
     public static final String ACTION_STOP_FTPSERVER = "org.mshare.ftp.server.ACTION_STOP_FTPSERVER";
     
-    // server thread
+    // ftp线程
     protected static Thread serverThread = null;
+    // rtsp线程
+    protected static Thread rtspServerThread;
     protected boolean shouldExit = false;
     // 用于接收客户端的socket
     protected ServerSocket listenSocket;
@@ -98,7 +103,7 @@ public class ServerService extends Service implements Runnable {
     /**
      * TODO 为什么名字叫这个?
      */
-    private FtpListener wifiListener;
+    private FtpListener ftpListener;
     private RtspListener rtspListener;
     
     // wifi和wake锁
@@ -155,7 +160,7 @@ public class ServerService extends Service implements Runnable {
         sessionController.setVerifier(accountFactory.getVerifier());
         
         // 启动服务器线程
-        Log.d(TAG, "Creating server thread");
+        Log.d(TAG, "fCreating server thread");
         serverThread = new Thread(this);
         serverThread.start();
 
@@ -189,9 +194,8 @@ public class ServerService extends Service implements Runnable {
     public void onDestroy() {
         Log.i(TAG, "onDestroy() Stopping server");
 
-		// RTSP服务器原本的内容是使用线程的interupt来停止线程
-		// 现在呢，能确保吗
-
+		// TODO RTSP服务器原本的内容是使用线程的interupt来停止线程,现在呢，能确保吗
+        // 尝试关闭FTP服务器
         shouldExit = true;
         if (serverThread == null) {
             Log.w(TAG, "Stopping with null serverThread");
@@ -216,6 +220,14 @@ public class ServerService extends Service implements Runnable {
             }
         } catch (IOException e) {
         }
+        
+        // 尝试关闭所有的FtpThread
+        if (sessionController != null) {
+        	sessionController.terminateAllSessions();
+        }
+        
+        // 尝试关闭RTSP服务器
+        // 没有需要关闭的内容
         
         if (wifiLock != null) {
             Log.d(TAG, "onDestroy: Releasing wifi lock");
@@ -252,7 +264,7 @@ public class ServerService extends Service implements Runnable {
 
         // TODO 检测当前的网络状态，根据当前的网络状态来确定是否应当开启服务器
         // 只有当网络状态是WIFI或者是自己启动的AP的时候才可以启动服务器
-        // 同时注意当3G启动的时候需要提醒可能会产生流量
+        // 同时注意当3G启动的时候需要提醒可能会产生流量，即需要提醒用户关于这些的内容
         
         // 如果不是在local network的情形下，将无法启动FTP服务器
         if (isConnectedToLocalNetwork() == false) {
@@ -273,7 +285,7 @@ public class ServerService extends Service implements Runnable {
             return;
         }
 
-        // @TODO: when using ethernet, is it needed to take wifi lock?
+        // TODO: when using ethernet, is it needed to take wifi lock?
         // 获得Wifi和Wake锁
         takeWifiLock();
         takeWakeLock();
@@ -284,25 +296,26 @@ public class ServerService extends Service implements Runnable {
         sendBroadcast(new Intent(ACTION_STARTED));
 
         // shouldExit是退出标志
+        // 主要的循环，每过一定的时间，将判断所需要的对象是否为空，并且保证其能够正常地运行
         while (!shouldExit) {
         	// 是一个Thread
-            if (wifiListener != null) {
-                if (!wifiListener.isAlive()) {
-                    Log.d(TAG, "Joining crashed wifiListener thread");
+            if (ftpListener != null) {
+                if (!ftpListener.isAlive()) {
+                    Log.d(TAG, "Joining crashed ftpListener thread");
                     // 到现在还是不大懂Thread.join();，是将一个Thread类的所有实例合并？
                     try {
-                        wifiListener.join();
+                        ftpListener.join();
                     } catch (InterruptedException e) {
+                    	Log.e(TAG, "Exception occur when join ftpListener");
                     }
-                    wifiListener = null;
+                    ftpListener = null;
                 }
             }
-            if (wifiListener == null) {
-                // Either our wifi listener hasn't been created yet, or has crashed,
-                // so spawn it
+            if (ftpListener == null) {
+                // Either our wifi listener hasn't been created yet, or has crashed, so spawn it
             	// 创建并启动线程
-                wifiListener = new FtpListener(listenSocket, this, sessionController);
-                wifiListener.start();
+                ftpListener = new FtpListener(listenSocket, sessionController);
+                ftpListener.start();
             }
             // 创建rtsp服务器
             if (rtspListener == null) {
@@ -326,9 +339,13 @@ public class ServerService extends Service implements Runnable {
 
         sessionController.terminateAllSessions();
 
-        if (wifiListener != null) {
-            wifiListener.quit();
-            wifiListener = null;
+        if (ftpListener != null) {
+            ftpListener.quit();
+            ftpListener = null;
+        }
+        if (rtspListener != null) {
+        	rtspListener.quit();
+        	rtspListener = null;
         }
         shouldExit = false; // we handled the exit flag, so reset it to acknowledge
         Log.d(TAG, "Exiting cleanly, returning from run()");
@@ -521,12 +538,4 @@ public class ServerService extends Service implements Runnable {
     	return AccountFactory.getInstance().getAdminAccountToken();
     }
 
-    /**
-     * 临时所使用的用于注册session的函数，不知道以后还需不需要
-     * @param newSession
-     */
-    public void registerSessionThread(SessionThread newSession) {
-    	sessionController.registerSessionThread(newSession);
-    }
-    
 }

@@ -28,7 +28,7 @@ package org.mshare.server.ftp.cmd;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -39,7 +39,7 @@ public class CmdNLST extends CmdAbstractListing implements Runnable {
     public final static long MS_IN_SIX_MONTHS = 6L * 30L * 24L * 60L * 60L * 1000L;
     private final String input;
 
-    public CmdNLST(SessionThread sessionThread, String input) {
+    public CmdNLST(FtpSessionThread sessionThread, String input) {
         super(sessionThread, input);
         this.input = input;
     }

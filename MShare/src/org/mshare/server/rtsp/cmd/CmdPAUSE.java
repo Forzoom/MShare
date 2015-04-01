@@ -2,7 +2,7 @@ package org.mshare.server.rtsp.cmd;
 
 import android.util.Log;
 
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspConstants;
 import org.mshare.server.rtsp.RtspThread;

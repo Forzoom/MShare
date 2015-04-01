@@ -27,7 +27,7 @@ import java.util.Locale;
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -40,7 +40,7 @@ public class CmdMFMT extends FtpCmd implements Runnable {
 
     private String mInput;
 
-    public CmdMFMT(SessionThread sessionThread, String input) {
+    public CmdMFMT(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         mInput = input;
     }

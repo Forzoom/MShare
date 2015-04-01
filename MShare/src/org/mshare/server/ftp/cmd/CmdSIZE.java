@@ -5,7 +5,7 @@ import java.io.File;
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -20,7 +20,7 @@ public class CmdSIZE extends FtpCmd {
 
     protected String input;
 
-    public CmdSIZE(SessionThread sessionThread, String input) {
+    public CmdSIZE(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }

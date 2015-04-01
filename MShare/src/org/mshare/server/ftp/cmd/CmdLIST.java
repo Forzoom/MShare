@@ -32,7 +32,7 @@ import java.util.Locale;
 
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -43,7 +43,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
     public final static long MS_IN_SIX_MONTHS = 6L * 30L * 24L * 60L * 60L * 1000L;
     private final String input;
 
-    public CmdLIST(SessionThread sessionThread, String input) {
+    public CmdLIST(FtpSessionThread sessionThread, String input) {
         super(sessionThread, input);
         this.input = input;
     }

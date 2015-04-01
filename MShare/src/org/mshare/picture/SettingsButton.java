@@ -96,6 +96,14 @@ public class SettingsButton extends CanvasElement {
 		this.paddingBottom = bottom;
 	}
 	
+	// …Ë÷√padding
+	public void setPadding(int padding) {
+		this.paddingLeft = padding;
+		this.paddingRight = padding;
+		this.paddingTop = padding;
+		this.paddingBottom = padding;
+	}
+	
 	public class AlphaAnimation extends CanvasAnimation {
 
 		private int targetAlpha;

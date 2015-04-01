@@ -1,5 +1,7 @@
 package org.mshare.server.ftp;
 
+import org.mshare.server.ServerService;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;

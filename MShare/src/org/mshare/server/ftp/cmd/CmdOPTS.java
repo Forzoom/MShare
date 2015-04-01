@@ -23,7 +23,7 @@ import android.util.Log;
 
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdOPTS extends FtpCmd implements Runnable {
     private static final String TAG = CmdOPTS.class.getSimpleName();
@@ -31,7 +31,7 @@ public class CmdOPTS extends FtpCmd implements Runnable {
     public static final String message = "TEMPLATE!!";
     private final String input;
 
-    public CmdOPTS(SessionThread sessionThread, String input) {
+    public CmdOPTS(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }

@@ -43,7 +43,7 @@ abstract public class CmdAbstractStore extends FtpCmd {
                                                           // from abstract class
     public static final String message = "TEMPLATE!!";
 
-    public CmdAbstractStore(SessionThread sessionThread, String input) {
+    public CmdAbstractStore(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

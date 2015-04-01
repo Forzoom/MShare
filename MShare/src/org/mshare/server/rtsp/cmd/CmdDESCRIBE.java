@@ -4,7 +4,7 @@ import android.os.Environment;
 import android.util.Log;
 
 import org.mshare.file.share.SharedLink;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspConstants;
 import org.mshare.server.rtsp.RtspParser;

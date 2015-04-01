@@ -119,7 +119,7 @@
             </intent-filter>
         </receiver>
         
-        <service android:name="org.mshare.server.ftp.ServerService"></service>
+        <service android:name="org.mshare.server.ServerService"></service>
         
     </application>
 

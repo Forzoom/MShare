@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 import org.mshare.file.MshareFileMenu;
 import org.mshare.preference.ServerSettingActivity;
 import org.mshare.preference.ServerSettings;
-import org.mshare.server.ftp.ServerService;
+import org.mshare.server.ServerService;
 import org.mshare.picture.CanvasElement;
 import org.mshare.picture.PictureBackground;
 import org.mshare.picture.RingButton;

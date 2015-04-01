@@ -22,14 +22,14 @@ package org.mshare.server.ftp.cmd;
 import java.net.InetAddress;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
 public class CmdPASV extends FtpCmd implements Runnable {
     private static final String TAG = CmdPASV.class.getSimpleName();
 
-    public CmdPASV(SessionThread sessionThread, String input) {
+    public CmdPASV(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

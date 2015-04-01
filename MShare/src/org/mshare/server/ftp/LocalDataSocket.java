@@ -24,6 +24,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.mshare.server.ServerService;
+
 import android.util.Log;
 
 public class LocalDataSocket {

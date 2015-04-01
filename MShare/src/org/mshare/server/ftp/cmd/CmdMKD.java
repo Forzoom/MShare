@@ -23,7 +23,7 @@ import org.mshare.file.share.SharedLink;
 import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -37,7 +37,7 @@ public class CmdMKD extends FtpCmd implements Runnable {
 
     String input;
 
-    public CmdMKD(SessionThread sessionThread, String input) {
+    public CmdMKD(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }

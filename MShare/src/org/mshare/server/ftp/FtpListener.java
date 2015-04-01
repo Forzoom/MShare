@@ -22,26 +22,28 @@ package org.mshare.server.ftp;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.mshare.server.ServerService;
+
 import android.util.Log;
 
 public class FtpListener extends Thread {
     private static final String TAG = FtpListener.class.getSimpleName();
 
     ServerSocket listenSocket;
-    ServerService ftpServerService;
     
     private SessionController sessionController;
     
-    public FtpListener(ServerSocket listenSocket, ServerService ftpServerService, SessionController sessionController) {
+    public FtpListener(ServerSocket listenSocket, SessionController sessionController) {
         this.listenSocket = listenSocket;
-        this.ftpServerService = ftpServerService;
         this.sessionController= sessionController; 
     }
 
     public void quit() {
+    	Log.d(TAG, "try to quit FtpListener");
         try {
             listenSocket.close(); // if the FtpListener thread is blocked on accept,
                                   // closing the socket will raise an exception
+            Log.v(TAG, "quit FtpListener succeed!");
         } catch (Exception e) {
             Log.d(TAG, "Exception closing FtpListener listenSocket");
         }
@@ -56,10 +58,10 @@ public class FtpListener extends Thread {
             while (true) {
                 Socket clientSocket = listenSocket.accept();
             	Log.i(TAG, "New connection, spawned thread");
-            	SessionThread newSession = new SessionThread(clientSocket, new LocalDataSocket());
+            	FtpSessionThread newSession = new FtpSessionThread(clientSocket, new LocalDataSocket());
                 newSession.start();
                 // register应该放在哪里呢？
-                ftpServerService.registerSessionThread(newSession);
+                sessionController.registerSessionThread(newSession);
             }
         } catch (Exception e) {
             Log.d(TAG, "Exception in FtpListener");

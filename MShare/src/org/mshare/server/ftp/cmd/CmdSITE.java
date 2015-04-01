@@ -18,11 +18,11 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 package org.mshare.server.ftp.cmd;
 
 import org.mshare.server.ftp.FtpCmd;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 public class CmdSITE extends FtpCmd implements Runnable {
 
-    public CmdSITE(SessionThread sessionThread, String input) {
+    public CmdSITE(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
     }
 

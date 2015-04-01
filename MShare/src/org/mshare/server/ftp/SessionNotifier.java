@@ -35,13 +35,13 @@ public class SessionNotifier {
 	 * TODO 如果是管理员账户该怎么办？
 	 * @param sender may be null
 	 */
-	public void notifyAddFile(Token token, SessionThread sender) {
+	public void notifyAddFile(Token token, FtpSessionThread sender) {
 		int sessionCount = sessionController.getCount();
 		
 		// 对于管理员账户来说
 		if (token.isAdministrator()) {
 			for (int index = 0; index < sessionCount; index++) {
-    			SessionThread receiveSession = sessionController.getSessionThread(index);
+    			FtpSessionThread receiveSession = sessionController.getSessionThread(index);
 				// 发送消息通知所有的Session
 //    			receiveSession.
     		}
@@ -49,7 +49,7 @@ public class SessionNotifier {
 			// 普通账户
 			for (int index = 0; index < sessionCount; index++) {
     			// 在所有的session中寻找拥有相同的Accoount的SessionThread,但不包括sender
-    			SessionThread receiveSession = sessionController.getSessionThread(index);
+    			FtpSessionThread receiveSession = sessionController.getSessionThread(index);
     			// session和sender不相等如何判断
     			if (receiveSession.getToken().equals(token) && receiveSession != sender) {
     				// 发送消息通知
@@ -61,7 +61,7 @@ public class SessionNotifier {
 		
 	}
 	
-	public void notifyDeleteFile(Account account, SessionThread sender) {
+	public void notifyDeleteFile(Account account, FtpSessionThread sender) {
 		
 	}
 	

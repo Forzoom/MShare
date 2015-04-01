@@ -30,7 +30,7 @@ import android.util.Log;
 public abstract class FtpCmd implements Runnable {
     private static final String TAG = FtpCmd.class.getSimpleName();
 
-    protected SessionThread sessionThread;
+    protected FtpSessionThread sessionThread;
 
     protected static FtpCmdMap[] cmdClasses = { new FtpCmdMap("SYST", CmdSYST.class),
             new FtpCmdMap("USER", CmdUSER.class), new FtpCmdMap("PASS", CmdPASS.class),
@@ -99,7 +99,7 @@ public abstract class FtpCmd implements Runnable {
     	CmdUSER.class, CmdPASS.class, CmdQUIT.class, CmdUUID.class, CmdNINA.class
     };
     
-    public FtpCmd(SessionThread sessionThread) {
+    public FtpCmd(FtpSessionThread sessionThread) {
         this.sessionThread = sessionThread;
     }
 
@@ -107,7 +107,7 @@ public abstract class FtpCmd implements Runnable {
     abstract public void run();
 
 	// 根据权限进行分发工作
-    protected static void dispatchCommand(SessionThread session, String inputString) {
+    protected static void dispatchCommand(FtpSessionThread session, String inputString) {
         // 使用空格来分割
         String[] strings = inputString.split(" ");
         // 对应的Cmd的名称
@@ -115,7 +115,7 @@ public abstract class FtpCmd implements Runnable {
 
         if (!isFtpCmd(inputString)) {
             Log.e(TAG, "something wrong happen? the command is not ftp command!");
-			session.writeString(SessionThread.unrecognizedCmdMsg);
+			session.writeString(FtpSessionThread.unrecognizedCmdMsg);
             return;
         }
 
@@ -134,12 +134,12 @@ public abstract class FtpCmd implements Runnable {
         	if (token.accessWrite()) { // 检测写权限
         		Log.d(TAG, "only write");
 				if (!findAndExecuteCommand(session, verbClass, inputString, allowCmdWhileWrite)) {
-					session.writeString(SessionThread.unrecognizedCmdMsg);
+					session.writeString(FtpSessionThread.unrecognizedCmdMsg);
 				}
         	} else if (token.accessRead()) { // 检测读权限
         		Log.d(TAG, "only read");
         		if (!findAndExecuteCommand(session, verbClass, inputString, allowedCmdsWhileRead)) {
-					session.writeString(SessionThread.unrecognizedCmdMsg);
+					session.writeString(FtpSessionThread.unrecognizedCmdMsg);
 				}
         	} else {
         		Log.e(TAG, "permission denied");
@@ -155,7 +155,7 @@ public abstract class FtpCmd implements Runnable {
 
 	// 分发到具体的cmd集合之中，在这些集合中进行寻找
 	// 用于内部分发命令，根据用户的不同权限
-	public static boolean findAndExecuteCommand(SessionThread session, Class<? extends FtpCmd> verb, String inputString, Class<?>[] commands) {
+	public static boolean findAndExecuteCommand(FtpSessionThread session, Class<? extends FtpCmd> verb, String inputString, Class<?>[] commands) {
 		
 		for (int i = 0; i < commands.length; i++) {
 			if (verb.equals(commands[i])) {
@@ -167,7 +167,7 @@ public abstract class FtpCmd implements Runnable {
 
 				// 创建反射构造函数
 				try {
-					constructor = verb.getConstructor(new Class[] { SessionThread.class, String.class });
+					constructor = verb.getConstructor(new Class[] { FtpSessionThread.class, String.class });
 				} catch (NoSuchMethodException e) {
 					Log.e(TAG, "FtpCmd subclass lacks expected " + "constructor ");
 					return false;
@@ -183,7 +183,7 @@ public abstract class FtpCmd implements Runnable {
 				if (cmdInstance == null) {
 					// If we couldn't find a matching command,
 					Log.d(TAG, "Ignoring unrecognized FTP verb: " + verb);
-					session.writeString(SessionThread.unrecognizedCmdMsg);
+					session.writeString(FtpSessionThread.unrecognizedCmdMsg);
 					return false;
 				}
 
@@ -231,7 +231,7 @@ public abstract class FtpCmd implements Runnable {
      * 判断所接受到的内容是否是FTP的命令
      * @return
      */
-    public static boolean isAndExecuteFtpCmd(SessionThread session, String inputString, Class<?> targetClass) {
+    public static boolean isAndExecuteFtpCmd(FtpSessionThread session, String inputString, Class<?> targetClass) {
         String[] strings = inputString.split(" ");
         // 不能识别
         if (strings == null || strings.length < 1) {
@@ -272,7 +272,7 @@ public abstract class FtpCmd implements Runnable {
 			if (cmdInstance == null) {
 				// If we couldn't find a matching command,
 				Log.d(TAG, "Ignoring unrecognized FTP verb: " + verb);
-				session.writeString(SessionThread.unrecognizedCmdMsg);
+				session.writeString(FtpSessionThread.unrecognizedCmdMsg);
 				return false;
 			}
 

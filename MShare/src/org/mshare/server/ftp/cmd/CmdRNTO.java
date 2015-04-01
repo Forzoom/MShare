@@ -26,7 +26,7 @@ import org.mshare.file.share.SharedLinkSystem;
 import org.mshare.main.MShareUtil;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -35,7 +35,7 @@ public class CmdRNTO extends FtpCmd implements Runnable {
 
     protected String input;
 
-    public CmdRNTO(SessionThread sessionThread, String input) {
+    public CmdRNTO(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }

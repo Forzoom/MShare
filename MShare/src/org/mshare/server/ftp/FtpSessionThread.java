@@ -37,6 +37,7 @@ import org.mshare.account.AccountFactory.Verifier;
 
 import android.util.Log;
 
+import org.mshare.server.ServerService;
 import org.mshare.server.ftp.cmd.CmdCRTP;
 import org.mshare.server.rtsp.RtspCmd;
 import org.mshare.server.rtsp.RtspParser;
@@ -50,8 +51,8 @@ import de.kp.net.rtp.packetizer.AbstractPacketizer;
  * @author HM
  * TODO 主要是如果出现..的情况下的文件路径，可能会出现问题
  */
-public class SessionThread extends Thread {
-    private static final String TAG = SessionThread.class.getSimpleName();
+public class FtpSessionThread extends Thread {
+    private static final String TAG = FtpSessionThread.class.getSimpleName();
 
     protected boolean shouldExit = false;
     protected Socket cmdSocket;
@@ -100,7 +101,7 @@ public class SessionThread extends Thread {
 	// ftp命令无法识别时的返回
 	public static String unrecognizedCmdMsg = "502 Command not recognized\r\n";
 
-	public SessionThread(Socket socket, LocalDataSocket dataSocket) {
+	public FtpSessionThread(Socket socket, LocalDataSocket dataSocket) {
         this.cmdSocket = socket;
         this.localDataSocket = dataSocket;
         this.sendWelcomeBanner = true;
@@ -255,7 +256,7 @@ public class SessionThread extends Thread {
     }
 
     public void quit() {
-        Log.d(TAG, "SessionThread told to quit");
+        Log.d(TAG, "FtpSessionThread told to quit");
         closeSocket();
     }
 
@@ -284,7 +285,7 @@ public class SessionThread extends Thread {
 
     @Override
     public void run() {
-        Log.i(TAG, "SessionThread started");
+        Log.i(TAG, "FtpSessionThread started");
 
         if (sendWelcomeBanner) {
             writeString("220 FTP Server ready\r\n");
@@ -406,7 +407,7 @@ public class SessionThread extends Thread {
     		Log.e(TAG, "verifier is null");
 			return null;
     	}
-    	Log.d(TAG, "SessionThread auth : " + username);
+    	Log.d(TAG, "FtpSessionThread auth : " + username);
         if ((newToken = verifier.auth(username, password, this)) != null) {
         	setToken(newToken);
             Log.i(TAG, "Authentication complete");

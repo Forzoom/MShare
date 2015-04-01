@@ -22,7 +22,7 @@ package org.mshare.server.ftp.cmd;
 import org.mshare.file.share.SharedLink;
 import org.mshare.server.ftp.FtpCmd;
 import org.mshare.server.ftp.FtpParser;
-import org.mshare.server.ftp.SessionThread;
+import org.mshare.server.ftp.FtpSessionThread;
 
 import android.util.Log;
 
@@ -36,7 +36,7 @@ public class CmdDELE extends FtpCmd implements Runnable {
 
     protected String input;
 
-    public CmdDELE(SessionThread sessionThread, String input) {
+    public CmdDELE(FtpSessionThread sessionThread, String input) {
         super(sessionThread);
         this.input = input;
     }
